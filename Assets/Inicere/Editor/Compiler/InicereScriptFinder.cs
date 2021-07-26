@@ -64,7 +64,7 @@ namespace Iniciere
             return all;
         }
 
-        public static IEnumerable<TemplateLocation> FindTemplatesLite(
+        public static List<TemplateLocation> FindTemplatesLite(
             IEnumerable<string> filepaths,
             string tmpStart = "<#iniciere",
             string tmpEnd = "#/>")

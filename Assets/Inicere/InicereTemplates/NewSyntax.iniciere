@@ -186,6 +186,13 @@ STRING HANDLER:
 
 ===============
 GUI TODO:
-* TemplateInfo hold path to file + section rather than full Contesnts
-* Get Files Asyncronously
-* 
+* TemplateInfo hold path to file + section rather than full Contesnts	|||
+* Get Files Asyncronously	||||
+* Move all Compiler Errors to a Custom Log
+GUI ELEMENTS:
+* Display a List for templates + Template selection
+* Display selected template's Info (Name, Lang)
+* Filter templates from list by factors (Lagns, Tags, Category, FileEx, Search Bar)
+* Template Inspector (Properties) w/ Serialized Property Drawers
+* Custom Inspectors
+* Create Template & Cancel Button

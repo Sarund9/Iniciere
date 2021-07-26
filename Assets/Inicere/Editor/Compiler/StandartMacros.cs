@@ -7,9 +7,10 @@ using UnityEngine;
 
 namespace Iniciere
 {
+    public delegate bool TryFunc<T, TResult>(T value, out TResult result);
+
     public static class StandartMacros
     {
-        public delegate bool TryFunc<T, TResult>(T value, out TResult result);
         public static IEnumerable<TResult> SelectWhere<T, TResult>(
             this IEnumerable<T> col, TryFunc<T, TResult> selector
             )
@@ -21,10 +22,26 @@ namespace Iniciere
             }
         }
 
-        [IniciereMacro("INSERT")]
-        static void Insert(StringBuilder build, MacroContext ctx, string obj)
+        [IniciereMacro("VERIFYCSNAMESPACE")]
+        static void Insert(StringBuilder build, MacroContext ctx)
         {
+            var text = new TextBuilder(build);
 
+            var namespaces = ctx.Types
+                .Select(t => t.Namespace)
+                .Distinct();
+
+            while (!text.IsFinished)
+            {
+                const int SPACE = 6;
+                if (text.TryGoTo("using", TextBuilder.SelectionMode.Set1))
+                {
+                    text.Next(6, false);
+
+                }
+
+                text.Next();
+            }
 
         }
         [IniciereMacro("FORMAT")]

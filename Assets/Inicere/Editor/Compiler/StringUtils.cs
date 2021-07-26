@@ -431,6 +431,7 @@ namespace Iniciere
                 };
             }
         }
+    
 
         static void ProcessEscapeSequences(ref string str, char cmdChar)
         {
@@ -797,5 +798,7 @@ namespace Iniciere
 
         public static bool InRange<T>(this T[] array, int i) => i >= 0 && i < array.Length;
         public static bool InRange<T>(this List<T> list, int i) => i >= 0 && i < list.Count;
+
+
     }
 }

@@ -31,7 +31,7 @@ namespace Iniciere
             if (GUILayout.Button("Find Files"))
             {
                 var files = InicereScriptFinder.FindFilePaths();
-                templates = InicereScriptFinder.FindTemplatesLite(files).ToList();
+                templates = InicereScriptFinder.FindTemplatesLite(files);
                 //Debug.Log($"FILES {files.Count()}");
                 //foreach (var template in templates)
                 //{
