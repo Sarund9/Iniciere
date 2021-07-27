@@ -78,6 +78,26 @@ namespace Iniciere
             result.y += pivotPoint.y;
             return result;
         }
+        public static Rect Shrink(this Rect rect, int left, int right, int top, int bottom)
+        {
+            Rect result = rect;
+            result.x += right;
+            result.width -= right;
+            result.width -= left;
+            result.y += top;
+            result.height -= top;
+            result.height -= bottom;
+            return result;
+        }
+        public static Rect Shrink(this Rect rect, int value)
+        {
+            Rect result = rect;
+            result.x += value;
+            result.width -= value * 2;
+            result.y += value;
+            result.height -= value * 2;
+            return result;
+        }
 
         public static string ReplaceAt(this string input, int index, char newChar)
         {

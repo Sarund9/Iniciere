@@ -64,12 +64,12 @@ namespace Iniciere
             return all;
         }
 
-        public static List<TemplateLocation> FindTemplatesLite(
+        public static IEnumerable<TemplateLocation> FindTemplatesLite(
             IEnumerable<string> filepaths,
             string tmpStart = "<#iniciere",
             string tmpEnd = "#/>")
         {
-            List<TemplateLocation> all = new List<TemplateLocation>();
+            //List<TemplateLocation> all = new List<TemplateLocation>();
             
             foreach (var path in filepaths)
             {
@@ -93,7 +93,8 @@ namespace Iniciere
                             insideCount++;
                             if (tmpEnd.Length == insideCount)
                             {
-                                all.Add(new TemplateLocation(path, i - count - tmpStart.Length, count + tmpStart.Length));
+                                //all.Add(new TemplateLocation(path, i - count - tmpStart.Length, count + tmpStart.Length));
+                                yield return new TemplateLocation(path, i - count - tmpStart.Length, count + tmpStart.Length);
 
                                 inside = false;
                                 insideCount = 0;
@@ -127,7 +128,7 @@ namespace Iniciere
             }
             
 
-            return all;
+            //return all;
         }
         //var contents = File.ReadAllLines(path);
         //foreach (var line in contents)

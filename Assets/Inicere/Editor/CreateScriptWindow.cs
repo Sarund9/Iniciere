@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Iniciere
 {
@@ -71,20 +72,103 @@ namespace Iniciere
             }
         }
 
+        private void CreateGUI()
+        {
+            //rootVisualElement = new 
+        }
+
         private void OnGUI()
         {
-            //GUILayout.Label("Template Window");
-
-            foreach (var item in precompiling)
+            Event e = Event.current;
+            var layout = new VisualElement()
             {
-                GUILayout.Label($"Template: [{item.}]");
+
+            };
+            
+            const float SEARCH_HEIGHT = 120;
+
+
+            #region OLD
+            /*
+            Rect rect_SearchFilters, rect_TmpList, rect_Info, rect_Inspector;
+            CalculateAreas();
+
+            const float DIM = 0.6f;
+            EditorGUI.DrawRect(rect_SearchFilters, Color.red * DIM);
+            EditorGUI.DrawRect(rect_TmpList, Color.blue * DIM);
+            EditorGUI.DrawRect(rect_Info, Color.green * DIM);
+            EditorGUI.DrawRect(rect_Inspector, Color.cyan * DIM);
+
+            void CalculateAreas()
+                {
+                    using (new GUILayout.HorizontalScope())
+                    {
+                        using (new GUILayout.VerticalScope())
+                        {
+                            rect_SearchFilters = GUILayoutUtility.GetRect(
+                                Screen.width / 2,
+                                SEARCH_HEIGHT,
+                                GUILayout.MaxWidth(Screen.width / 2 - 10), GUILayout.MaxHeight(SEARCH_HEIGHT))
+                                .Shrink(10);
+                            using (new GUILayout.AreaScope(rect_SearchFilters))
+                                DrawFilters();
+
+                            rect_TmpList = GUILayoutUtility.GetRect(
+                                Screen.width / 2,
+                                Screen.height,
+                                GUILayout.MaxWidth(Screen.width / 2 - 10), GUILayout.MinHeight(600))
+                                .Shrink(10, 10, 5, 10);
+                            using (new GUILayout.AreaScope(rect_TmpList))
+                                DrawTemplateList();
+
+                        }
+
+                        using (new GUILayout.VerticalScope())
+                        {
+                            rect_Info = GUILayoutUtility.GetRect(
+                                Screen.width / 2,
+                                SEARCH_HEIGHT,
+                                GUILayout.MaxWidth(Screen.width / 2 - 10), GUILayout.MaxHeight(SEARCH_HEIGHT))
+                                .Shrink(10);
+                            using (new GUILayout.AreaScope(rect_Info))
+                                DrawTemplateInfo();
+
+                            rect_Inspector = GUILayoutUtility.GetRect(
+                                Screen.width / 2,
+                                Screen.height,
+                                GUILayout.MaxWidth(Screen.width / 2 - 10), GUILayout.MinHeight(600))
+                                .Shrink(10, 10, 5, 10);
+                            using (new GUILayout.AreaScope(rect_Inspector))
+                                DrawTemplateInspector();
+
+                        }
+                    }
+                }
+
+
+            void DrawFilters()
+            {
+
+                EditorGUILayout.TextField("Search", "SampleSearch");
+
             }
+            void DrawTemplateList()
+            {
+
+            }
+            void DrawTemplateInfo()
+            {
+
+            }
+            void DrawTemplateInspector()
+            {
+
+            }
+            //*/
+            #endregion
         }
 
-        private void Update()
-        {
-            
-        }
+
         private void OnInspectorUpdate()
         {
             for (int i = 0; i < precompiling.Count; i++)
@@ -107,14 +191,11 @@ namespace Iniciere
         {
             IEnumerable<string> filepaths = await Task.Run(() => InicereScriptFinder.FindFilePaths());
 
-            List<TemplateLocation> templates = await Task.Run(() => InicereScriptFinder.FindTemplatesLite(filepaths));
+            IEnumerable<TemplateLocation> templates = InicereScriptFinder.FindTemplatesLite(filepaths);
 
             foreach (var item in templates)
             {
-                //this.templates.Add(item);
-
-                var task = PrecompileTemplate(item);
-                precompiling.Add(task);
+                precompiling.Add(PrecompileTemplate(item));
             }
             //return templates;
         }
