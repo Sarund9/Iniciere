@@ -61,7 +61,7 @@ namespace Iniciere
             var types = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.GetTypes());
 
-            Debug.Log($"Starts Compiling: '{templateInfo.Name}'");
+            //Debug.Log($"Starts Compiling: '{templateInfo.Name}'");
 
             for (int l = 0; l < lines.Count; l++)
             {
@@ -77,7 +77,7 @@ namespace Iniciere
                         for (int i = 0; i < rs.Length; i++)
                             templateInfo.FileExts.Add(rs[i]);
 
-                        Debug.Log($"FILE EX: '{result}'");
+                        //Debug.Log($"FILE EX: '{result}'");
                         l = end.l;
                         checkForSkip = false;
                         continue;
@@ -94,7 +94,7 @@ namespace Iniciere
                         for (int i = 0; i < rs.Length; i++)
                             templateInfo.Langs.Add(rs[i]);
 
-                        Debug.Log($"LANGUAGE: '{result}'");
+                        //Debug.Log($"LANGUAGE: '{result}'");
                         l = end.l;
                         checkForSkip = false;
                         continue;
@@ -111,7 +111,7 @@ namespace Iniciere
                         for (int i = 0; i < rs.Length; i++)
                             templateInfo.Categories.Add(rs[i]);
 
-                        Debug.Log($"CATEGORY: '{result}'");
+                        //Debug.Log($"CATEGORY: '{result}'");
                         l = end.l;
                         checkForSkip = false;
                         continue;
@@ -128,7 +128,7 @@ namespace Iniciere
                         for (int i = 0; i < rs.Length; i++)
                             templateInfo.Flags.Add(rs[i]);
 
-                        Debug.Log($"FLAGS: '{result}'");
+                        //Debug.Log($"FLAGS: '{result}'");
                         l = end.l;
                         checkForSkip = false;
                         continue;
@@ -146,7 +146,7 @@ namespace Iniciere
                         }
 
                         includes.Add(result);
-                        Debug.Log($"USING: '{result}'");
+                        //Debug.Log($"USING: '{result}'");
                         l = end.l;
                         checkForSkip = false;
                         continue;

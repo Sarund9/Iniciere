@@ -7,7 +7,7 @@ Compilation:
 
 <#iniciere "CSharp Class"
 
-	language "C#"
+	language "C##"
 	category ""
 	flags ""
 	fileext "cs" //File extension eg: "c, h, cpp" / "js, json"

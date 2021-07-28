@@ -78,7 +78,7 @@ namespace Iniciere
             result.y += pivotPoint.y;
             return result;
         }
-        public static Rect Shrink(this Rect rect, int left, int right, int top, int bottom)
+        public static Rect Shrink(this Rect rect, float left, float right, float top, float bottom)
         {
             Rect result = rect;
             result.x += right;
@@ -89,7 +89,7 @@ namespace Iniciere
             result.height -= bottom;
             return result;
         }
-        public static Rect Shrink(this Rect rect, int value)
+        public static Rect Shrink(this Rect rect, float value)
         {
             Rect result = rect;
             result.x += value;
@@ -109,5 +109,25 @@ namespace Iniciere
             chars[index] = newChar;
             return new string(chars);
         }
+
+        public static T Do<T>(this T obj, Action<T> action)
+        {
+            action(obj);
+            return obj;
+        }
+
+        public static void AddRange<T, T2>(this Dictionary<T, T2> hash, IEnumerable<(T, T2)> items)
+        {
+            foreach (var item in items)
+                if (!hash.ContainsKey(item.Item1))
+                    hash.Add(item.Item1, item.Item2);
+        }
+        public static void AddRange<T>(this HashSet<T> hash, IEnumerable<T> items)
+        {
+            foreach (var item in items)
+                hash.Add(item);
+        }
     }
+
+    public delegate void Procedure<T>(ref T obj);
 }

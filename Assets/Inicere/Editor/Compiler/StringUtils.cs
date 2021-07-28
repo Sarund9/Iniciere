@@ -276,7 +276,7 @@ namespace Iniciere
             //var str = TryHandleString(lines, start >> keyword.Length, '#', out kw_name, out end);
             //ProcessEscapeSequences(ref kw_name, '#');
 
-            Debug.Log($"Keyword '{keyword}' handling resulted in '{kw_name}' "); //at {endPos} char:'{lines[start.l][endPos]}'");
+            //Debug.Log($"Keyword '{keyword}' handling resulted in '{kw_name}' "); //at {endPos} char:'{lines[start.l][endPos]}'");
             return str;
         }
         public static bool TryHandleProperty(

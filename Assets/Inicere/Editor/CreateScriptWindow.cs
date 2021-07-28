@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEditor;
@@ -18,6 +19,13 @@ namespace Iniciere
 
         List<TemplateInfo> templates = new List<TemplateInfo>();
         //Thread thread;
+
+        string search = "";
+
+        readonly Dictionary<string, bool> filters_lang = new Dictionary<string, bool>();
+        readonly Dictionary<string, bool> filters_fileEx = new Dictionary<string, bool>();
+        readonly Dictionary<string, bool> filters_cat = new Dictionary<string, bool>();
+        readonly Dictionary<string, bool> filters_flags = new Dictionary<string, bool>();
 
         [MenuItem("Assets/Create/Script", priority = 80)] //80 is C# Script Priority
         public static void Create()
@@ -63,31 +71,133 @@ namespace Iniciere
             var _ = FindFiles();
         }
 
-        private void TemplateColChanged(object sender, NotifyCollectionChangedEventArgs e)
-        {
-            
-            if (e.Action == NotifyCollectionChangedAction.Add)
-            {
-                //e.NewItems[0]
-            }
-        }
+        //private void TemplateColChanged(object sender, NotifyCollectionChangedEventArgs e)
+        //{
+        //    if (e.Action == NotifyCollectionChangedAction.Add)
+        //    {
+        //        //e.NewItems[0]
+        //    }
+        //}
 
-        private void CreateGUI()
-        {
-            //rootVisualElement = new 
-        }
+        //private void CreateGUI()
+        //{
+        //    //rootVisualElement = new 
+        //}
 
         private void OnGUI()
         {
             Event e = Event.current;
-            var layout = new VisualElement()
+
+            float halfScreen = Screen.width / 2;
+
+            search = GUILayout.TextField(search, "SearchTextField", GUILayout.MaxWidth(halfScreen));
+
+            #region TMP_FILTERS
+            GUILayout.Space(2f);
+
+            using (new GUILayout.HorizontalScope())
             {
+                float subdivideHalf = halfScreen / 2;
+                Rect button1 = GUILayoutUtility.GetRect(20, 20, GUILayout.MaxWidth(subdivideHalf));
+                button1 = button1.ScaleSizeBy(new Vector2(.9f, 1), button1.size / 2);
+                if (GUI.Button(button1, "Language", "DropDownButton"))
+                {
+                    TogglePopup.Create(this, filters_lang, "Test", button1, button1.width);
+                }
 
-            };
+                Rect button2 = GUILayoutUtility.GetRect(20, 20, GUILayout.MaxWidth(subdivideHalf));
+                button2 = button2.ScaleSizeBy(new Vector2(.9f, 1), button2.size / 2);
+                if (GUI.Button(button2, "File Exts", "DropDownButton"))
+                {
+                    TogglePopup.Create(this, filters_fileEx, "Test", button2, button2.width);
+                }
+            }
+
+            GUILayout.Space(4f);
+
+            using (new GUILayout.HorizontalScope())
+            {
+                float subdivideHalf = halfScreen / 2;
+                Rect button1 = GUILayoutUtility.GetRect(20, 20, GUILayout.MaxWidth(subdivideHalf));
+                button1 = button1.ScaleSizeBy(new Vector2(.9f, 1), button1.size / 2);
+                if (GUI.Button(button1, "Category", "DropDownButton"))
+                {
+                    TogglePopup.Create(this, filters_cat, "Test", button1, button1.width);
+                }
+
+                Rect button2 = GUILayoutUtility.GetRect(20, 20, GUILayout.MaxWidth(subdivideHalf));
+                button2 = button2.ScaleSizeBy(new Vector2(.9f, 1), button2.size / 2);
+                if (GUI.Button(button2, "Flags", "DropDownButton"))
+                {
+                    TogglePopup.Create(this, filters_flags, "Test", button2, button2.width);
+                }
+            }
+
+            #endregion
             
-            const float SEARCH_HEIGHT = 120;
+            GUILayout.Space(2f);
 
+            //var r_tmpList = GUILayoutUtility.GetRect(1, 1, GUILayout.MaxWidth(halfScreen));
+            //r_tmpList.y += 4;
+            //r_tmpList.height = Screen.height - (r_tmpList.y + 1);
+            //r_tmpList = r_tmpList.Shrink(10);
+            Rect r_tmpList = GUILayoutUtility.GetRect(1, 1,
+                GUILayout.MaxWidth(halfScreen),
+                GUILayout.ExpandHeight(true))
+                .Shrink(10);
 
+            EditorGUI.DrawRect(r_tmpList, new Color(0.2f, 0.2f, 0.2f));
+
+            const float TMP_ITEM_HEIGHT = 80;
+            const float TMP_ITEM_MARGIN = 2.2f;
+            Color tmpColor1 = new Color(0.3f, 0.3f, 0.3f);
+            Color tmpColor2 = new Color(0.4f, 0.4f, 0.4f);
+            bool colToUse = false;
+
+            for (int i = 0, t = 0; i < templates.Count; i++)
+            {
+                if (SkipTempalte(i))
+                    continue;
+                
+                Rect rect = r_tmpList;
+                rect.x += TMP_ITEM_MARGIN;
+                rect.width -= TMP_ITEM_MARGIN * 2;
+                if (t == 0)
+                    rect.y += TMP_ITEM_MARGIN;
+                rect.height = TMP_ITEM_HEIGHT;
+                rect.y += TMP_ITEM_HEIGHT * t;
+
+                EditorGUI.DrawRect(rect, GetColor());
+                TemplateDisplay(i, rect);
+
+                t++;
+                // ============= \\
+                Color GetColor() =>
+                    (colToUse = !colToUse) ? tmpColor1 : tmpColor2;
+            }
+
+            void TemplateDisplay(int index, Rect rect)
+            {
+                var template = templates[index];
+                Rect label = rect.Shrink(0, 0, 0, TMP_ITEM_HEIGHT - EditorGUIUtility.singleLineHeight);
+                GUI.Label(label, new GUIContent(template.Name));
+            }
+            bool SkipTempalte(int index)
+            {
+                // Search Bar
+                if (templates[index] is null)
+                    return false;
+                
+                if (search.Length > 0 && !templates[index].Name.ToLower().Contains(search.ToLower()))
+                    return true;
+
+                foreach (var fex in templates[index].FileExts)
+                {
+                    //if ()
+                }
+
+                return false;
+            }
             #region OLD
             /*
             Rect rect_SearchFilters, rect_TmpList, rect_Info, rect_Inspector;
@@ -168,6 +278,8 @@ namespace Iniciere
             #endregion
         }
 
+        
+
 
         private void OnInspectorUpdate()
         {
@@ -180,6 +292,14 @@ namespace Iniciere
                     {
                         //Debug.Log($"Template precompiled: {info.Name}");
                         templates.Add(info);
+
+                        filters_lang.AddRange(info.Langs.Select(x => (x, true)));
+
+                        filters_fileEx.AddRange(info.FileExts.Select(x => (x, true)));
+
+                        filters_cat.AddRange(info.Categories.Select(x => (x, true)));
+
+                        filters_flags.AddRange(info.Flags.Select(x => (x, true)));
                     }
                     precompiling.RemoveAt(i);
                     i--;
