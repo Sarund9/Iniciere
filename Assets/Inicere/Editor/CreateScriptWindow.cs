@@ -102,14 +102,16 @@ namespace Iniciere
                 button1 = button1.ScaleSizeBy(new Vector2(.9f, 1), button1.size / 2);
                 if (GUI.Button(button1, "Language", "DropDownButton"))
                 {
-                    TogglePopup.Create(this, filters_lang, "Test", button1, button1.width);
+                    var t = TogglePopup.Create(this, filters_lang, "Test", button1, button1.width);
+                    t.OnItemChanged += (i, v) => Repaint();
                 }
 
                 Rect button2 = GUILayoutUtility.GetRect(20, 20, GUILayout.MaxWidth(subdivideHalf));
                 button2 = button2.ScaleSizeBy(new Vector2(.9f, 1), button2.size / 2);
                 if (GUI.Button(button2, "File Exts", "DropDownButton"))
                 {
-                    TogglePopup.Create(this, filters_fileEx, "Test", button2, button2.width);
+                    var t = TogglePopup.Create(this, filters_fileEx, "Test", button2, button2.width);
+                    t.OnItemChanged += (i, v) => Repaint();
                 }
             }
 
@@ -122,14 +124,16 @@ namespace Iniciere
                 button1 = button1.ScaleSizeBy(new Vector2(.9f, 1), button1.size / 2);
                 if (GUI.Button(button1, "Category", "DropDownButton"))
                 {
-                    TogglePopup.Create(this, filters_cat, "Test", button1, button1.width);
+                    var t = TogglePopup.Create(this, filters_cat, "Test", button1, button1.width);
+                    t.OnItemChanged += (i, v) => Repaint();
                 }
 
                 Rect button2 = GUILayoutUtility.GetRect(20, 20, GUILayout.MaxWidth(subdivideHalf));
                 button2 = button2.ScaleSizeBy(new Vector2(.9f, 1), button2.size / 2);
                 if (GUI.Button(button2, "Flags", "DropDownButton"))
                 {
-                    TogglePopup.Create(this, filters_flags, "Test", button2, button2.width);
+                    var t = TogglePopup.Create(this, filters_flags, "Test", button2, button2.width);
+                    t.OnItemChanged += (i, v) => Repaint();
                 }
             }
 
@@ -185,18 +189,49 @@ namespace Iniciere
             bool SkipTempalte(int index)
             {
                 // Search Bar
-                if (templates[index] is null)
-                    return false;
-                
-                if (search.Length > 0 && !templates[index].Name.ToLower().Contains(search.ToLower()))
-                    return true;
 
-                foreach (var fex in templates[index].FileExts)
+                if (search.Length > 0 && !templates[index].Name.ToLower().Contains(search.ToLower()))
                 {
-                    //if ()
+                    return true;
                 }
 
+                //if (!ContainsAny(templates[index].FileExts, x => filters_fileEx[x])) return true;
+
+                if (Invalidate(templates[index].FileExts, filters_fileEx))
+                    return true;
+                
+                if (Invalidate(templates[index].Langs, filters_lang))
+                    return true;
+
+                if (Invalidate(templates[index].Categories, filters_cat))
+                    return true;
+
+                if (Invalidate(templates[index].Flags, filters_flags))
+                    return true;
+
+                
+
                 return false;
+                // ============ \\
+                static bool Invalidate(List<string> tags, Dictionary<string, bool> filters)
+                {
+                    if (tags.Count == 0) return false;
+                    bool exclude = true;
+                    foreach (var tag in tags)
+                    {
+                        //if (!filters.ContainsKey(tag))
+                        //{
+                        //    Debug.Log($"TAG '{tag}' is not in flags");
+                        //    continue;
+                        //}
+                        if (filters[tag])
+                        {
+                            exclude = false;
+                            break;
+                        }
+                    }
+                    return exclude;
+                }
             }
             #region OLD
             /*

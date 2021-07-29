@@ -127,6 +127,8 @@ namespace Iniciere
             foreach (var item in items)
                 hash.Add(item);
         }
+
+        //public static bool HasCommonItem<T1, T2>()
     }
 
     public delegate void Procedure<T>(ref T obj);

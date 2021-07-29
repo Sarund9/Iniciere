@@ -102,13 +102,16 @@ namespace Iniciere
         void SetAll(bool val)
         {
             int i = 0;
+            string[] keys = new string[items.Count];
             foreach (var key in items.Keys)
             {
-
-                // TODO: Filter Search
-                items[key] = val;
-                OnItemChanged?.Invoke(i, val);
+                keys[i] = key;
                 i++;
+            }
+            for (int k = 0; k < keys.Length; k++)
+            {
+                items[keys[k]] = val;
+                OnItemChanged?.Invoke(k, val);
             }
         }
 

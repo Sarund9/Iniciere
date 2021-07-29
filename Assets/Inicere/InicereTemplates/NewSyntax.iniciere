@@ -8,8 +8,8 @@ Compilation:
 <#iniciere "CSharp Class"
 
 	language "C##"
-	category ""
-	flags ""
+	category "standart"
+	flags "std"
 	fileext "cs" //File extension eg: "c, h, cpp" / "js, json"
 
 	// This is a Comment
