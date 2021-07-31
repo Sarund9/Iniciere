@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Iniciere
 {
+    [Serializable]
     public class TemplateInfo
     {
         TemplateLocation location;
@@ -53,7 +54,8 @@ namespace Iniciere
         //        .ToString();
         //}
     }
-
+    
+    [Serializable]
     public class TemplateLocation
     {
         public TemplateLocation(string filepath, int startInChars, int countInChars)
@@ -91,6 +93,7 @@ namespace Iniciere
         }
     }
 
+    //[Serializable]
     public class TemplateProperty
     {
         public TemplateProperty(string name)

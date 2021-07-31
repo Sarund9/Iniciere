@@ -14,11 +14,14 @@ namespace Iniciere
     public class CreateScriptWindow : EditorWindow
     {
         //List<TemplateLocation> templates = new List<TemplateLocation>();
-        
-        List<Task<TemplateInfo>> precompiling = new List<Task<TemplateInfo>>();
 
-        List<TemplateInfo> templates = new List<TemplateInfo>();
-        //Thread thread;
+        readonly List<Task<TemplateInfo>> precompiling = new List<Task<TemplateInfo>>();
+
+        readonly List<TemplateInfo> templates = new List<TemplateInfo>();
+        
+        int selectedTemplate = -1;
+
+        TemplateInfo SelectedTemplate => selectedTemplate < 0 ? null : templates[selectedTemplate];
 
         string search = "";
 
@@ -90,7 +93,10 @@ namespace Iniciere
 
             float halfScreen = Screen.width / 2;
 
-            search = GUILayout.TextField(search, "SearchTextField", GUILayout.MaxWidth(halfScreen));
+            search = GUILayout.TextField(search, "SearchTextField", GUILayout.Width(halfScreen));
+
+            GUILayout.BeginHorizontal();
+            GUILayout.BeginVertical();
 
             #region TMP_FILTERS
             GUILayout.Space(2f);
@@ -138,7 +144,8 @@ namespace Iniciere
             }
 
             #endregion
-            
+
+            #region TMP_DISPLAY
             GUILayout.Space(2f);
 
             //var r_tmpList = GUILayoutUtility.GetRect(1, 1, GUILayout.MaxWidth(halfScreen));
@@ -171,12 +178,19 @@ namespace Iniciere
                 rect.height = TMP_ITEM_HEIGHT;
                 rect.y += TMP_ITEM_HEIGHT * t;
 
+                //if (e.type == EventType.MouseDown && e.button == 0 && r_tmpList.Contains(e.mousePosition))
+                //{
+                //    selectedTemplate = -1;
+                //    Debug.Log("UNSELECTED");
+                //}
+
                 EditorGUI.DrawRect(rect, GetColor());
                 TemplateDisplay(i, rect);
 
                 t++;
                 // ============= \\
-                Color GetColor() =>
+                Color GetColor() => selectedTemplate == i?
+                    new Color(0.1f, 0.1f, 0.4f) :
                     (colToUse = !colToUse) ? tmpColor1 : tmpColor2;
             }
 
@@ -185,6 +199,13 @@ namespace Iniciere
                 var template = templates[index];
                 Rect label = rect.Shrink(0, 0, 0, TMP_ITEM_HEIGHT - EditorGUIUtility.singleLineHeight);
                 GUI.Label(label, new GUIContent(template.Name));
+
+                if (e.type == EventType.MouseDown && e.button == 0 && rect.Contains(e.mousePosition))
+                {
+                    selectedTemplate = index;
+                    //Debug.Log("SELECTED");
+                    Repaint();
+                }
             }
             bool SkipTempalte(int index)
             {
@@ -233,6 +254,24 @@ namespace Iniciere
                     return exclude;
                 }
             }
+
+            #endregion
+
+            GUILayout.EndVertical();
+
+            using (new GUILayout.VerticalScope())
+            {
+                if (SelectedTemplate is object)
+                {
+                    GUILayout.Label("Template Display");
+
+                }
+
+
+            }
+
+            GUILayout.EndHorizontal();
+
             #region OLD
             /*
             Rect rect_SearchFilters, rect_TmpList, rect_Info, rect_Inspector;
@@ -289,31 +328,11 @@ namespace Iniciere
                         }
                     }
                 }
-
-
-            void DrawFilters()
-            {
-
-                EditorGUILayout.TextField("Search", "SampleSearch");
-
-            }
-            void DrawTemplateList()
-            {
-
-            }
-            void DrawTemplateInfo()
-            {
-
-            }
-            void DrawTemplateInspector()
-            {
-
-            }
             //*/
             #endregion
         }
 
-        
+
 
 
         private void OnInspectorUpdate()
