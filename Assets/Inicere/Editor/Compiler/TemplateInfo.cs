@@ -94,7 +94,7 @@ namespace Iniciere
         }
     }
 
-    //[Serializable]
+    [Serializable]
     public class TemplateProperty
     {
         public TemplateProperty(string name)

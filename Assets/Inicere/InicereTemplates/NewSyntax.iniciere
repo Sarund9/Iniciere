@@ -203,3 +203,40 @@ GUI ELEMENTS:
 * Template Inspector (Properties) w/ Serialized Property Drawers
 * Custom Inspectors
 * Create Template & Cancel Button
+
+Language:
+* Primitive Type: 'type'
+* Restricted Type
+* Remove support for Types
+
+* Add ArraySupport
+* Add EnumSupport
+
+* Restrict Types in Macros
+
+* Separate template between declaration and Body
+* Better Error/Log System
+* Do not allow random keywords
+* Restrict string multi-lining to use a char before it.
+* CmdChar should throw error if invalid char is after it.
+* 
+
+\\===//
+
+New Type System:
+* Dynamic Language?
+* Adding Atributes for Editor Value Assignment
+
+Properties:
+* Var
+* Array 
+* 
+
+Hardcode:
+* String
+* Bool
+* Type
+* Int
+* Float
+* Long
+* 

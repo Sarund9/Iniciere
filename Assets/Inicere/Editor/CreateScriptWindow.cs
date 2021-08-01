@@ -353,9 +353,21 @@ namespace Iniciere
 
             #endregion
 
-            var props = SelectedTemplate.Properties;
+            var properties = SelectedTemplate.Properties;
 
+            //var sobj = new UnityEditor.SerializedObject();
+            foreach (var prop in properties)
+            {
+                ValueSerializer vs = ValueSerializer.Get(prop.Value);
+                var sp = vs.GetProperty();
 
+            }
+
+            void HandleProperty(ValueSerializer vs)
+            {
+                //SerializedProperty sp = 
+                //EditorGUILayout.PropertyField(serializedProperty);
+            }
 
             GUILayout.EndArea();
 

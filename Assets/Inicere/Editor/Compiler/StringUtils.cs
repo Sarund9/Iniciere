@@ -331,6 +331,28 @@ namespace Iniciere
             }
             return true;
         }
+        public static bool TryHandleDynamicProperty(
+            List<string> lines, TextPos start,
+            out string propname, out TextPos end
+            )
+        {
+            if (!lines[start.l].StartsWithOrWhitespace("in", out int endPos))
+            {
+                propname = "";
+                end = start;
+                return false;
+            }
+
+            if (!lines[start.l].BeginsAtWithOrWhitespace("$", endPos + 1))
+            {
+                throw new Exception("in property name must begin with '$'");
+            }
+
+
+            propname = "";
+            end = start;
+            return false;
+        }
         #region OBSOLETE
         [Obsolete("This function does nothing")]
         public static bool TryHandleAdd(List<string> lines, int start, out string result, out int skip)
