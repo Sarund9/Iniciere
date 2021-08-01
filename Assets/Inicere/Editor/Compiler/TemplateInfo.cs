@@ -94,21 +94,4 @@ namespace Iniciere
         }
     }
 
-    [Serializable]
-    public class TemplateProperty
-    {
-        public TemplateProperty(string name)
-        {
-            Name = name;
-        }
-        public string Name { get; }
-        public Type Type { get; set; }
-        public object Value { get; set; }
-
-        public override string ToString()
-        {
-            var val = Value == null ? "NULL" : Value.ToString();
-            return $"[{Type.Name}] '{Name}' = {val};";
-        }
-    }
 }

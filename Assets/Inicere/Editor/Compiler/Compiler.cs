@@ -9,12 +9,13 @@ namespace Iniciere
     public class Compiler
     {
         #region CONST
-        const string TEMPLATE_START = "<#iniciere";
-        const string TEMPLATE_END = "#/>";
+        const string TEMPLATE_START = @"<#iniciere";
+        const string TEMPLATE_DIV = @"\\===//";
+        const string TEMPLATE_END = @"#/>";
 
         #endregion
 
-        List<string> lines;
+        //List<string> lines;
         //string s_Raw;
 
         //[Obsolete]
@@ -152,24 +153,41 @@ namespace Iniciere
                         continue;
                     }
                 }
+                //IN KEYWORD (PROPERTIES) OLD
+                #region ...
+                //{
+                //    if (StringUtils.TryHandleProperty(lines, new TextPos(l),
+                //        out var typename, out var varname, out var end))
+                //    {
+                //        if (!TryResolveType(typename, includes, out var type))
+                //        {
+                //            Debug.LogError($"TYPE '{typename}' could not be found");
+                //            foreach (var item in includes)
+                //            {
+                //                Debug.LogError($"Including: '{item}'");
+                //            }
+                //            return -1;
+                //        }
+
+                //        templateInfo.Properties.Add(new TemplateProperty(varname)
+                //        {
+                //            Type = type,
+                //            Value = null,
+                //        });
+                //        //Debug.Log($"PROPERTY: '{varname}' ({typename})");
+                //        l = end.l;
+                //        checkForSkip = false;
+                //        continue;
+                //    }
+                //}
+                #endregion
                 //IN KEYWORD (PROPERTIES)
                 {
-                    if (StringUtils.TryHandleProperty(lines, new TextPos(l),
-                        out var typename, out var varname, out var end))
+                    if (StringUtils.TryHandleDynamicProperty(lines, new TextPos(l),
+                        out var varname, out var end))
                     {
-                        if (!TryResolveType(typename, includes, out var type))
-                        {
-                            Debug.LogError($"TYPE '{typename}' could not be found");
-                            foreach (var item in includes)
-                            {
-                                Debug.LogError($"Including: '{item}'");
-                            }
-                            return -1;
-                        }
-
                         templateInfo.Properties.Add(new TemplateProperty(varname)
                         {
-                            Type = type,
                             Value = null,
                         });
                         //Debug.Log($"PROPERTY: '{varname}' ({typename})");
@@ -318,7 +336,7 @@ namespace Iniciere
                 MacroContext.InitializeMacroSystem(
                     AppDomain.CurrentDomain, out MacroContext macroContext);
 
-            Dictionary<string, MacroInstance> macros = new Dictionary<string, MacroInstance>();
+            Dictionary<string, MacroTypeInstance> macros = new Dictionary<string, MacroTypeInstance>();
             foreach (var item in allMacros)
             {
                 try
@@ -495,114 +513,114 @@ namespace Iniciere
         #endregion
 
         #region OLD_COMPILER
-        public int Compile(TemplateInfo info, out Template template)
-        {
-            //result = new List<string>(m_Lines.Count);
+        //public int Compile(TemplateInfo info, out Template template)
+        //{
+        //    //result = new List<string>(m_Lines.Count);
 
-            bool b_InTemplate = false; //Indicates if we are inside a template
-            template = new Template(); //If inside a template, the name of it
+        //    bool b_InTemplate = false; //Indicates if we are inside a template
+        //    template = new Template(); //If inside a template, the name of it
 
-            try {
-                template.Name = TryStartTemplate(lines[0]);
-                Debug.LogWarning($"NAME: {template.Name}");
-            }
-            catch
-            {
-                Debug.LogError("No template Name");
-                return -1;
-            } //TEMPLATE NAME
+        //    try {
+        //        template.Name = TryStartTemplate(lines[0]);
+        //        Debug.LogWarning($"NAME: {template.Name}");
+        //    }
+        //    catch
+        //    {
+        //        Debug.LogError("No template Name");
+        //        return -1;
+        //    } //TEMPLATE NAME
 
-            if (!b_InTemplate)
-            {
-                Debug.LogError("No template Name");
-                return -1; //TEMPLATE NOT FOUND
-            }
+        //    if (!b_InTemplate)
+        //    {
+        //        Debug.LogError("No template Name");
+        //        return -1; //TEMPLATE NOT FOUND
+        //    }
 
-            Queue<MacroInstance> macroQueue = new Queue<MacroInstance>();
-            var allMacros =
-                MacroContext.InitializeMacroSystem(
-                    AppDomain.CurrentDomain, out MacroContext macroContext);
-
-
-
-            Debug.Log($"Starts Compiling: '{template.Name}'");
-            for (int l = 0; l < lines.Count; l++)
-            {
-                //if (!b_InTemplate)
-                //{
-                //    try {
-                //        TryStartTemplate(m_Lines[l]);
-                //    }
-                //    catch { return -1; }
-                //    continue;
-                //}
-
-                //TODO: detect and add macros to list (and cache for future compilation)
-
-
-                //TODO: detect and add inputs to property system
-
-                //FILE KEYWORD
-                {
-                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "file", info.Properties,
-                        out var name, out var end))
-                    {
-                        template.AddFile(name);
-                        Debug.Log($"FILE: '{name}'");
-                        l = end.l;
-                        continue;
-                    }
-                }
-
-                //ADD KEYWORD
-                {
-                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "add", info.Properties,
-                        out var body, out var end))
-                    {
-                        if (template.FileCount == 0)
-                        {
-                            Debug.LogError("cannot add lines to no file");
-                            return -1;
-                        }
-                        template.LastFile().AddLine(body);
-                        Debug.Log($"\t ADD: '{body.TrySubstring(0, 20)}'");
-                        //TODO: run macros
-                        l = end.l;
-                        continue;
-                    }
-                }
-                //LANGUAGE KEYWORD
-                //{
-                //    if (StringUtils.TryHandleKeyword(m_Lines, new TextPos(l), "language",
-                //        out var name, out var end))
-                //    {
-
-                //    }
-
-                //}
-
-                //for (int c = 0; c < m_Lines[l].Length; c++)
-                //{
-
-                //    //m_Lines[i][c];
-                //}
-            }
+        //    Queue<MacroInstance> macroQueue = new Queue<MacroInstance>();
+        //    var allMacros =
+        //        MacroContext.InitializeMacroSystem(
+        //            AppDomain.CurrentDomain, out MacroContext macroContext);
 
 
 
-            return 0;
-            // =================== \\
+        //    Debug.Log($"Starts Compiling: '{template.Name}'");
+        //    for (int l = 0; l < lines.Count; l++)
+        //    {
+        //        //if (!b_InTemplate)
+        //        //{
+        //        //    try {
+        //        //        TryStartTemplate(m_Lines[l]);
+        //        //    }
+        //        //    catch { return -1; }
+        //        //    continue;
+        //        //}
 
-            string TryStartTemplate(string line)
-            {
-                if (line.StartsWith(TEMPLATE_START))
-                {
-                    b_InTemplate = true;
-                }
-                return StringUtils.CaptureInBetween(line);
-                //template.Name = name;
-            }
-        }
+        //        //TODO: detect and add macros to list (and cache for future compilation)
+
+
+        //        //TODO: detect and add inputs to property system
+
+        //        //FILE KEYWORD
+        //        {
+        //            if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "file", info.Properties,
+        //                out var name, out var end))
+        //            {
+        //                template.AddFile(name);
+        //                Debug.Log($"FILE: '{name}'");
+        //                l = end.l;
+        //                continue;
+        //            }
+        //        }
+
+        //        //ADD KEYWORD
+        //        {
+        //            if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "add", info.Properties,
+        //                out var body, out var end))
+        //            {
+        //                if (template.FileCount == 0)
+        //                {
+        //                    Debug.LogError("cannot add lines to no file");
+        //                    return -1;
+        //                }
+        //                template.LastFile().AddLine(body);
+        //                Debug.Log($"\t ADD: '{body.TrySubstring(0, 20)}'");
+        //                //TODO: run macros
+        //                l = end.l;
+        //                continue;
+        //            }
+        //        }
+        //        //LANGUAGE KEYWORD
+        //        //{
+        //        //    if (StringUtils.TryHandleKeyword(m_Lines, new TextPos(l), "language",
+        //        //        out var name, out var end))
+        //        //    {
+
+        //        //    }
+
+        //        //}
+
+        //        //for (int c = 0; c < m_Lines[l].Length; c++)
+        //        //{
+
+        //        //    //m_Lines[i][c];
+        //        //}
+        //    }
+
+
+
+        //    return 0;
+        //    // =================== \\
+
+        //    string TryStartTemplate(string line)
+        //    {
+        //        if (line.StartsWith(TEMPLATE_START))
+        //        {
+        //            b_InTemplate = true;
+        //        }
+        //        return StringUtils.CaptureInBetween(line);
+        //        //template.Name = name;
+        //    }
+        //}
         #endregion
 
     }

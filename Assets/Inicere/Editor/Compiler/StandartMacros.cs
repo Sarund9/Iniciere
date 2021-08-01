@@ -33,7 +33,7 @@ namespace Iniciere
 
             while (!text.IsFinished)
             {
-                const int SPACE = 6;
+                //const int SPACE = 6;
                 if (text.TryGoTo("using", TextBuilder.SelectionMode.Set1))
                 {
                     text.Next(6, false);
@@ -108,9 +108,9 @@ namespace Iniciere
         public Assembly[] Assemblies { get; private set; }
         public IEnumerable<Type> Types { get; private set; }
         public IEnumerable<MethodInfo> Methods { get; private set; }
-        public IEnumerable<MacroInstance> Macros { get; private set; }
+        public IEnumerable<MacroTypeInstance> Macros { get; private set; }
 
-        public static IEnumerable<MacroInstance> InitializeMacroSystem(AppDomain domain, out MacroContext ctx)
+        public static IEnumerable<MacroTypeInstance> InitializeMacroSystem(AppDomain domain, out MacroContext ctx)
         {
 #pragma warning disable IDE0017 // Simplify object initialization
             ctx = new MacroContext();
@@ -121,13 +121,13 @@ namespace Iniciere
             ctx.Methods = ctx.Types.SelectMany(t => t.GetMethods());
 
             return ctx.Macros = ctx.Methods
-                .SelectWhere((MethodInfo m, out MacroInstance mi) =>
+                .SelectWhere((MethodInfo m, out MacroTypeInstance mi) =>
                 {
                     var atr = m.GetCustomAttribute<IniciereMacroAttribute>();
 
                     if (atr is object)
                     {
-                        mi = new MacroInstance(m, atr);
+                        mi = new MacroTypeInstance(m, atr);
 
                         if (!m.IsStatic && VerifyParams(m))
                             return false;
@@ -164,9 +164,9 @@ namespace Iniciere
         }
     }
 
-    public class MacroInstance
+    public class MacroTypeInstance
     {
-        public MacroInstance(MethodInfo method, IniciereMacroAttribute atr)
+        public MacroTypeInstance(MethodInfo method, IniciereMacroAttribute atr)
         {
             Method = method;
             Atr = atr;
@@ -191,13 +191,13 @@ namespace Iniciere
 
     public class MacroExecutionInstance
     {
-        public MacroExecutionInstance(MacroInstance macro, object[] @params)
+        public MacroExecutionInstance(MacroTypeInstance macro, object[] @params)
         {
             Macro = macro;
             Params = @params;
         }
 
-        public MacroInstance Macro { get; }
+        public MacroTypeInstance Macro { get; }
         
         /// <summary> Parameters without the first 2 inputs of All Macros </summary>
         public object[] Params { get; }

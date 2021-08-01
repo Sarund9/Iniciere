@@ -15,12 +15,12 @@ Compilation:
 	// This is a Comment
 	
 	// in keyword is an Input
-	// Followed by Type, followed by Name beginning with '$'
-	in string $filename
+	// Followed by a Name beginning with '$'
+	in $filename
 	
 	// Macros can add special meta-data to Inputs
 	#
-	in string $namespace
+	in $namespace
 	
 	// This starts a new File, everything after this is in that file
 	file $filename .. ".cs"
@@ -94,7 +94,7 @@ COMPILER:
 	//	add "This is a Template"
 	//	add "Test file"
 
-	in string $filename
+	in $filename
 
 	file "HelloWorld.cs"
 		add "
@@ -117,10 +117,10 @@ class HelloWorldEx
 	category "CatA, CatB"
 	flags "Web, Dynamic"
 
-	using "System"
+	//using "System"
 
-	in string $filename
-	in Type $parent
+	in $filename
+	in $parent
 
 	file "MyFile.cs"
 		add "
@@ -149,7 +149,7 @@ language "C##"
 category "std"
 flags ""
 
-in string $filename
+in $filename
 
 #FORMAT($filename)
 file "{}.cs"
@@ -166,8 +166,8 @@ class {}
 
 <#iniciere "Params"
 
-in string $filename
-in string $typename
+in $filename
+in $typename
 
 
 

@@ -336,22 +336,49 @@ namespace Iniciere
             out string propname, out TextPos end
             )
         {
+            end = start;
             if (!lines[start.l].StartsWithOrWhitespace("in", out int endPos))
             {
                 propname = "";
-                end = start;
                 return false;
             }
+            //Debug.Log($"HANDLING: {start.l}:\n{lines[start.l]}");
 
-            if (!lines[start.l].BeginsAtWithOrWhitespace("$", endPos + 1))
+            if (!lines[start.l].BeginsAtWithOrWhitespace("$", endPos + 2))
             {
+                Debug.Log($"LINE: {start.l}:\n{lines[start.l]}");
                 throw new Exception("in property name must begin with '$'");
+                //propname = "pname"; 
+                //return false;
             }
 
+            //Debug.Log($"'{lines[start.l]}' ends at {endPos}, +2 = '{lines[start.l][endPos + 2]}'");
 
-            propname = "";
-            end = start;
-            return false;
+            var line = lines[start.l];
+
+            bool inside = false;
+            StringBuilder str = new StringBuilder();
+
+            for (int i = 0; i < line.Length; i++)
+            {
+                if (inside)
+                {
+                    if (line[i] == '\n' || line[i] == ' ')
+                    {
+                        break;
+                    }
+                    str.Append(line[i]);
+                }
+                else
+                {
+                    if (line[i] == '$')
+                        inside = true;
+                }
+
+            }
+            //Debug.Log($"Captured: {str}");
+            propname = str.ToString();// CaptureAfter(lines[start.l], '$').RemoveWhitespace();//old
+            return true;
         }
         #region OBSOLETE
         [Obsolete("This function does nothing")]
@@ -541,7 +568,7 @@ namespace Iniciere
 
         public static bool TryHandleMacro(
             List<string> lines, TextPos start, List<TemplateProperty> props,
-            Dictionary<string, MacroInstance> macros, MacroContext macroContext,
+            Dictionary<string, MacroTypeInstance> macros, MacroContext macroContext,
             out MacroExecutionInstance result, out TextPos end)
         {
             if (!lines[start.l].StartsWithOrWhitespace("#"))
@@ -563,7 +590,7 @@ namespace Iniciere
                 throw new Exception($"Iniciere Error: Unknown macro '{macroName}'");
             }
 
-            MacroInstance actualMacro = macros[macroName];
+            MacroTypeInstance actualMacro = macros[macroName];
 
             string inputs = CaptureAfter(lines[start.l], '(', ')');
 
@@ -694,7 +721,7 @@ namespace Iniciere
                     }
                     catch
                     {
-                        throw new Exception($"Iniciere Error: {prop.Type.Name} '{prop.Name}' has no conversion to {typeof(T).Name}");
+                        throw new Exception($"Iniciere Error: {prop.Typename} '{prop.Name}' has no conversion to {typeof(T).Name}");
                     }
                 }
             }
@@ -718,6 +745,13 @@ namespace Iniciere
             }
             result = null;
             return false;
+        }
+
+        public static bool TryHandleDecorator(
+            List<string> lines, TextPos start,
+            )
+        {
+
         }
 
         public static string[] CustomSplit(this string str, char split = ',', char halter = '"')

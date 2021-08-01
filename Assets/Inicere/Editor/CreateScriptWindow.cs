@@ -491,8 +491,16 @@ namespace Iniciere
         {
             for (int i = 0; i < precompiling.Count; i++)
             {
-                if (precompiling[i].IsCompleted)
+                if (precompiling[i].IsFaulted)
                 {
+                    Debug.LogError($"Iniciere Compilation Faulted: {precompiling[i].Exception}");
+                    precompiling.RemoveAt(i);
+                    i--;
+                    //throw precompiling[i].Exception;
+                }
+                else if (precompiling[i].IsCompleted)
+                {
+                    //Debug.Log("COMPLETED");
                     var info = precompiling[i].Result;
                     if (info != null)
                     {
@@ -510,6 +518,7 @@ namespace Iniciere
                     precompiling.RemoveAt(i);
                     i--;
                 }
+                
             }
         }
 
