@@ -15,21 +15,21 @@ namespace Iniciere
         #endregion
 
         List<string> lines;
-        string s_Raw;
+        //string s_Raw;
 
-        [Obsolete]
-        private Compiler(string text)
-        {
-            var filtered = StringUtils.FilterAllComments(text);
-            lines = new List<string>(filtered.Split('\n'));
-            s_Raw = text;
-        }
+        //[Obsolete]
+        //private Compiler(string text)
+        //{
+        //    var filtered = StringUtils.FilterAllComments(text);
+        //    lines = new List<string>(filtered.Split('\n'));
+        //    s_Raw = text;
+        //}
 
-        public static int Precompile(TemplateLocation templateLocation)
-        {
+        //public static int Precompile(TemplateLocation templateLocation)
+        //{
 
-            throw new NotImplementedException();
-        }
+        //    throw new NotImplementedException();
+        //}
 
         public static int Precompile(TemplateLocation templateLocation, out TemplateInfo templateInfo)
         {
@@ -178,7 +178,18 @@ namespace Iniciere
                         continue;
                     }
                 }
+                //DESC KEYWORD (DESCRIPTION)
+                {
+                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "desc", templateInfo.Properties,
+                        out var result, out var end))
+                    {
+                        templateInfo.Description += result;
 
+                        l = end.l;
+                        checkForSkip = false;
+                        continue;
+                    }
+                }
                 //STRING SKIPPING
                 {
                     if (checkForSkip && StringUtils.TrySkip(lines, new TextPos(l), out var end))
