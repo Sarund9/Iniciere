@@ -166,7 +166,9 @@ class {}
 
 <#iniciere "Params"
 
+[FileName]
 in $filename
+
 in $typename
 
 

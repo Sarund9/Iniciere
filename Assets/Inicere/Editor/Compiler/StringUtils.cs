@@ -748,10 +748,38 @@ namespace Iniciere
         }
 
         public static bool TryHandleDecorator(
-            List<string> lines, TextPos start,
+            List<string> lines, TextPos start, DecoratorContext decoContext,
+            Dictionary<string, DecoratorTypeInstance> decos,
+            out DecoratorExecInstance decorator, out TextPos end
             )
         {
+            end = start;
+            var line = lines[start.l];
+            if (!line.StartsWithOrWhitespace("[", out int endPos))
+            {
+                decorator = null;
+                return false;
+            }
 
+            string str = "";
+            try {
+                str = CaptureAfter(line.Substring(endPos), '[', ']');
+            } catch {
+                throw new Exception($"Decorator Syntax Error at {start.l}");
+            }
+            
+            if (!decos.ContainsKey(str))
+            {
+                throw new Exception($"Decorator {str} not found");
+            }
+
+            DecoratorTypeInstance actualDecorator = decos[str];
+
+
+
+
+            decorator = null;
+            return false;
         }
 
         public static string[] CustomSplit(this string str, char split = ',', char halter = '"')

@@ -24,9 +24,4 @@ namespace Iniciere
     }
 
 
-    public class IniciereDecorator
-    {
-
-
-    }
 }

@@ -56,7 +56,7 @@ namespace Iniciere
             //USING STATEMENTS
             List<string> includes = new List<string>();
 
-            
+            Dictionary<string, DecoratorTypeInstance> decorators = new Dictionary<string, DecoratorTypeInstance>();
 
             //REFLECTIONS
             var types = AppDomain.CurrentDomain.GetAssemblies()
@@ -181,6 +181,10 @@ namespace Iniciere
                 //    }
                 //}
                 #endregion
+                {
+
+
+                }
                 //IN KEYWORD (PROPERTIES)
                 {
                     if (StringUtils.TryHandleDynamicProperty(lines, new TextPos(l),
