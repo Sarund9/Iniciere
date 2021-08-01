@@ -35,7 +35,8 @@ namespace Iniciere
         public List<TemplateProperty> Properties { get; }
             = new List<TemplateProperty>();
         //public string Contents { get; set; }
-        public string Description { get; set; } = "";
+        public string ShortDescription { get; set; } = "";
+        public string LongDescription { get; set; } = "";
 
         public string GetContents() => location.GetContents();
 

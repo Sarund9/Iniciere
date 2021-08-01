@@ -5,7 +5,7 @@ Compilation:
 1two3
 #/> //This is 45 Characters starting at 18
 
-<#iniciere "CSharp Class"
+<#iniciere "CSharp ClassTest"
 
 	language "C##"
 	category "standart"
@@ -141,6 +141,8 @@ class MyFile : MyParent
 
 <#iniciere "CSharp Class"
 
+sdesc "Standart C## Class"
+ldesc "Standart C## Class"
 
 in string $filename
 

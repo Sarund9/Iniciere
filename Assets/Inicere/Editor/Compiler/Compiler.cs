@@ -178,12 +178,24 @@ namespace Iniciere
                         continue;
                     }
                 }
-                //DESC KEYWORD (DESCRIPTION)
+                //SDESC KEYWORD (DESCRIPTION)
                 {
-                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "desc", templateInfo.Properties,
+                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "sdesc", templateInfo.Properties,
                         out var result, out var end))
                     {
-                        templateInfo.Description += result;
+                        templateInfo.ShortDescription += result;
+
+                        l = end.l;
+                        checkForSkip = false;
+                        continue;
+                    }
+                }
+                //LDESC KEYWORD (DESCRIPTION)
+                {
+                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "ldesc", templateInfo.Properties,
+                        out var result, out var end))
+                    {
+                        templateInfo.LongDescription += result;
 
                         l = end.l;
                         checkForSkip = false;
