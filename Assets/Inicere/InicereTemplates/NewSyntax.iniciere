@@ -144,6 +144,11 @@ class MyFile : MyParent
 sdesc "Standart C## Class"
 ldesc "Standart C## Class"
 
+fileext "cs, ca, b, c, d, e"
+language "C##"
+category "std"
+flags ""
+
 in string $filename
 
 #FORMAT($filename)

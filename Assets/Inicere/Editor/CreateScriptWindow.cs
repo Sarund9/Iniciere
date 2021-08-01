@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEditor;
@@ -21,6 +22,8 @@ namespace Iniciere
         
         int selectedTemplate = -1;
 
+        bool selectedLastEvent = false;
+
         TemplateInfo SelectedTemplate => selectedTemplate < 0 ? null : templates[selectedTemplate];
 
         string search = "";
@@ -29,6 +32,8 @@ namespace Iniciere
         readonly Dictionary<string, bool> filters_fileEx = new Dictionary<string, bool>();
         readonly Dictionary<string, bool> filters_cat = new Dictionary<string, bool>();
         readonly Dictionary<string, bool> filters_flags = new Dictionary<string, bool>();
+
+        Vector2[] inspectorTagScrolls = new Vector2[4];
 
         [MenuItem("Assets/Create/Script", priority = 80)] //80 is C# Script Priority
         public static void Create()
@@ -97,6 +102,13 @@ namespace Iniciere
         {
             Event e = Event.current;
 
+            var style_TemplateTitle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 19,
+                padding = new RectOffset(0, 0, 5, 0),
+            };
+
             UnityEngine.Random.InitState(99);
 
             float halfScreen = Screen.width / 2;
@@ -106,8 +118,6 @@ namespace Iniciere
             GUILayout.BeginArea(halfTheScreenL);
 
             search = GUILayout.TextField(search, "SearchTextField", GUILayout.Width(halfScreen - 5));
-
-            
 
             #region TMP_FILTERS
             GUILayout.Space(2f);
@@ -262,14 +272,89 @@ namespace Iniciere
 
             #endregion
 
-            //GUILayout.EndVertical();
             GUILayout.EndArea();
+
+            if (SelectedTemplate != null && !selectedLastEvent)
+            {
+                selectedLastEvent = true;
+                return;
+            }
+            if (SelectedTemplate == null)
+            {
+                selectedLastEvent = false;
+                return;
+            }
 
             Rect halfTheScreenR = new Rect(halfScreen, 0, halfScreen, Screen.height);
             GUILayout.BeginArea(halfTheScreenR);
 
-            //Draw(GUILayoutUtility.GetRect(20, 120));
-            //Draw(GUILayoutUtility.GetRect(20, 20));
+            #region TMP_INFO
+
+            //if (SelectedTemplate != null)
+            {
+                GUILayout.Label(new GUIContent(SelectedTemplate.Name, SelectedTemplate.ShortDescription), style_TemplateTitle, GUILayout.ExpandWidth(true));
+                EditorGUILayout.SelectableLabel(SelectedTemplate.LongDescription);
+
+                using (new GUILayout.HorizontalScope(GUILayout.MaxHeight(30)))
+                {
+                    
+                    Rect baseRect = GUILayoutUtility.GetRect(10, 50);
+
+                    Rect[] rects = baseRect
+                        .SplitHorizontal(4)
+                        .Select(r => r.Shrink(3, 3, 0, 0))
+                        .ToArray();
+
+                    TagDisplay(rects[0], SelectedTemplate.FileExts, "File Exts");
+                    TagDisplay(rects[1], SelectedTemplate.Langs, "Language");
+                    TagDisplay(rects[2], SelectedTemplate.Categories, "Categories");
+                    TagDisplay(rects[3], SelectedTemplate.Flags, "Flags");
+                }
+
+            }
+
+            void TagDisplay(Rect rect, List<string> tags, string title)
+            {
+                StringBuilder str = new StringBuilder("\n");
+
+                foreach (var tag in tags)
+                {
+                    str.Append($"{tag}, ");
+                }
+                if (str.Length > 2)
+                    str.Remove(str.Length - 2, 2);
+                else
+                    str.Append("none");
+
+                float lineHeight = EditorGUIUtility.singleLineHeight;
+                int numItems = tags.Count;
+
+                float height = lineHeight * numItems;
+
+                var boxstyle = new GUIStyle("HelpBox")
+                {
+                    fontSize = 12,
+                };
+
+                GUI.Label(rect, new GUIContent(str.ToString()), boxstyle);
+
+                var titlestyle = new GUIStyle("Toolbar")
+                {
+                    fontSize = 12,
+                    fixedHeight = lineHeight,
+                    fontStyle = FontStyle.Bold,
+                };
+
+                var titleRect = rect
+                    .Shrink(0, 0, 0, rect.height - lineHeight);
+                
+                GUI.Label(titleRect, title, titlestyle);
+            }
+
+            #endregion
+
+            var props = SelectedTemplate.Properties;
+
 
 
             GUILayout.EndArea();

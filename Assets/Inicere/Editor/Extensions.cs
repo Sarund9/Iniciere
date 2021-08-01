@@ -78,7 +78,8 @@ namespace Iniciere
             result.y += pivotPoint.y;
             return result;
         }
-        public static Rect Shrink(this Rect rect, float left, float right, float top, float bottom)
+        public static Rect Shrink(this Rect rect,
+            float left, float right, float top, float bottom)
         {
             Rect result = rect;
             result.x += right;
@@ -89,6 +90,22 @@ namespace Iniciere
             result.height -= bottom;
             return result;
         }
+        public static Rect ShrinkMaxSize(this Rect rect,
+            float maxLeft, float maxRight, float maxTop, float maxBottom)
+        {
+            Rect result = rect;
+            Vector2 center = result.position + result.size / 2;
+
+            float distH = result.width / 2;
+            float distV = result.height / 2;
+
+            return result
+                .Shrink(
+                    Mathf.Max(distH - maxLeft, 0),
+                    Mathf.Max(distH - maxRight, 0),
+                    Mathf.Max(distV - maxTop, 0),
+                    Mathf.Max(distV - maxBottom, 0));
+        }
         public static Rect Shrink(this Rect rect, float value)
         {
             Rect result = rect;
@@ -97,6 +114,32 @@ namespace Iniciere
             result.y += value;
             result.height -= value * 2;
             return result;
+        }
+        public static IEnumerable<Rect> SplitHorizontal(this Rect rect, int numSplits)
+        {
+            float newWidth = rect.width / numSplits;
+            for (int i = 0; i < numSplits; i++)
+            {
+                yield return new Rect
+                {
+                    y = rect.y, height = rect.height,
+                    x = rect.x + newWidth * i,
+                    width = newWidth,
+                };
+            }
+        }
+        public static IEnumerable<Rect> SplitVertical(this Rect rect, int numSplits)
+        {
+            float newHeight = rect.height / numSplits;
+            for (int i = 0; i < numSplits; i++)
+            {
+                yield return new Rect
+                {
+                    x = rect.x, width = rect.width,
+                    y = rect.y + newHeight * i,
+                    height = newHeight,
+                };
+            }
         }
 
         public static string ReplaceAt(this string input, int index, char newChar)
