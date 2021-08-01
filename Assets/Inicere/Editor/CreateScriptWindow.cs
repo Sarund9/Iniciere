@@ -87,21 +87,34 @@ namespace Iniciere
         //    //rootVisualElement = new 
         //}
 
+        //private void CreateGUI()
+        //{
+            
+        //}
+
+
         private void OnGUI()
         {
             Event e = Event.current;
 
+            UnityEngine.Random.InitState(99);
+
             float halfScreen = Screen.width / 2;
 
-            search = GUILayout.TextField(search, "SearchTextField", GUILayout.Width(halfScreen));
+            Rect halfTheScreenL = new Rect(0, 0, halfScreen, Screen.height);
 
-            GUILayout.BeginHorizontal();
-            GUILayout.BeginVertical();
+            GUILayout.BeginArea(halfTheScreenL);
+
+            search = GUILayout.TextField(search, "SearchTextField", GUILayout.Width(halfScreen - 5));
+
+            
 
             #region TMP_FILTERS
             GUILayout.Space(2f);
+            //Draw(GUILayoutUtility.GetLastRect());
 
-            using (new GUILayout.HorizontalScope())
+            GUILayout.BeginHorizontal();
+            //using (new GUILayout.HorizontalScope())
             {
                 float subdivideHalf = halfScreen / 2;
                 Rect button1 = GUILayoutUtility.GetRect(20, 20, GUILayout.MaxWidth(subdivideHalf));
@@ -109,7 +122,7 @@ namespace Iniciere
                 if (GUI.Button(button1, "Language", "DropDownButton"))
                 {
                     var t = TogglePopup.Create(this, filters_lang, "Test", button1, button1.width);
-                    t.OnItemChanged += (i, v) => Repaint();
+                    t.OnItemChanged += OnItemChanged;
                 }
 
                 Rect button2 = GUILayoutUtility.GetRect(20, 20, GUILayout.MaxWidth(subdivideHalf));
@@ -117,13 +130,19 @@ namespace Iniciere
                 if (GUI.Button(button2, "File Exts", "DropDownButton"))
                 {
                     var t = TogglePopup.Create(this, filters_fileEx, "Test", button2, button2.width);
-                    t.OnItemChanged += (i, v) => Repaint();
+                    t.OnItemChanged += OnItemChanged;
                 }
+
+                //Draw(button1);
+                //Draw(button2);
             }
+            GUILayout.EndHorizontal();
 
             GUILayout.Space(4f);
+            //Draw(GUILayoutUtility.GetLastRect());
 
-            using (new GUILayout.HorizontalScope())
+            GUILayout.BeginHorizontal();
+            //using (new GUILayout.HorizontalScope())
             {
                 float subdivideHalf = halfScreen / 2;
                 Rect button1 = GUILayoutUtility.GetRect(20, 20, GUILayout.MaxWidth(subdivideHalf));
@@ -131,7 +150,7 @@ namespace Iniciere
                 if (GUI.Button(button1, "Category", "DropDownButton"))
                 {
                     var t = TogglePopup.Create(this, filters_cat, "Test", button1, button1.width);
-                    t.OnItemChanged += (i, v) => Repaint();
+                    t.OnItemChanged += OnItemChanged;
                 }
 
                 Rect button2 = GUILayoutUtility.GetRect(20, 20, GUILayout.MaxWidth(subdivideHalf));
@@ -139,8 +158,22 @@ namespace Iniciere
                 if (GUI.Button(button2, "Flags", "DropDownButton"))
                 {
                     var t = TogglePopup.Create(this, filters_flags, "Test", button2, button2.width);
-                    t.OnItemChanged += (i, v) => Repaint();
+                    t.OnItemChanged += OnItemChanged;
                 }
+
+                //Draw(button1);
+                //Draw(button2);
+            }
+            GUILayout.EndHorizontal();
+
+            void OnItemChanged(int i, bool value)
+            {
+                if (selectedTemplate == i && SkipTempalte(i))
+                {
+                    //Debug.Log($"Selection Gone I[{i}] S[{selectedTemplate}]");
+                    selectedTemplate = -1;
+                }
+                Repaint();
             }
 
             #endregion
@@ -164,7 +197,7 @@ namespace Iniciere
             Color tmpColor1 = new Color(0.3f, 0.3f, 0.3f);
             Color tmpColor2 = new Color(0.4f, 0.4f, 0.4f);
             bool colToUse = false;
-
+            bool selected = false;
             for (int i = 0, t = 0; i < templates.Count; i++)
             {
                 if (SkipTempalte(i))
@@ -189,10 +222,27 @@ namespace Iniciere
 
                 t++;
                 // ============= \\
-                Color GetColor() => selectedTemplate == i?
-                    new Color(0.1f, 0.1f, 0.4f) :
-                    (colToUse = !colToUse) ? tmpColor1 : tmpColor2;
+                Color GetColor()
+                {
+                    if (selectedTemplate == i)
+                    {
+                        colToUse = !colToUse;
+                        return new Color(0.1f, 0.1f, 0.4f);
+                    }
+                    else return (colToUse = !colToUse) ? tmpColor1 : tmpColor2;
+                    //return selectedTemplate == i ?
+                    //    new Color(0.1f, 0.1f, 0.4f) :
+                    //    (colToUse = !colToUse) ? tmpColor1 : tmpColor2;
+                }
             }
+            if (!selected && e.type == EventType.MouseDown && e.button == 0 && r_tmpList.Contains(e.mousePosition))
+            {
+                selectedTemplate = -1;
+                Repaint();
+            }
+
+            //Draw(r_tmpList);
+
 
             void TemplateDisplay(int index, Rect rect)
             {
@@ -203,74 +253,26 @@ namespace Iniciere
                 if (e.type == EventType.MouseDown && e.button == 0 && rect.Contains(e.mousePosition))
                 {
                     selectedTemplate = index;
+                    selected = true;
                     //Debug.Log("SELECTED");
                     Repaint();
                 }
             }
-            bool SkipTempalte(int index)
-            {
-                // Search Bar
 
-                if (search.Length > 0 && !templates[index].Name.ToLower().Contains(search.ToLower()))
-                {
-                    return true;
-                }
-
-                //if (!ContainsAny(templates[index].FileExts, x => filters_fileEx[x])) return true;
-
-                if (Invalidate(templates[index].FileExts, filters_fileEx))
-                    return true;
-                
-                if (Invalidate(templates[index].Langs, filters_lang))
-                    return true;
-
-                if (Invalidate(templates[index].Categories, filters_cat))
-                    return true;
-
-                if (Invalidate(templates[index].Flags, filters_flags))
-                    return true;
-
-                
-
-                return false;
-                // ============ \\
-                static bool Invalidate(List<string> tags, Dictionary<string, bool> filters)
-                {
-                    if (tags.Count == 0) return false;
-                    bool exclude = true;
-                    foreach (var tag in tags)
-                    {
-                        //if (!filters.ContainsKey(tag))
-                        //{
-                        //    Debug.Log($"TAG '{tag}' is not in flags");
-                        //    continue;
-                        //}
-                        if (filters[tag])
-                        {
-                            exclude = false;
-                            break;
-                        }
-                    }
-                    return exclude;
-                }
-            }
 
             #endregion
 
-            GUILayout.EndVertical();
+            //GUILayout.EndVertical();
+            GUILayout.EndArea();
 
-            using (new GUILayout.VerticalScope())
-            {
-                if (SelectedTemplate is object)
-                {
-                    GUILayout.Label("Template Display");
+            Rect halfTheScreenR = new Rect(halfScreen, 0, halfScreen, Screen.height);
+            GUILayout.BeginArea(halfTheScreenR);
 
-                }
+            //Draw(GUILayoutUtility.GetRect(20, 120));
+            //Draw(GUILayoutUtility.GetRect(20, 20));
 
 
-            }
-
-            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
 
             #region OLD
             /*
@@ -332,8 +334,61 @@ namespace Iniciere
             #endregion
         }
 
+        private bool SkipTempalte(int index)
+        {
+            // Search Bar
+
+            if (search.Length > 0 && !templates[index].Name.ToLower().Contains(search.ToLower()))
+            {
+                return true;
+            }
+
+            //if (!ContainsAny(templates[index].FileExts, x => filters_fileEx[x])) return true;
+
+            if (Invalidate(templates[index].FileExts, filters_fileEx))
+                return true;
+
+            if (Invalidate(templates[index].Langs, filters_lang))
+                return true;
+
+            if (Invalidate(templates[index].Categories, filters_cat))
+                return true;
+
+            if (Invalidate(templates[index].Flags, filters_flags))
+                return true;
 
 
+
+            return false;
+            // ============ \\
+            static bool Invalidate(List<string> tags, Dictionary<string, bool> filters)
+            {
+                if (tags.Count == 0) return false;
+                bool exclude = true;
+                foreach (var tag in tags)
+                {
+                    //if (!filters.ContainsKey(tag))
+                    //{
+                    //    Debug.Log($"TAG '{tag}' is not in flags");
+                    //    continue;
+                    //}
+                    if (filters[tag])
+                    {
+                        exclude = false;
+                        break;
+                    }
+                }
+                return exclude;
+            }
+        }
+
+
+        static Color rdbgcolor;
+        void Draw(Rect rect)
+        {
+            rdbgcolor = UnityEngine.Random.ColorHSV(0, 1, 0.7f, 0.9f, 0.1f, 0.7f, .5f, .5f);
+            EditorGUI.DrawRect(rect, rdbgcolor);
+        }
 
         private void OnInspectorUpdate()
         {
