@@ -17,9 +17,10 @@ namespace Iniciere
 
         public TemplateInfo Template { get; }
 
-        public List<InicierePropertyEditor> CustomEditors { get; } = new List<InicierePropertyEditor>();
+        public InicierePropertyEditor Editor { get; set; }
 
-        public bool IsFileName { get; set; }
+        public bool IsFileName => Template.FileNameProperty == this;
+        public bool HasEditor => Editor is object;
 
         public Type Type => Value?.GetType();
 

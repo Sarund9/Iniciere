@@ -16,12 +16,15 @@ namespace Iniciere
         {
             ctx.Property.Value = "File";
             ctx.Property.MarkAsFileName();
-            //ctx.Property.CustomEditors.Add(new FileNameEditor());
-
-            
-
         }
-        class FileNameEditor : InicierePropertyEditor
+        [IniciereDecorator("Text")]
+        public static void TextDecorator(DecoratorContext ctx)
+        {
+            ctx.Property.Value = "";
+            ctx.Property.Editor = new TextEditor();
+        }
+
+        class TextEditor : InicierePropertyEditor
         {
             public override void DrawGUI(Rect area, TemplateProperty property)
             {
@@ -155,6 +158,11 @@ namespace Iniciere
     public abstract class InicierePropertyEditor
     {
         public abstract void DrawGUI(Rect area, TemplateProperty property);
-        public virtual float GetHeight(Rect area, TemplateProperty property) => EditorGUIUtility.singleLineHeight;
+        public virtual float GetHeight(TemplateProperty property) => EditorGUIUtility.singleLineHeight;
+
+        //public virtual float GetHeight(float? prevHeight, TemplateProperty property) =>
+        //    prevHeight is null ?
+        //        EditorGUIUtility.singleLineHeight
+        //        : (float)prevHeight;
     }
 }

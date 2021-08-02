@@ -33,7 +33,8 @@ namespace Iniciere
         readonly Dictionary<string, bool> filters_cat = new Dictionary<string, bool>();
         readonly Dictionary<string, bool> filters_flags = new Dictionary<string, bool>();
 
-        Vector2[] inspectorTagScrolls = new Vector2[4];
+        //Vector2[] inspectorTagScrolls = new Vector2[4];
+        Vector2 inspectorScroll;
 
         [MenuItem("Assets/Create/Script", priority = 80)] //80 is C# Script Priority
         public static void Create()
@@ -77,6 +78,7 @@ namespace Iniciere
             //((Action)FindFiles).BeginInvoke(OnFinished)
             //templates.CollectionChanged += TemplateColChanged;
             var _ = FindFiles();
+            selectedTemplate = -1;
         }
 
         //private void TemplateColChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -101,13 +103,6 @@ namespace Iniciere
         private void OnGUI()
         {
             Event e = Event.current;
-
-            var style_TemplateTitle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 19,
-                padding = new RectOffset(0, 0, 5, 0),
-            };
 
             UnityEngine.Random.InitState(99);
 
@@ -212,7 +207,7 @@ namespace Iniciere
             {
                 if (SkipTempalte(i))
                     continue;
-                
+
                 Rect rect = r_tmpList;
                 rect.x += TMP_ITEM_MARGIN;
                 rect.width -= TMP_ITEM_MARGIN * 2;
@@ -274,114 +269,159 @@ namespace Iniciere
 
             GUILayout.EndArea();
 
-            if (SelectedTemplate != null && !selectedLastEvent)
-            {
-                selectedLastEvent = true;
-                return;
-            }
-            if (SelectedTemplate == null)
-            {
-                selectedLastEvent = false;
-                return;
-            }
 
-            Rect halfTheScreenR = new Rect(halfScreen, 0, halfScreen, Screen.height);
+            Rect halfTheScreenR = new Rect(Screen.width / 2, 0, Screen.width / 2, Screen.height);
             GUILayout.BeginArea(halfTheScreenR);
 
-            #region TMP_INFO
+            EditorRightSide();
 
-            //if (SelectedTemplate != null)
+            void EditorRightSide()
             {
-                GUILayout.Label(new GUIContent(SelectedTemplate.Name, SelectedTemplate.ShortDescription), style_TemplateTitle, GUILayout.ExpandWidth(true));
-                EditorGUILayout.SelectableLabel(SelectedTemplate.LongDescription);
-
-                using (new GUILayout.HorizontalScope(GUILayout.MaxHeight(30)))
+                if (SelectedTemplate != null && !selectedLastEvent)
                 {
-                    
-                    Rect baseRect = GUILayoutUtility.GetRect(10, 50);
-
-                    Rect[] rects = baseRect
-                        .SplitHorizontal(4)
-                        .Select(r => r.Shrink(3, 3, 0, 0))
-                        .ToArray();
-
-                    TagDisplay(rects[0], SelectedTemplate.FileExts, "File Exts");
-                    TagDisplay(rects[1], SelectedTemplate.Langs, "Language");
-                    TagDisplay(rects[2], SelectedTemplate.Categories, "Categories");
-                    TagDisplay(rects[3], SelectedTemplate.Flags, "Flags");
+                    selectedLastEvent = true;
+                    return;
                 }
+                if (SelectedTemplate == null)
+                {
+                    selectedLastEvent = false;
+                    return;
+                }
+
+                #region TMP_INFO
+
+                //if (SelectedTemplate != null)
+                {
+                    var style_TemplateTitle = new GUIStyle(GUI.skin.label)
+                    {
+                        alignment = TextAnchor.MiddleCenter,
+                        fontSize = 19,
+                        padding = new RectOffset(0, 0, 5, 0),
+                    };
+                    GUILayout.Label(new GUIContent(SelectedTemplate.Name, SelectedTemplate.ShortDescription), style_TemplateTitle, GUILayout.ExpandWidth(true));
+                    EditorGUILayout.SelectableLabel(SelectedTemplate.LongDescription);
+
+                    using (new GUILayout.HorizontalScope(GUILayout.MaxHeight(30)))
+                    {
+
+                        Rect baseRect = GUILayoutUtility.GetRect(10, 50);
+
+                        Rect[] rects = baseRect
+                            .SplitHorizontal(4)
+                            .Select(r => r.Shrink(3, 3, 0, 0))
+                            .ToArray();
+
+                        TagDisplay(rects[0], SelectedTemplate.FileExts, "File Exts");
+                        TagDisplay(rects[1], SelectedTemplate.Langs, "Language");
+                        TagDisplay(rects[2], SelectedTemplate.Categories, "Categories");
+                        TagDisplay(rects[3], SelectedTemplate.Flags, "Flags");
+                    }
+
+                }
+
+                void TagDisplay(Rect rect, List<string> tags, string title)
+                {
+                    StringBuilder str = new StringBuilder("\n");
+
+                    foreach (var tag in tags)
+                    {
+                        str.Append($"{tag}, ");
+                    }
+                    if (str.Length > 2)
+                        str.Remove(str.Length - 2, 2);
+                    else
+                        str.Append("none");
+
+                    float lineHeight = EditorGUIUtility.singleLineHeight;
+                    int numItems = tags.Count;
+
+                    float height = lineHeight * numItems;
+
+                    var boxstyle = new GUIStyle("HelpBox")
+                    {
+                        fontSize = 12,
+                    };
+
+                    GUI.Label(rect, new GUIContent(str.ToString()), boxstyle);
+
+                    var titlestyle = new GUIStyle("Toolbar")
+                    {
+                        fontSize = 12,
+                        fixedHeight = lineHeight,
+                        fontStyle = FontStyle.Bold,
+                    };
+
+                    var titleRect = rect
+                        .Shrink(0, 0, 0, rect.height - lineHeight);
+
+                    GUI.Label(titleRect, title, titlestyle);
+                }
+
+                #endregion
+
+
+                EditorGUI.BeginChangeCheck();
+
+                var fileNameProperty = SelectedTemplate.FileNameProperty;
+                if (fileNameProperty != null)
+                {
+                    var str = EditorGUILayout.TextField("File Name", fileNameProperty.Value.ToString());
+
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        fileNameProperty.Value = str;
+                    }
+                }
+
+                #region INSPECTOR
+                using (new GUILayout.ScrollViewScope(inspectorScroll))
+                {
+                    var properties = SelectedTemplate.Properties;
+                    //var sobj = new UnityEditor.SerializedObject();
+                    foreach (var prop in properties)
+                    {
+                        if (prop.IsFileName)
+                            continue;
+                        if (prop.HasEditor)
+                            HandleProperty(prop);
+                    }
+                    void HandleProperty(TemplateProperty templateProperty)
+                    {
+                        float height = templateProperty.Editor.GetHeight(templateProperty);
+
+                        var rect = GUILayoutUtility.GetRect(0, height);
+
+                        templateProperty.Editor.DrawGUI(rect, templateProperty);
+                    }
+                }
+
+                #endregion
+
 
             }
 
-            void TagDisplay(Rect rect, List<string> tags, string title)
+            GUILayout.FlexibleSpace();
+            /*var r1 =*/ GUILayoutUtility.GetRect(Screen.height, 20);
+            //Draw(r1);
+            using (new GUILayout.HorizontalScope())
             {
-                StringBuilder str = new StringBuilder("\n");
 
-                foreach (var tag in tags)
-                {
-                    str.Append($"{tag}, ");
-                }
-                if (str.Length > 2)
-                    str.Remove(str.Length - 2, 2);
-                else
-                    str.Append("none");
-
-                float lineHeight = EditorGUIUtility.singleLineHeight;
-                int numItems = tags.Count;
-
-                float height = lineHeight * numItems;
-
-                var boxstyle = new GUIStyle("HelpBox")
-                {
-                    fontSize = 12,
-                };
-
-                GUI.Label(rect, new GUIContent(str.ToString()), boxstyle);
-
-                var titlestyle = new GUIStyle("Toolbar")
-                {
-                    fontSize = 12,
-                    fixedHeight = lineHeight,
-                    fontStyle = FontStyle.Bold,
-                };
-
-                var titleRect = rect
-                    .Shrink(0, 0, 0, rect.height - lineHeight);
+                var button = GUILayoutUtility
+                    .GetRect(20, 20)
+                    .Shrink(0, Screen.width / 4, 0, 0);
+                //button.x += 
+                //Draw(r2);
+                //GUILayout.FlexibleSpace();
                 
-                GUI.Label(titleRect, title, titlestyle);
-            }
-
-            #endregion
-
-
-            EditorGUI.BeginChangeCheck();
-
-            var property = SelectedTemplate.FileNameProperty;
-
-            var str = EditorGUILayout.TextField(property.Name, property.Value.ToString());
-
-            if (EditorGUI.EndChangeCheck())
-            {
-                property.Value = str;
-            }
-
-            var properties = SelectedTemplate.Properties;
-
-            //var sobj = new UnityEditor.SerializedObject();
-            foreach (var prop in properties)
-            {
-                if (prop.IsFileName)
-                    continue;
-
-
-            }
-
-            void HandleProperty(TemplateProperty templateProperty)
-            {
-                foreach (var editor in templateProperty.CustomEditors)
+                EditorGUI.BeginDisabledGroup(SelectedTemplate is null);
+                
+                if (GUI.Button(button, "Create"))
                 {
+                    //CREATE SCRIPT (PROGRESS BAR?)
+
 
                 }
+                EditorGUI.EndDisabledGroup();
             }
 
             GUILayout.EndArea();
@@ -561,6 +601,19 @@ namespace Iniciere
             }
 
             return info;
+        }
+
+        private void OnDestroy() //TODO: Cancel Compile
+        {
+            
+        }
+
+        void CancelCompilations()
+        {
+            foreach (var item in precompiling)
+            {
+                //TODO: Cancel Compile
+            }
         }
     }
 }
