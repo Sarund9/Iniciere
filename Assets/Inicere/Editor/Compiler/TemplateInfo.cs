@@ -34,7 +34,9 @@ namespace Iniciere
             = new List<string>();
         public List<TemplateProperty> Properties { get; }
             = new List<TemplateProperty>();
-        //public string Contents { get; set; }
+        
+        public TemplateProperty FileNameProperty { get; set; }
+
         public string ShortDescription { get; set; } = "";
         public string LongDescription { get; set; } = "";
 

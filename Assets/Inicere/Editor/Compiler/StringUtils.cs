@@ -775,11 +775,8 @@ namespace Iniciere
 
             DecoratorTypeInstance actualDecorator = decos[str];
 
-
-
-
-            decorator = null;
-            return false;
+            decorator = new DecoratorExecInstance(actualDecorator);
+            return true;
         }
 
         public static string[] CustomSplit(this string str, char split = ',', char halter = '"')

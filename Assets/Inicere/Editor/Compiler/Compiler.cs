@@ -57,6 +57,13 @@ namespace Iniciere
             List<string> includes = new List<string>();
 
             Dictionary<string, DecoratorTypeInstance> decorators = new Dictionary<string, DecoratorTypeInstance>();
+            
+            DecoratorContext decoContext;
+            foreach (var item in 
+                DecoratorContext.InitializeDecoratorSystem(AppDomain.CurrentDomain, out decoContext))
+                    decorators.Add(item.Name, item);
+
+            Queue<DecoratorExecInstance> decoratorQueue = new Queue<DecoratorExecInstance>();
 
             //REFLECTIONS
             var types = AppDomain.CurrentDomain.GetAssemblies()
@@ -181,8 +188,14 @@ namespace Iniciere
                 //    }
                 //}
                 #endregion
+                //DECORATORS
                 {
-
+                    if (StringUtils.TryHandleDecorator(lines, new TextPos(l), decoContext,
+                        decorators, out DecoratorExecInstance execInstance, out TextPos end))
+                    {
+                        Debug.Log($"DECORATOR AT [{l}]: {execInstance.Decor.Name}");
+                        decoratorQueue.Enqueue(execInstance);
+                    }
 
                 }
                 //IN KEYWORD (PROPERTIES)
@@ -190,11 +203,18 @@ namespace Iniciere
                     if (StringUtils.TryHandleDynamicProperty(lines, new TextPos(l),
                         out var varname, out var end))
                     {
-                        templateInfo.Properties.Add(new TemplateProperty(varname)
+                        var prop = new TemplateProperty(varname, templateInfo)
                         {
                             Value = null,
-                        });
-                        //Debug.Log($"PROPERTY: '{varname}' ({typename})");
+                        };
+                        decoContext.Prepare(prop);
+                        while (decoratorQueue.Count > 0)
+                        {
+                            var exec = decoratorQueue.Dequeue();
+                            exec.Execute(decoContext);
+                        }
+
+                        templateInfo.Properties.Add(prop);
                         l = end.l;
                         checkForSkip = false;
                         continue;

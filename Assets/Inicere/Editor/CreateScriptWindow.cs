@@ -353,20 +353,35 @@ namespace Iniciere
 
             #endregion
 
+
+            EditorGUI.BeginChangeCheck();
+
+            var property = SelectedTemplate.FileNameProperty;
+
+            var str = EditorGUILayout.TextField(property.Name, property.Value.ToString());
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                property.Value = str;
+            }
+
             var properties = SelectedTemplate.Properties;
 
             //var sobj = new UnityEditor.SerializedObject();
             foreach (var prop in properties)
             {
-                ValueSerializer vs = ValueSerializer.Get(prop.Value);
-                var sp = vs.GetProperty();
+                if (prop.IsFileName)
+                    continue;
+
 
             }
 
-            void HandleProperty(ValueSerializer vs)
+            void HandleProperty(TemplateProperty templateProperty)
             {
-                //SerializedProperty sp = 
-                //EditorGUILayout.PropertyField(serializedProperty);
+                foreach (var editor in templateProperty.CustomEditors)
+                {
+
+                }
             }
 
             GUILayout.EndArea();
