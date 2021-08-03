@@ -242,3 +242,16 @@ Hardcode:
 * Float
 * Long
 * 
+
+Final TODO:
+* Reflections Optimizations
+* Template Cache Asset
+* Swap 'in' for something else (var, let, sub)
+
+Expression Process:
+* true vs false for boolean
+* int & float
+
+Other:
+* Calling functions/getting values from types
+* Asign values to properties using 

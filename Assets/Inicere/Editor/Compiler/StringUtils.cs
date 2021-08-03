@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Reflection;
 using UnityEngine;
+using System.Linq;
 
 namespace Iniciere
 {
@@ -337,7 +338,7 @@ namespace Iniciere
             )
         {
             end = start;
-            if (!lines[start.l].StartsWithOrWhitespace("in", out int endPos))
+            if (!lines[start.l].StartsWithOrWhitespace("var", out int endPos))
             {
                 propname = "";
                 return false;
@@ -363,7 +364,7 @@ namespace Iniciere
             {
                 if (inside)
                 {
-                    if (line[i] == '\n' || line[i] == ' ')
+                    if (line[i] == '\n' || line[i] == ' ' || line[i] == '\r')
                     {
                         break;
                     }
@@ -624,7 +625,9 @@ namespace Iniciere
         public static bool TryHandleParamInput(string input,
             List<TemplateProperty> props, out object[] result)
         {
-            string[] split = input.CustomSplit();
+            string[] split = input.CustomSplit()
+                        .Select(s => s.Substring(1))
+                        .ToArray();
             result = new object[split.Length];
 
             if (split.Length == 0)
@@ -656,7 +659,7 @@ namespace Iniciere
                     }
                     else
                     {
-                        throw new Exception($"Variable {split[i]} could not be found");
+                        throw new Exception($"Variable '{split[i]}' could not be found");
                     }
                 }
             }
@@ -737,7 +740,8 @@ namespace Iniciere
             // TODO: Compound Object
             foreach (var prop in props)
             {
-                if (text.BeginsAtWithOrWhitespace(prop.Name, 0))
+                Debug.Log($"'{prop.Name}' == '{text}' = {prop.Name == text}");
+                if (prop.Name == text)
                 {
                     result = prop.Value;
                     return true;

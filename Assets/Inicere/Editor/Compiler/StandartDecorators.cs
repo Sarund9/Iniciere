@@ -14,7 +14,7 @@ namespace Iniciere
         [IniciereDecorator("FileName")]
         public static void FileNameDecorator(DecoratorContext ctx)
         {
-            ctx.Property.Value = "File";
+            ctx.Property.Value = "New_File"; //TODO: Default Name Input Option
             ctx.Property.MarkAsFileName();
         }
         [IniciereDecorator("Text")]
@@ -35,6 +35,27 @@ namespace Iniciere
                 if (EditorGUI.EndChangeCheck())
                 {
                     property.Value = str;
+                }
+            }
+        }
+        
+        [IniciereDecorator("Toggle")]
+        public static void ToggleDecorator(DecoratorContext ctx)
+        {
+            ctx.Property.Value = false;
+            ctx.Property.Editor = new ToggleEditor();
+        }
+        class ToggleEditor : InicierePropertyEditor
+        {
+            public override void DrawGUI(Rect area, TemplateProperty property)
+            {
+                EditorGUI.BeginChangeCheck();
+
+                bool value = EditorGUI.ToggleLeft(area, property.Name, (bool)property.Value);
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    property.Value = value;
                 }
             }
         }

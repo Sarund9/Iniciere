@@ -1,0 +1,59 @@
+
+<#iniciere "Empty CSharp Class"
+
+	sdesc "Standart CSharp class"
+	ldesc "Standart CSharp class"
+
+	language "C##"
+	category "standart"
+	flags "std, oop"
+	fileext "cs"
+
+	[FileName]
+	var $filename
+	[Toggle]
+	var $unitynamespace
+
+	#FORMAT($filename)
+	file "{}.cs"
+
+	add "
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;"
+
+	//TODO: IF, VERIFYNAMESPACE
+	#IF($unitynamespace)
+	add "
+using UnityEngine;
+#n"
+	
+	//TODO: ENCAPSULATESCOPE (adds tabs before every '\n')
+	//TODO: if statements (if, else, endif, elif, keywords) these act like the C# precompiler
+
+	#FORMAT($filename)
+	add "
+public class {} {
+	
+}
+"
+
+#/>
+
+<#iniciere "Inherited CSharp Class"
+
+	sdesc "CSharp class implementing another class"
+	ldesc "Select the "
+
+	language "C##"
+	category "standart"
+	flags "std, oop"
+	fileext "cs"
+
+	[FileName]
+	var $filename
+
+
+
+#/>

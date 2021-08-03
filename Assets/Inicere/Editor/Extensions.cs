@@ -19,6 +19,16 @@ namespace Iniciere
                         yield return type;
             }
         }
+        public static IEnumerable<TResult> SelectWhere<T, TResult>(
+            this IEnumerable<T> col, TryFunc<T, TResult> selector
+            )
+        {
+            foreach (var item in col)
+            {
+                if (selector(item, out var result))
+                    yield return result;
+            }
+        }
 
         public static Rect GetEditorMainWindowPos2019()
         {
@@ -170,6 +180,19 @@ namespace Iniciere
             foreach (var item in items)
                 hash.Add(item);
         }
+
+        //[MenuItem("Assets/Ping")]
+        public static string GetPathToProjectWindowFolder()
+        {
+            Type projectWindowUtilType = typeof(UnityEditor.ProjectWindowUtil);
+            MethodInfo getActiveFolderPath = projectWindowUtilType.GetMethod("GetActiveFolderPath", BindingFlags.Static | BindingFlags.NonPublic);
+            object obj = getActiveFolderPath.Invoke(null, new object[0]);
+            string pathToCurrentFolder = obj.ToString();
+            Debug.Log(pathToCurrentFolder);
+
+            return pathToCurrentFolder;
+        }
+
 
         //public static bool HasCommonItem<T1, T2>()
     }

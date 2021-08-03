@@ -198,7 +198,7 @@ namespace Iniciere
                     }
 
                 }
-                //IN KEYWORD (PROPERTIES)
+                //VAR KEYWORD (PROPERTIES)
                 {
                     if (StringUtils.TryHandleDynamicProperty(lines, new TextPos(l),
                         out var varname, out var end))

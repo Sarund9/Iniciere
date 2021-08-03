@@ -11,15 +11,12 @@ namespace Iniciere
 
     public static class StandartMacros
     {
-        public static IEnumerable<TResult> SelectWhere<T, TResult>(
-            this IEnumerable<T> col, TryFunc<T, TResult> selector
-            )
+        
+        [IniciereMacro("IF")] //TODO: real ifs
+        public static void IfMacro(StringBuilder build, MacroContext ctx, bool value)
         {
-            foreach (var item in col)
-            {
-                if (selector(item, out var result))
-                    yield return result;
-            }
+            if (!value)
+                build.Clear();
         }
 
         [IniciereMacro("VERIFYCSNAMESPACE")]
