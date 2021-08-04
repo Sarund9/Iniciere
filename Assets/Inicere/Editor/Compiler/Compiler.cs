@@ -193,7 +193,7 @@ namespace Iniciere
                     if (StringUtils.TryHandleDecorator(lines, new TextPos(l), decoContext,
                         decorators, out DecoratorExecInstance execInstance, out TextPos end))
                     {
-                        Debug.Log($"DECORATOR AT [{l}]: {execInstance.Decor.Name}");
+                        //Debug.Log($"DECORATOR AT [{l}]: {execInstance.Decor.Name}");
                         decoratorQueue.Enqueue(execInstance);
                     }
 
@@ -389,7 +389,7 @@ namespace Iniciere
                     {
                         //output.AddFile(name);
                         macroQueue.Enqueue(macroExInstance);
-                        Debug.Log($"MACRO: '{macroExInstance.Macro.Name}'");
+                        //Debug.Log($"MACRO: '{macroExInstance.Macro.Name}'");
                         checkForSkip = false;
                         l = end.l;
                         continue;
@@ -487,7 +487,7 @@ namespace Iniciere
                     inputs[1] = macroContext;
                     try
                     {
-                        Debug.LogWarning($"EXECUTING");
+                        //Debug.LogWarning($"EXECUTING");
                         ex.Macro.Method.Invoke(null, inputs);
                     }
                     catch (Exception excep)

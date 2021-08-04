@@ -188,7 +188,7 @@ namespace Iniciere
             MethodInfo getActiveFolderPath = projectWindowUtilType.GetMethod("GetActiveFolderPath", BindingFlags.Static | BindingFlags.NonPublic);
             object obj = getActiveFolderPath.Invoke(null, new object[0]);
             string pathToCurrentFolder = obj.ToString();
-            Debug.Log(pathToCurrentFolder);
+            //Debug.Log(pathToCurrentFolder);
 
             return pathToCurrentFolder;
         }
@@ -196,6 +196,6 @@ namespace Iniciere
 
         //public static bool HasCommonItem<T1, T2>()
     }
-
+    
     public delegate void Procedure<T>(ref T obj);
 }

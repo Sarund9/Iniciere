@@ -33,8 +33,10 @@ using UnityEngine;
 	//TODO: if statements (if, else, endif, elif, keywords) these act like the C# precompiler
 
 	#FORMAT($filename)
+	//#TABIF() //TODO: Fix IsAt() StringBuilder Extension Function
 	add "
-public class {} {
+public class {}
+{
 	
 }
 "

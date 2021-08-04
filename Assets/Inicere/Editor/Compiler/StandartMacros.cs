@@ -13,11 +13,27 @@ namespace Iniciere
     {
         
         [IniciereMacro("IF")] //TODO: real ifs
-        public static void IfMacro(StringBuilder build, MacroContext ctx, bool value)
+        public static void IfMacro(StringBuilder build, MacroContext ctx, bool predicate)
         {
-            if (!value)
+            if (!predicate)
                 build.Clear();
         }
+
+        [IniciereMacro("TABIF")]
+        public static void TabIf(StringBuilder build, MacroContext ctx, bool predicate = true)
+        {
+            if (!predicate)
+                return; //TODO: real ifs
+
+            for (int i = 0; i < build.Length; i++)
+            {
+                if (build.IsAt(Environment.NewLine, i))
+                {
+                    build.Insert(i, '\t');
+                }
+            }
+        }
+
 
         [IniciereMacro("VERIFYCSNAMESPACE")]
         static void Insert(StringBuilder build, MacroContext ctx)
@@ -94,7 +110,7 @@ namespace Iniciere
 
             bool InRange(int i) => i > -1 && i < objs.Length;
 
-            Debug.Log($"FORMAT HAS RAN \n{debug}\n Turned Into \n{build}");
+            //Debug.Log($"FORMAT HAS RAN \n{debug}\n Turned Into \n{build}");
         }
     }
 

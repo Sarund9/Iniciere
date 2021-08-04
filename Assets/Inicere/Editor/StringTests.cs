@@ -7,7 +7,7 @@ namespace Iniciere
 {
     public class StringTests : EditorWindow
     {
-        [MenuItem("Tools/Iniciere/String Tests")]
+        //[MenuItem("Tools/Iniciere/String Tests")]
         public static void OpenWindow()
         {
             GetWindow<StringTests>("String Tests");

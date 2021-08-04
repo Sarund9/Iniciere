@@ -740,7 +740,7 @@ namespace Iniciere
             // TODO: Compound Object
             foreach (var prop in props)
             {
-                Debug.Log($"'{prop.Name}' == '{text}' = {prop.Name == text}");
+                //Debug.Log($"'{prop.Name}' == '{text}' = {prop.Name == text}");
                 if (prop.Name == text)
                 {
                     result = prop.Value;
