@@ -1,0 +1,199 @@
+
+<#iniciere "Empty CSharp Class"
+
+	sdesc "Standart CSharp class"
+	ldesc "Standart CSharp class with no code"
+
+	language "C##"
+	category "standart"
+	flags "std, oop"
+	fileext "cs"
+
+	[FileName]
+	var $filename
+	[Toggle("Add using UnityEngine Statement")]
+	var $unitynamespace
+
+	[Toggle("Add using Empty Constructor")]
+	var $constructor
+	
+	#FORMAT($filename)
+	file "{}.cs"
+
+	add "
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;"
+
+	//TODO: IF, VERIFYNAMESPACE
+	#IF($unitynamespace)
+	add "
+using UnityEngine;
+#n"
+	
+	//TODO: ENCAPSULATESCOPE (adds tabs before every '\n')
+	//TODO: if statements (if, else, endif, elif, keywords) these act like the C# precompiler
+
+	#FORMAT($filename)
+	//#TABIF() //TODO: Fix IsAt() StringBuilder Extension Function
+	add "
+public class {0}
+{#n#t"
+
+#IF($constructor)
+add "public {0}()#n{#n#t#n}#n
+"
+	
+add "}"
+
+#/>
+
+<#iniciere "Inherited CSharp Class"
+
+	sdesc "CSharp class implementing another class"
+	ldesc "Select the "
+
+	language "C##"
+	category "standart"
+	flags "std, oop"
+	fileext "cs"
+
+	[FileName]
+	var $filename
+
+
+
+#/>
+
+<#iniciere "Unity MonoBehaviour"
+
+	sdesc "Unity MonoBehaviour Class"
+	ldesc "Unity MonoBehaviour Class, most similar to default script creation"
+	
+	language "C##"
+	category "standart"
+	flags "std, oop"
+	fileext "cs"
+	
+	[FileName]
+	var $filename
+	
+	[Toggle("Add Awake Method")]
+	var $mtdAwake
+	[Toggle("Add Start Method")]
+	var $mtdStart
+	[Toggle("Add Update Method")]
+	var $mtdUpdate
+	[Toggle("Add FixedUpdate Method")]
+	var $mtdFixedUpdate
+	
+	#FORMAT($filename)
+	file "{}.cs"
+	
+	add "
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;#n"
+	
+	#FORMAT($filename)
+	add "
+class {} : MonoBehaviour
+{
+#n#t"
+
+#IF($mtdAwake)
+add "
+void Awake()#n{#n#t#n}#n"
+
+#IF($mtdStart)
+add "
+void Start()#n{#n#t#n}#n"
+
+#IF($mtdUpdate)
+add "
+void Update()#n{#n#t#n}#n"
+
+#IF($mtdFixedUpdate)
+add "
+void FixedUpdate()#n{#n#t#n}#n"
+
+add "}"
+	
+#/>
+
+<#iniciere "Unity ScriptableObject"
+
+	sdesc "Unity ScriptableObject Class"
+	ldesc "Unity ScriptableObject Class, used to create class assets"
+	
+	language "C##"
+	category "standart"
+	flags "std, oop"
+	fileext "cs"
+	
+	[FileName]
+	var $filename
+	
+	[Toggle("Add OnEnable Method")]
+	var $mtdOnEnable
+	[Toggle("Add OnDisable Method")]
+	var $mtdOnDisable
+	
+	[Toggle("Add CreateAssetMenu")]
+	var $createAssetMenu
+	
+	#FORMAT($filename)
+	file "{}.cs"
+	
+	add "
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;#n"
+	
+	#IF($createAssetMenu)
+	add "[CreateAssetMenu]"
+	
+	#FORMAT($filename)
+	add "
+class {} : ScriptableObject
+{
+#n#t"
+
+#IF($mtdOnEnable)
+add "
+void OnEnable()#n{#n#t#n}#n"
+
+#IF($mtdOnDisable)
+add "
+void OnDisable()#n{#n#t#n}#n"
+
+add "}"
+	
+#/>
+
+TODO:
+* ClassType Decorator and Editor
+* GetProperties from Objects Dynamically
+* typeof expression (Utilizing using Statements)
+* typeof expression (Utilizing using Statements)
+* GlobalReflectionsCache on EditorRecompilation
+
+Templates:
+* MonoBehaviour	|||
+* ScriptableObject	|||
+* EditorWindow Script
+* EditorScript (Requires typeofExpression)
+
+Decorators:
+* ClassType(Type requiredParent = null)
+
+
+
+
+
+

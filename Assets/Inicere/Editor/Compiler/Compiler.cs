@@ -160,7 +160,7 @@ namespace Iniciere
                         continue;
                     }
                 }
-                //IN KEYWORD (PROPERTIES) OLD
+                //(OLD)IN KEYWORD (PROPERTIES)
                 #region ...
                 //{
                 //    if (StringUtils.TryHandleProperty(lines, new TextPos(l),
@@ -190,7 +190,8 @@ namespace Iniciere
                 #endregion
                 //DECORATORS
                 {
-                    if (StringUtils.TryHandleDecorator(lines, new TextPos(l), decoContext,
+                    if (StringUtils.TryHandleDecorator(lines, new TextPos(l),
+                        decoContext, templateInfo.Properties,
                         decorators, out DecoratorExecInstance execInstance, out TextPos end))
                     {
                         //Debug.Log($"DECORATOR AT [{l}]: {execInstance.Decor.Name}");
@@ -207,12 +208,17 @@ namespace Iniciere
                         {
                             Value = null,
                         };
+                        
                         decoContext.Prepare(prop);
+
                         while (decoratorQueue.Count > 0)
                         {
                             var exec = decoratorQueue.Dequeue();
-                            exec.Execute(decoContext);
+                            
+                            if (!exec.Execute(decoContext))
+                                return -1;
                         }
+
 
                         templateInfo.Properties.Add(prop);
                         l = end.l;
@@ -278,6 +284,51 @@ namespace Iniciere
                     throw new Exception($"Template code provided has invalid end: \n {line}");
                 }
             }
+            #region OLD
+            //bool TryApplyDecorators(TemplateProperty prop, int l)
+            //{
+            //    while (decoratorQueue.Count > 0)
+            //    {
+            //        var ex = decoratorQueue.Dequeue();
+
+            //        decoContext.Prepare(prop);
+
+            //        var inputs = new object[ex.Decor.ParamCount + 1];
+            //        for (int i = 0; i < ex.Params.Length; i++)
+            //        {
+            //            if (i == ex.Decor.ParamCount - 1 && ex.Decor.UsesParams)
+            //            {
+            //                int paramsLenght = ex.Params.Length - ex.Decor.ParamCount + 1;
+            //                var paramArgument = new object[paramsLenght];
+            //                for (int p = 0; p < paramsLenght; p++)
+            //                {
+            //                    paramArgument[p] = ex.Params[i + p];
+            //                }
+            //                inputs[i + 1] = paramArgument;
+            //                break;
+            //            }
+            //            inputs[i + 1] = ex.Params[i];
+
+            //            //bool InRange(int i) => i >= 0 && i < ex.Macro.ParamCount;
+            //            //bool Last() => i == ex.Macro.ParamCount - 1;
+            //        }
+            //        inputs[0] = decoContext;
+            //        try
+            //        {
+            //            //Debug.LogWarning($"EXECUTING");
+            //            ex.Decor.Method.Invoke(null, inputs);
+            //        }
+            //        catch (Exception excep)
+            //        {
+            //            Debug.LogError(
+            //            $"Iniciere Error: decorator '{ex.Decor.Name}' at {l}" +
+            //            $"has incorrect Inputs \n{excep.Message}");
+            //            return false;
+            //        }
+            //    }
+            //    return true;
+            //}
+            #endregion
         }
 
         private static bool ResolveNamespace(string result, IEnumerable<Type> types)
@@ -647,6 +698,19 @@ namespace Iniciere
         //}
         #endregion
 
+    }
+
+    public enum IniciereOperator
+    {
+        Add,            // +
+        Sub,            // -
+        Mult,           // *
+        Div,            // /
+        Equals,         // ==
+        Greater,        // >
+        Less,           // <
+        GreaterOrEqual, // >=
+        LessOrEqual,    // <=
     }
 
     //public class VariableInstance

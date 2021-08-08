@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using UnityEngine;
 
 namespace Iniciere
@@ -193,7 +194,19 @@ namespace Iniciere
             return pathToCurrentFolder;
         }
 
-
+        public static string AppendToString(this IEnumerable<string> strcol)
+        {
+            StringBuilder build = new StringBuilder();
+            foreach (var str in strcol)
+            {
+                build.Append(str);
+            }
+            return build.ToString();
+        }
+        public static string AppendToString(this IEnumerable<char> ccol)
+        {
+            return new string(ccol.ToArray());
+        }
         //public static bool HasCommonItem<T1, T2>()
     }
     

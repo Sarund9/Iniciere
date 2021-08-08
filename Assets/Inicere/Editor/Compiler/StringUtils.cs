@@ -9,6 +9,20 @@ namespace Iniciere
 {
     public static class StringUtils
     {
+
+
+        static readonly Dictionary<string, object> valueKeywords =
+            new Dictionary<string, object>()
+            {
+                { "null", null },
+                { "true", true },
+                { "false", false },
+            };
+        public static bool TryKeyword(string keyword, out object value)
+        {
+            return valueKeywords.TryGetValue(keyword, out value);
+        }
+
         public static string CaptureInBetween(string line, char c = '"')
         {
             bool inside = false;
@@ -59,6 +73,37 @@ namespace Iniciere
             throw new ArgumentException(
                 $"The line does not contain any text encapsulated by '{c}'"
                 );
+        }
+
+        public static bool TryCaptureAfter(
+            string line, out string result,
+            char c = '#', char end = '\n')
+        {
+            bool inside = false;
+            StringBuilder str = new StringBuilder();
+            for (int i = 0; i < line.Length; i++)
+            {
+                if (inside)
+                {
+                    if (line[i] == end)
+                    {
+                        result = str.ToString();
+                        return true;
+                    }
+                    str.Append(line[i]);
+                }
+                else
+                {
+                    if (line[i] == c)
+                        inside = true;
+                }
+
+            }
+            result = "";
+            return false;
+            //throw new ArgumentException(
+            //    $"The line does not contain any text encapsulated by '{c}'"
+            //    );
         }
 
         public static bool FilterComments(ref string line)
@@ -596,7 +641,7 @@ namespace Iniciere
             string inputs = CaptureAfter(lines[start.l], '(', ')');
 
             //TODO: resolve inputs using TryHandleParams
-            var paramInfos = actualMacro.Method.GetParameters();
+            //var paramInfos = actualMacro.Method.GetParameters();
 
             TryHandleParamInput(inputs, props, out var objs);
             
@@ -626,7 +671,7 @@ namespace Iniciere
             List<TemplateProperty> props, out object[] result)
         {
             string[] split = input.CustomSplit()
-                        .Select(s => s.Substring(1))
+                        .Select(s => s[0] == '$' ? s.Substring(1) : s)
                         .ToArray();
             result = new object[split.Length];
 
@@ -637,34 +682,115 @@ namespace Iniciere
 
             for (int i = 0; i < split.Length; i++)
             {
-                if (split[i].BeginsAtWithOrWhitespace("\"", 0)) // TODO: Raw Strings
-                {
-                    //Handle as string
-                    try
-                    {
-                        split[i] = CaptureInBetween(split[i]);
-                    }
-                    catch
-                    {
-                        throw new Exception($"Error capturing string at \n({input})[{i}]");
-                    }
-                }
-                else
-                {
-                    //Handle as variable
+                //TODO: RValues
 
-                    if (TryHandleVariable(split[i], props, out var res))
-                    {
-                        result[i] = res;
-                    }
-                    else
-                    {
-                        throw new Exception($"Variable '{split[i]}' could not be found");
-                    }
-                }
+                HandleValueExpression(split[i], props, out var res);
+                result[i] = res;
+
             }
             return true;
         }
+
+        static void HandleExpression(
+            string input, List<TemplateProperty> props,
+            out object result)
+        {
+            result = null;
+
+            string[] split = input.CustomSplit()
+                        .Select(s => s[0] == '$' ? s.Substring(1) : s)
+                        .ToArray();
+
+        }
+
+        private static void HandleValueExpression(string value,
+             List<TemplateProperty> props, out object result)
+        {
+            if (value.BeginsAtWithOrWhitespace("\"", 0)) // TODO: Raw Strings
+            {
+                //Handle as string
+                try
+                {
+                    result = CaptureInBetween(value);
+                }
+                catch
+                {
+                    throw new Exception($"Error capturing string at \n({value})");
+                }
+            }
+            else if (TryKeyword(value, out object resultValue))
+            {
+                result = resultValue;
+            }
+            else if (TryParseNumber(value, out object resultNumber))
+            {
+                result = resultNumber;
+            }
+            else
+            {
+                //Handle as variable
+
+                if (TryHandleVariable(value, props, out object res))
+                {
+                    result = res;
+                }
+                else
+                {
+                    throw new Exception($"Variable '{value}' could not be found");
+                }
+            }
+        }
+
+        static bool TryParseNumber(string value, out object resultValue)
+        {
+            bool isFloat = false;
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (isFloat && value[i] == '.')
+                {
+                    resultValue = null;
+                    return false;
+                }
+
+                if (value[i] == '.')
+                    isFloat = true;
+                if (value[i] != '1' &&
+                    value[i] != '2' &&
+                    value[i] != '3' &&
+                    value[i] != '4' &&
+                    value[i] != '5' &&
+                    value[i] != '6' &&
+                    value[i] != '7' &&
+                    value[i] != '8' &&
+                    value[i] != '9' &&
+                    value[i] != '.' &&
+                    value[i] != '0')
+                {
+                    resultValue = null;
+                    return false;
+                }
+            }
+
+            if (!isFloat) //Int
+            {
+                resultValue = int.Parse(value);
+            }
+            else
+            {
+                resultValue = ParseFloat(value);
+            }
+            return true;
+            
+            static float ParseFloat(string value)
+            {
+                if (value[value.Length - 1] == '.')
+                {
+                    return (float)double.Parse(value.Substring(0, value.Length - 1));
+                }
+                return (float)double.Parse(value.Substring(0));
+            }
+        }
+
 
         public static bool TryHandleParam<T>(
             List<string> lines, TextPos start,
@@ -753,6 +879,7 @@ namespace Iniciere
 
         public static bool TryHandleDecorator(
             List<string> lines, TextPos start, DecoratorContext decoContext,
+            List<TemplateProperty> props,
             Dictionary<string, DecoratorTypeInstance> decos,
             out DecoratorExecInstance decorator, out TextPos end
             )
@@ -765,22 +892,72 @@ namespace Iniciere
                 return false;
             }
 
-            string str = "";
+            string str;
             try {
                 str = CaptureAfter(line.Substring(endPos), '[', ']');
             } catch {
                 throw new Exception($"Decorator Syntax Error at {start.l}");
             }
-            
-            if (!decos.ContainsKey(str))
+
+            object[] paramInput = new object[0];
+            if (SplitInput(str, out string name, out string inputs))
             {
-                throw new Exception($"Decorator {str} not found");
+                if (!TryHandleParamInput(inputs, props, out var result))
+                {
+                    throw new Exception($"Decorator Input Syntax Error at {start.l}");
+                }
+
+                paramInput = result;
+            }
+            
+            //Debug.Log($"Input Decor Split:[{b}]: '{name}', Inputs:\n{inputs}");
+
+            if (!decos.ContainsKey(name))
+            {
+                throw new Exception($"Decorator '{name}' not found");
             }
 
-            DecoratorTypeInstance actualDecorator = decos[str];
+            DecoratorTypeInstance actualDecorator = decos[name];
 
-            decorator = new DecoratorExecInstance(actualDecorator);
+            //var strprint = paramInput.Aggregate(new StringBuilder(), (str, obj) =>
+            //{
+            //    string value = obj is null ? "NULL" : obj.ToString();
+            //    str.Append(value + ", ");
+            //    return str;
+            //});
+            //Debug.Log($"Executing as '{strprint}'");
+
+            decorator = new DecoratorExecInstance(actualDecorator, paramInput);
             return true;
+
+            static bool SplitInput(string str, out string name, out string inputs)
+            {
+                //Debug.Log($"Splitting: '{str}'");
+                int s = str.IndexOf('(');
+                int e = str.IndexOf(')');
+                if (s >= 0)
+                {
+                    if (e >= 0)
+                    {
+                        if (s + 1 == e)
+                        {
+                            inputs = "";
+                            name = str.Substring(0, s);
+                            return false;
+                        }
+                        inputs = str.Substring(s + 1, e - s - 1);
+                        Debug.Log($"Captured Input:\n{inputs}");
+
+                        name = str.Substring(0, s);
+
+                        return true;
+                    }
+                }
+
+                name = str;
+                inputs = "";
+                return false;
+            }
         }
 
         public static string[] CustomSplit(this string str, char split = ',', char halter = '"')

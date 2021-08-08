@@ -40,22 +40,60 @@ namespace Iniciere
         }
         
         [IniciereDecorator("Toggle")]
-        public static void ToggleDecorator(DecoratorContext ctx)
+        public static void ToggleDecorator(DecoratorContext ctx, string editorName = null)
         {
+            Debug.Log($"Toggle decorator : '{editorName}'");
             ctx.Property.Value = false;
-            ctx.Property.Editor = new ToggleEditor();
+            ctx.Property.Editor = new ToggleEditor(editorName);
         }
         class ToggleEditor : InicierePropertyEditor
         {
+            private string editorName;
+
+            public ToggleEditor(string editorName)
+            {
+                this.editorName = editorName;
+            }
+
             public override void DrawGUI(Rect area, TemplateProperty property)
             {
                 EditorGUI.BeginChangeCheck();
 
-                bool value = EditorGUI.ToggleLeft(area, property.Name, (bool)property.Value);
+                bool value = EditorGUI.ToggleLeft(area,
+                    editorName ?? property.Name,
+                    (bool)property.Value);
 
                 if (EditorGUI.EndChangeCheck())
                 {
                     property.Value = value;
+                }
+            }
+        }
+        
+        [IniciereDecorator("OptionalText")]
+        public static void OptionalText(DecoratorContext ctx)
+        {
+            ctx.Property.Editor = new OptTextEditor();
+        }
+        class OptTextEditor : InicierePropertyEditor
+        {
+            public override void DrawGUI(Rect area, TemplateProperty property)
+            {
+                EditorGUI.BeginChangeCheck();
+                //Rect text = area.Shrink(0, 10, 0, 0);
+                var str = EditorGUI.TextField(area, property.Name, property.Value.ToString());
+                if (EditorGUI.EndChangeCheck())
+                {
+                    property.Value = str;
+                }
+
+                EditorGUI.BeginChangeCheck();
+                Rect toggle = area.Shrink(area.width - 10, 0, 0, 0);
+                toggle.x += area.width - 10;
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    property.Value = str;
                 }
             }
         }
@@ -130,7 +168,8 @@ namespace Iniciere
                         var p = m.GetParameters();
                         //Debug.Log($"PARAMS {p.Length} '{p[0].ParameterType.Name}'");
 
-                        if (p.Length != 1 || p[0].ParameterType != typeof(DecoratorContext) || p[0].IsOut)
+                        if (p.Length == 0 || p[0].ParameterType != typeof(DecoratorContext)
+                            || p.Any(pm => pm.IsOut))
                             return false;
 
                         //Debug.Log($"DECOR: {atr.Name}");
@@ -151,28 +190,75 @@ namespace Iniciere
         {
             Method = method;
             Atr = atr;
+            var ps = Method.GetParameters();
+            UsesParams = ps[ps.Length - 1]
+                .IsDefined(typeof(ParamArrayAttribute), false);
+            ParamCount = ps.Length - 1;
         }
 
         public MethodInfo Method { get; }
         public IniciereDecoratorAttribute Atr { get; }
+
+        public bool UsesParams { get; }
+        public int ParamCount { get; }
 
         public string Name => Atr.Name;
     }
 
     public class DecoratorExecInstance
     {
-        public DecoratorExecInstance(DecoratorTypeInstance decor)
+        public DecoratorExecInstance(DecoratorTypeInstance decor, object[] parameters)
         {
             Decor = decor;
+            Params = parameters;
         }
         public DecoratorTypeInstance Decor { get; }
 
+        public object[] Params { get; }
 
-        public void Execute(DecoratorContext ctx)
+        public bool Execute(DecoratorContext ctx)
         {
             var mi = Decor.Method;
 
-            mi.Invoke(null, new object[] { ctx });
+            int inputLenght = Decor.ParamCount + 1;
+            var inputs = new object[inputLenght];
+
+            for (int i = 0; i < Params.Length; i++)
+            {
+                if (i == Decor.ParamCount - 1 && Decor.UsesParams)
+                {
+                    int paramsLenght = Params.Length - Decor.ParamCount + 1;
+                    var paramArg = new object[paramsLenght];
+                    for (int p = 0; p < paramsLenght; p++)
+                    {
+                        paramArg[p] = Params[i + p];
+                    }
+                    inputs[i + 1] = paramArg;
+                    break;
+                }
+                inputs[i + 1] = Params[i];
+            }
+            inputs[0] = ctx;
+
+            //var strprint = inputs.Aggregate(new StringBuilder(), (str, obj) =>
+            //{
+            //    string value = obj is null ? "NULL" : obj.ToString();
+            //    str.Append(value + ", ");
+            //    return str;
+            //});
+            //Debug.Log($"Executing {Params.Length} '{strprint}'");
+
+            try
+            {
+                mi.Invoke(null, inputs);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Iniciere Error: decorator '{Decor.Name}'" +
+                    $" has incorrect Inputs: \n {ex.Message}");
+                return false;
+            }
         }
     }
 

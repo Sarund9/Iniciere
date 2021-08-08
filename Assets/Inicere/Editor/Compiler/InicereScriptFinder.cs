@@ -10,7 +10,7 @@ namespace Iniciere
     public class InicereScriptFinder
     {
         const string FILE_EX = "iniciere";
-        const string FOLDER_NAME = "InicereTemplates";
+        const string FOLDER_NAME = "IniciereTemplates";
 
         public static IEnumerable<string> FindFilePaths() =>
             GetDirectories(Directory.GetCurrentDirectory())

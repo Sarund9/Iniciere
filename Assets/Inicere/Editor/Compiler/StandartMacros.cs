@@ -112,6 +112,20 @@ namespace Iniciere
 
             //Debug.Log($"FORMAT HAS RAN \n{debug}\n Turned Into \n{build}");
         }
+        [IniciereMacro("FOR")]
+        public static void Repeat(StringBuilder build, MacroContext ctx, int num)
+        {
+            for (int i = 0; i < num; i++)
+            {
+                var contents = build.ToString();
+                build.AppendLine(contents);
+            }
+        }
+        [IniciereMacro("OPTIONALTEXT")]
+        public static void OptionalText(StringBuilder build, MacroContext ctx, object variable)
+        {
+            
+        }
     }
 
     public sealed class MacroContext
