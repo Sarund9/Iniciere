@@ -43,14 +43,13 @@ public class {}
 #FORMAT($filename)
 #IF($constructor)
 #TABIF($constructor)
-add "#tpublic {}()#n{#n#t#n}#n
-"
+add "#tpublic {}()#n{#n#t#n}#n"
 	
 add "}"
 
 #/>
 
-<#iniciere "Inherited CSharp Class"
+<!#iniciere "Inherited CSharp Class"
 
 	sdesc "CSharp class implementing another class"
 	ldesc "Select the "
@@ -106,25 +105,25 @@ using UnityEngine;#n"
 	
 	#FORMAT($filename)
 	add "
-class {} : MonoBehaviour
+public class {} : MonoBehaviour
 {
-#n#t"
+#t"
 
 #IF($mtdAwake)
 add "
-void Awake()#n{#n#t#n}#n"
+#tvoid Awake()#n#t{#n#t#t#n#t}"
 
 #IF($mtdStart)
 add "
-void Start()#n{#n#t#n}#n"
+#tvoid Start()#n#t{#n#t#t#n#t}"
 
 #IF($mtdUpdate)
 add "
-void Update()#n{#n#t#n}#n"
+#tvoid Update()#n#t{#n#t#t#n#t}"
 
 #IF($mtdFixedUpdate)
 add "
-void FixedUpdate()#n{#n#t#n}#n"
+#tvoid FixedUpdate()#n#t{#n#t#t#n#t}"
 
 add "}"
 	
@@ -165,42 +164,44 @@ using UnityEngine;#n"
 	add "[CreateAssetMenu]"
 	
 	#FORMAT($filename)
-	add "
-class {} : ScriptableObject
+	add "class {} : ScriptableObject
 {
-#n#t"
+#t"
 
 #IF($mtdOnEnable)
-add "
-void OnEnable()#n{#n#t#n}#n"
+add "#tvoid OnEnable()#n#t{#n#t#t#n#t}#n"
 
 #IF($mtdOnDisable)
-add "
-void OnDisable()#n{#n#t#n}#n"
+add "#tvoid OnDisable()#n#t{#n#t#t#n#t}#n"
 
 add "}"
 	
 #/>
 
 TODO:
-* Add & AddLn
-* ClassType Decorator and Editor
-* GetProperties from Objects Dynamically
-* typeof expression (Utilizing using Statements)
-* typeof expression (Utilizing using Statements)
+* ClassType Editor Window
+
 * GlobalReflectionsCache on EditorRecompilation
+
+Language:
+* typeof expression (Utilizing using Statements)
+* Value Assignment: set value of properties using '=' anytime
+* Property Access (access C# Properties from Variables)
+* Method Calls
+* If, Else, ElIf, EndIf, system
+* C# Function Calls (Expose through C# Attributes)
 
 Templates:
 * MonoBehaviour	|||
-* ScriptableObject	|||
+* ScriptableObject: Create Asset Alongside it
 * EditorWindow Script
 * EditorScript (Requires typeofExpression)
 
 Decorators:
 * ClassType(Type requiredParent = null)
 
-
-
+Macro:
+* Convert Tabs Macro
 
 
 
