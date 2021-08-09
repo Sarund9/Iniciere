@@ -126,6 +126,13 @@ namespace Iniciere
             result.height -= value * 2;
             return result;
         }
+        public static Rect Shift(this Rect rect, float x, float y)
+        {
+            Rect result = rect;
+            result.x += x;
+            result.y += y;
+            return result;
+        }
         public static IEnumerable<Rect> SplitHorizontal(this Rect rect, int numSplits)
         {
             float newWidth = rect.width / numSplits;

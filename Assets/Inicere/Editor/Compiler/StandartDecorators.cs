@@ -42,7 +42,7 @@ namespace Iniciere
         [IniciereDecorator("Toggle")]
         public static void ToggleDecorator(DecoratorContext ctx, string editorName = null)
         {
-            Debug.Log($"Toggle decorator : '{editorName}'");
+            //Debug.Log($"Toggle decorator : '{editorName}'");
             ctx.Property.Value = false;
             ctx.Property.Editor = new ToggleEditor(editorName);
         }
@@ -95,6 +95,35 @@ namespace Iniciere
                 {
                     property.Value = str;
                 }
+            }
+        }
+
+        [IniciereDecorator("ClassType")]
+        public static void ClassType(DecoratorContext ctx, string msg = null, Type requiredImpl = null)
+        {
+            ctx.Property.Editor = new ClassTypeEditor(msg, requiredImpl);
+        }
+        class ClassTypeEditor : InicierePropertyEditor
+        {
+            readonly string msg;
+            readonly Type requiredImpl;
+
+            public ClassTypeEditor(string msg, Type requiredImpl)
+            {
+                this.msg = msg;
+                this.requiredImpl = requiredImpl;
+            }
+
+            public override void DrawGUI(Rect area, TemplateProperty property)
+            {
+                
+                if (GUI.Button(area, Msg(), "DropDownButton"))
+                {
+                    var win = ClassTypeSearchWindow.Create(EditorWindow.GetWindow<CreateScriptWindow>(), "Select Type", area, 240);
+
+                }
+
+                string Msg() => msg ?? property.Name;
             }
         }
     }

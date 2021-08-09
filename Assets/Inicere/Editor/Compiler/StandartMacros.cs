@@ -29,11 +29,23 @@ namespace Iniciere
             {
                 if (build.IsAt(Environment.NewLine, i))
                 {
-                    build.Insert(i, '\t');
+                    build.Insert(i + Environment.NewLine.Length, '\t');
+                    i += Environment.NewLine.Length;
                 }
             }
         }
-
+        [IniciereMacro("TABFOR")]
+        public static void TabFor(StringBuilder build, MacroContext ctx, int num)
+        {
+            for (int i = 0; i < build.Length; i++)
+            {
+                if (build.IsAt(Environment.NewLine, i))
+                {
+                    build.Insert(i + Environment.NewLine.Length, '\t');
+                    i += Environment.NewLine.Length;
+                }
+            }
+        }
 
         [IniciereMacro("VERIFYCSNAMESPACE")]
         static void Insert(StringBuilder build, MacroContext ctx)

@@ -479,7 +479,11 @@ namespace Iniciere
                             //Debug.LogWarning($"StrUtls: '{lines[start.l]}', {start} to {end}");
                             return true;
                         }
-                        resultBuild.Append(cmd);
+
+                        if (cmd == '\n')
+                            resultBuild.Append(Environment.NewLine);
+                        else
+                            resultBuild.Append(cmd);
                     }
                     else
                     {
@@ -498,7 +502,7 @@ namespace Iniciere
                     }
                     c++;
                 }
-                resultBuild.Append('\n');
+                //resultBuild.Append('\n');
                 c = 0;
                 l++;
             }
@@ -946,7 +950,7 @@ namespace Iniciere
                             return false;
                         }
                         inputs = str.Substring(s + 1, e - s - 1);
-                        Debug.Log($"Captured Input:\n{inputs}");
+                        //Debug.Log($"Captured Input:\n{inputs}");
 
                         name = str.Substring(0, s);
 

@@ -14,7 +14,7 @@
 	[Toggle("Add using UnityEngine Statement")]
 	var $unitynamespace
 
-	[Toggle("Add using Empty Constructor")]
+	[Toggle("Add Empty Constructor")]
 	var $constructor
 	
 	#FORMAT($filename)
@@ -28,21 +28,22 @@ using System.Linq;"
 
 	//TODO: IF, VERIFYNAMESPACE
 	#IF($unitynamespace)
-	add "
-using UnityEngine;
-#n"
+	add "using UnityEngine;#n"
 	
 	//TODO: ENCAPSULATESCOPE (adds tabs before every '\n')
 	//TODO: if statements (if, else, endif, elif, keywords) these act like the C# precompiler
 
-	#FORMAT($filename)
 	//#TABIF() //TODO: Fix IsAt() StringBuilder Extension Function
+	
+	#FORMAT($filename)
 	add "
-public class {0}
+public class {}
 {#n#t"
 
+#FORMAT($filename)
 #IF($constructor)
-add "public {0}()#n{#n#t#n}#n
+#TABIF($constructor)
+add "#tpublic {}()#n{#n#t#n}#n
 "
 	
 add "}"
@@ -61,6 +62,11 @@ add "}"
 
 	[FileName]
 	var $filename
+	[ClassType("Inherit From")]
+	var $baseType
+
+	#FORMAT($filename)
+	file "{}.cs"
 
 
 
@@ -177,6 +183,7 @@ add "}"
 #/>
 
 TODO:
+* Add & AddLn
 * ClassType Decorator and Editor
 * GetProperties from Objects Dynamically
 * typeof expression (Utilizing using Statements)

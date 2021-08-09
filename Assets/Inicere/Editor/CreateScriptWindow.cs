@@ -401,10 +401,14 @@ namespace Iniciere
             //Draw(r1);
             using (new GUILayout.HorizontalScope())
             {
+                float screenQuarter = Screen.width / 4;
+                var butonsRect = GUILayoutUtility
+                    .GetRect(20, 20);
 
-                var button = GUILayoutUtility
-                    .GetRect(20, 20)
-                    .Shrink(0, Screen.width / 4, 0, 0);
+                var button = butonsRect
+                    .Shrink(0, screenQuarter + 10, 0, 0);
+                var button2 = button
+                    .Shift(-button.width + 2, 0);
                 //button.x += 
                 //Draw(r2);
                 //GUILayout.FlexibleSpace();
@@ -417,6 +421,13 @@ namespace Iniciere
                     var path = Extensions.GetPathToProjectWindowFolder();
                     ScriptBuilder.CreateScript(SelectedTemplate, path);
 
+                }
+                if (GUI.Button(button2, "Create & Close"))
+                {
+                    //CREATE SCRIPT (PROGRESS BAR?)
+                    var path = Extensions.GetPathToProjectWindowFolder();
+                    ScriptBuilder.CreateScript(SelectedTemplate, path);
+                    Close();
                 }
                 EditorGUI.EndDisabledGroup();
             }

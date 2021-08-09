@@ -474,13 +474,37 @@ namespace Iniciere
                             Debug.LogError("cannot add lines to no file");
                             return -1;
                         }
-                        //Debug.Log($"\t ADD: '{body.TrySubstring(0, 20)}'");
+                        //Debug.Log($"ADD:\n{body}");
                         //TODO: run macros
                         var build = new StringBuilder(body);
 
                         if (!TryApplyMacros(build, l))
                             return -1;
                         
+                        output.LastFile().AddLine(build.ToString());
+                        checkForSkip = false;
+                        l = end.l;
+                        continue;
+                    }
+                }
+
+                //ADDLN KEYWORD
+                {
+                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "addln", info.Properties,
+                        out string body, out TextPos end))
+                    {
+                        if (output.FileCount == 0)
+                        {
+                            Debug.LogError("cannot add lines to no file");
+                            return -1;
+                        }
+                        //Debug.Log($"ADDLN:\n{body}");
+                        //TODO: run macros
+                        var build = new StringBuilder(body);
+                        build.Append(Environment.NewLine);
+                        if (!TryApplyMacros(build, l))
+                            return -1;
+
                         output.LastFile().AddLine(build.ToString());
                         checkForSkip = false;
                         l = end.l;
