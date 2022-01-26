@@ -60,7 +60,8 @@ namespace Iniciere
                 {
                     //var filtered = StringUtils.FilterAllComments(file);
                     //var lines = new List<string>(filtered.Split('\n'));
-                    int result = Compiler.Precompile(file, out lastInfo);
+                    lastInfo = TemplateInfo.New(file);
+                    int result = Compiler.Precompile(file, lastInfo);
                     if (result == 0)
                     {
                         Debug.Log($"Precompiler succeded");
@@ -84,7 +85,7 @@ namespace Iniciere
 
             filename = EditorGUILayout.TextField("INPUT", filename);
 
-            if (GUILayout.Button($"Compile {lastInfo.Name}", GUILayout.Height(24)))
+            if (GUILayout.Button($"Compile {lastInfo.TmpName}", GUILayout.Height(24)))
             {
                 //Fill string properties with something
                 if (lastInfo != null) PopulateProperties();
@@ -234,7 +235,7 @@ namespace Iniciere
         static void PrintTemplateInfo(TemplateInfo info)
         {
             StringBuilder build = new StringBuilder(1024);
-            build.AppendLine($"Template info for template: {info.Name}");
+            build.AppendLine($"Template info for template: {info.TmpName}");
             build.AppendLine("==========================");
             // File Ex
             build.Append($"File extensions: ");

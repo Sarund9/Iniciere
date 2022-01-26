@@ -73,7 +73,9 @@ namespace Iniciere
         {
             //((Action)FindFiles).BeginInvoke(OnFinished)
             //templates.CollectionChanged += TemplateColChanged;
-            var _ = FindFiles();
+            //var _ = FindFiles();
+            FindFilesNew();
+
             selectedTemplate = -1;
         }
 
@@ -102,9 +104,9 @@ namespace Iniciere
 
             UnityEngine.Random.InitState(99);
 
-            float halfScreen = Screen.width / 2;
+            float halfScreen = position.width / 2;
 
-            Rect halfTheScreenL = new Rect(0, 0, halfScreen, Screen.height);
+            Rect halfTheScreenL = new Rect(0, 0, halfScreen, position.height);
 
             GUILayout.BeginArea(halfTheScreenL);
 
@@ -249,7 +251,7 @@ namespace Iniciere
             {
                 var template = templates[index];
                 Rect label = rect.Shrink(0, 0, 0, TMP_ITEM_HEIGHT - EditorGUIUtility.singleLineHeight);
-                GUI.Label(label, new GUIContent(template.Name));
+                GUI.Label(label, new GUIContent(template.TmpName));
 
                 if (e.type == EventType.MouseDown && e.button == 0 && rect.Contains(e.mousePosition))
                 {
@@ -266,7 +268,7 @@ namespace Iniciere
             GUILayout.EndArea();
 
 
-            Rect halfTheScreenR = new Rect(Screen.width / 2, 0, Screen.width / 2, Screen.height);
+            Rect halfTheScreenR = new Rect(position.width / 2, 0, position.width / 2, position.height);
             GUILayout.BeginArea(halfTheScreenR);
 
             EditorRightSide();
@@ -294,7 +296,7 @@ namespace Iniciere
                         fontSize = 19,
                         padding = new RectOffset(0, 0, 5, 0),
                     };
-                    GUILayout.Label(new GUIContent(SelectedTemplate.Name, SelectedTemplate.ShortDescription), style_TemplateTitle, GUILayout.ExpandWidth(true));
+                    GUILayout.Label(new GUIContent(SelectedTemplate.TmpName, SelectedTemplate.ShortDescription), style_TemplateTitle, GUILayout.ExpandWidth(true));
                     EditorGUILayout.SelectableLabel(SelectedTemplate.LongDescription);
 
                     using (new GUILayout.HorizontalScope(GUILayout.MaxHeight(30)))
@@ -397,18 +399,20 @@ namespace Iniciere
             }
 
             GUILayout.FlexibleSpace();
-            /*var r1 =*/ GUILayoutUtility.GetRect(Screen.height, 20);
+            /*var r1 =*/ GUILayoutUtility.GetRect(position.height, 20);
             //Draw(r1);
             using (new GUILayout.HorizontalScope())
             {
-                float screenQuarter = Screen.width / 4;
-                var butonsRect = GUILayoutUtility
+                float screenQuarter = position.width / 4;
+                Rect butonsRect = GUILayoutUtility
                     .GetRect(20, 20);
 
-                var button = butonsRect
+                //EditorGUI.DrawRect(butonsRect, Color.red);
+
+                Rect button = butonsRect
                     .Shrink(0, screenQuarter + 10, 0, 0);
-                var button2 = button
-                    .Shift(-button.width + 2, 0);
+                Rect button2 = button
+                    .Shift(-button.width - 4, 0);
                 //button.x += 
                 //Draw(r2);
                 //GUILayout.FlexibleSpace();
@@ -498,7 +502,7 @@ namespace Iniciere
         {
             // Search Bar
 
-            if (search.Length > 0 && !templates[index].Name.ToLower().Contains(search.ToLower()))
+            if (search.Length > 0 && !templates[index].TmpName.ToLower().Contains(search.ToLower()))
             {
                 return true;
             }
@@ -585,6 +589,16 @@ namespace Iniciere
             }
         }
 
+        private void FindFilesNew()
+        {
+            var paths = FindAssetsByType<TemplateInfo>();
+
+            foreach (var tmpPath in paths)
+            {
+
+            }
+        }
+
         private async Task FindFiles(Action callback = null)
         {
             IEnumerable<string> filepaths = await Task.Run(() => InicereScriptFinder.FindFilePaths());
@@ -593,14 +607,15 @@ namespace Iniciere
 
             foreach (var item in templates)
             {
-                precompiling.Add(PrecompileTemplate(item));
+                TemplateInfo info = TemplateInfo.New(item);
+                precompiling.Add(PrecompileTemplate(item, info));
             }
             //return templates;
         }
-        private async Task<TemplateInfo> PrecompileTemplate(TemplateLocation template)
+        private async Task<TemplateInfo> PrecompileTemplate(TemplateLocation template, TemplateInfo info)
         {
-            TemplateInfo info = null;
-            int result = await Task.Run(() => Compiler.Precompile(template, out info));
+            
+            int result = await Task.Run(() => Compiler.Precompile(template, info));
 
             if (result != 0)
             {
@@ -622,6 +637,25 @@ namespace Iniciere
             {
                 //TODO: Cancel Compile
             }
+        }
+
+
+        public static List<T> FindAssetsByType<T>() where T : UnityEngine.Object
+        {
+            List<T> result = new List<T>();
+            string[] guids = AssetDatabase.FindAssets(string.Format("t:{0}", typeof(T)));
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(guids[i]);
+                var assets = AssetDatabase.LoadAllAssetsAtPath(assetPath)
+                    .OfType<T>()
+                    .ToArray();
+                if (assets.Length > 0)
+                {
+                    result.AddRange(assets);
+                }
+            }
+            return result;
         }
     }
 }

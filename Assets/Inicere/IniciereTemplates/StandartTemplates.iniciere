@@ -49,7 +49,7 @@ add "}"
 
 #/>
 
-<!#iniciere "Inherited CSharp Class"
+<#iniciere "Inherited CSharp Class"
 
 	sdesc "CSharp class implementing another class"
 	ldesc "Select the "
@@ -169,12 +169,12 @@ using UnityEngine;#n"
 #t"
 
 #IF($mtdOnEnable)
-add "#tvoid OnEnable()#n#t{#n#t#t#n#t}#n"
+	add "#tvoid OnEnable()#n#t{#n#t#t#n#t}#n"
 
 #IF($mtdOnDisable)
-add "#tvoid OnDisable()#n#t{#n#t#t#n#t}#n"
+	add "#tvoid OnDisable()#n#t{#n#t#t#n#t}#n"
 
-add "}"
+	add "}"
 	
 #/>
 

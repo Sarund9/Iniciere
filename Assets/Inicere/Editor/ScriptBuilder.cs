@@ -16,7 +16,7 @@ namespace Iniciere
         {
             var win = CreateInstance<ScriptBuilder>();
             win.directoryPath = directoryPath;
-            win.tmpName = info.Name;
+            win.tmpName = info.TmpName;
 
 #if UNITY_2020_1_OR_NEWER
             Rect pos = EditorGUIUtility.GetMainWindowPosition();
@@ -89,7 +89,7 @@ namespace Iniciere
 
             if (result != 0)
             {
-                Debug.LogError($"Async Compile of '{info.Name}' Failed! error code: {result}");
+                Debug.LogError($"Async Compile of '{info.TmpName}' Failed! error code: {result}");
             }
 
             return new TemplateResult(result, template);

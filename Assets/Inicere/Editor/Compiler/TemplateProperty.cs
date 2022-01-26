@@ -7,17 +7,32 @@ namespace Iniciere
     [Serializable]
     public class TemplateProperty
     {
+        [SerializeField]
+        string name;
+        [SerializeField]
+        TemplateInfo template;
+        [SerializeField]
+        UBox valueBox = new UBox();
+
+        [SerializeField]
+        InicierePropertyEditor editor;
+
         public TemplateProperty(string name, TemplateInfo templateInfo)
         {
-            Name = name;
-            Template = templateInfo;
+            this.name = name;
+            template = templateInfo;
         }
-        public string Name { get; }
-        public object Value { get; set; }
+        public string Name => name;
+        public object Value
+        {
+            get => valueBox.Get();
+            set => valueBox.Set(value);
+        }
+        
 
-        public TemplateInfo Template { get; }
+        public TemplateInfo Template => template;
 
-        public InicierePropertyEditor Editor { get; set; }
+        public InicierePropertyEditor Editor { get => editor; set => editor = value; }
 
         public bool IsFileName => Template.FileNameProperty == this;
         public bool HasEditor => Editor is object;

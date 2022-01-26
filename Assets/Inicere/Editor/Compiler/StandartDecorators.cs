@@ -15,12 +15,14 @@ namespace Iniciere
         public static void FileNameDecorator(DecoratorContext ctx)
         {
             ctx.Property.Value = "New_File"; //TODO: Default Name Input Option
+            //ctx.Property.LitValue = "New_File";
             ctx.Property.MarkAsFileName();
         }
         [IniciereDecorator("Text")]
         public static void TextDecorator(DecoratorContext ctx)
         {
             ctx.Property.Value = "";
+            //ctx.Property.LitValue = "";
             ctx.Property.Editor = new TextEditor();
         }
 
@@ -44,15 +46,23 @@ namespace Iniciere
         {
             //Debug.Log($"Toggle decorator : '{editorName}'");
             ctx.Property.Value = false;
-            ctx.Property.Editor = new ToggleEditor(editorName);
+            ctx.Property.Editor = ToggleEditor.New(editorName);
         }
+        
         class ToggleEditor : InicierePropertyEditor
         {
+            [SerializeField]
             private string editorName;
 
             public ToggleEditor(string editorName)
             {
                 this.editorName = editorName;
+            }
+            public static ToggleEditor New(string editorName)
+            {
+                var obj = CreateInstance<ToggleEditor>();
+                obj.editorName = editorName;
+                return obj;
             }
 
             public override void DrawGUI(Rect area, TemplateProperty property)
@@ -73,8 +83,9 @@ namespace Iniciere
         [IniciereDecorator("OptionalText")]
         public static void OptionalText(DecoratorContext ctx)
         {
-            ctx.Property.Editor = new OptTextEditor();
+            ctx.Property.Editor = ScriptableObject.CreateInstance<OptTextEditor>();
         }
+        
         class OptTextEditor : InicierePropertyEditor
         {
             public override void DrawGUI(Rect area, TemplateProperty property)
@@ -98,20 +109,28 @@ namespace Iniciere
             }
         }
 
-        [IniciereDecorator("ClassType")]
+        //[IniciereDecorator("ClassType")]
         public static void ClassType(DecoratorContext ctx, string msg = null, Type requiredImpl = null)
         {
-            ctx.Property.Editor = new ClassTypeEditor(msg, requiredImpl);
+            ctx.Property.Editor = ClassTypeEditor.New(msg, requiredImpl);
         }
+        
         class ClassTypeEditor : InicierePropertyEditor
         {
-            readonly string msg;
-            readonly Type requiredImpl;
+            string msg;
+            Type requiredImpl; // TODO: UBox This
 
             public ClassTypeEditor(string msg, Type requiredImpl)
             {
                 this.msg = msg;
                 this.requiredImpl = requiredImpl;
+            }
+            public static ClassTypeEditor New(string msg, Type requiredImpl)
+            {
+                var obj = CreateInstance<ClassTypeEditor>();
+                obj.msg = msg;
+                obj.requiredImpl = requiredImpl;
+                return obj;
             }
 
             public override void DrawGUI(Rect area, TemplateProperty property)
@@ -291,7 +310,8 @@ namespace Iniciere
         }
     }
 
-    public abstract class InicierePropertyEditor
+    [Serializable]
+    public abstract class InicierePropertyEditor : ScriptableObject
     {
         public abstract void DrawGUI(Rect area, TemplateProperty property);
         public virtual float GetHeight(TemplateProperty property) => EditorGUIUtility.singleLineHeight;

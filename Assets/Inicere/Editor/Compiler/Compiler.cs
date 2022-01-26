@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEditor;
 using UnityEngine;
 
 namespace Iniciere
@@ -15,31 +16,20 @@ namespace Iniciere
 
         #endregion
 
-        //List<string> lines;
-        //string s_Raw;
-
-        //[Obsolete]
-        //private Compiler(string text)
-        //{
-        //    var filtered = StringUtils.FilterAllComments(text);
-        //    lines = new List<string>(filtered.Split('\n'));
-        //    s_Raw = text;
-        //}
-
-        //public static int Precompile(TemplateLocation templateLocation)
-        //{
-
-        //    throw new NotImplementedException();
-        //}
-
-        public static int Precompile(TemplateLocation templateLocation, out TemplateInfo templateInfo)
+        
+        public static int Precompile(TemplateLocation templateLocation, in TemplateInfo templateInfo)
         {
             var filteredContents = StringUtils.FilterAllComments(templateLocation.GetContents());
             var lines = new List<string>(filteredContents.Split('\n'));
 
-            templateInfo = new TemplateInfo(templateLocation);
+            if (!templateInfo)
+            {
+                Debug.LogError("TemplateInfo is null");
+                return -1;
+            }
+
             try {
-                templateInfo.Name = TryStartTemplate(lines[0]);
+                templateInfo.TmpName = TryStartTemplate(lines[0]);
 
             }
             catch
@@ -207,6 +197,7 @@ namespace Iniciere
                         var prop = new TemplateProperty(varname, templateInfo)
                         {
                             Value = null,
+                            //LitValue = "null",
                         };
                         
                         decoContext.Prepare(prop);
@@ -264,6 +255,9 @@ namespace Iniciere
             }
 
             //templateInfo.Contents = string.Join(Environment.NewLine, lines);
+
+            Debug.Log($"Template Created {templateInfo.TmpName}");
+            EditorUtility.SetDirty(templateInfo);
 
             return 0;
 
@@ -403,7 +397,7 @@ namespace Iniciere
         {
             output = new TemplateOutput
             {
-                Name = info.Name
+                Name = info.TmpName
             };
 
             Queue<MacroExecutionInstance> macroQueue = new Queue<MacroExecutionInstance>();

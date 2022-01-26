@@ -7,14 +7,39 @@ using UnityEngine;
 
 namespace Iniciere
 {
-    [Serializable]
-    public class TemplateInfo
+    //[Serializable]
+    public class TemplateInfo : ScriptableObject
     {
+        [SerializeField]
         TemplateLocation location;
 
-        public TemplateInfo(TemplateLocation location)
+        [SerializeField]
+        string shortDescription = "", longDescription = "";
+
+        [SerializeField]
+        string m_TemplateName;
+        [SerializeField]
+        List<string> fileExts = new List<string>();
+        [SerializeField]
+        List<string> langs = new List<string>();
+        [SerializeField]
+        List<string> categories = new List<string>();
+        [SerializeField]
+        List<string> flags = new List<string>();
+        [SerializeField]
+        List<TemplateProperty> properties = new List<TemplateProperty>();
+        [SerializeField]
+        TemplateProperty fileNameProperty;
+
+        //public TemplateInfo(TemplateLocation location)
+        //{
+        //    this.location = location;
+        //}
+        public static TemplateInfo New(TemplateLocation location)
         {
-            this.location = location;
+            var obj = CreateInstance<TemplateInfo>();
+            obj.location = location;
+            return obj;
         }
         //if (!File.Exists(filepath))
         //    throw new ArgumentException($"Filepath does not exist:\n{filepath}");
@@ -23,22 +48,33 @@ namespace Iniciere
         //this.filepath = filepath;
         //this.start = start;
         //this.end = end;
-        public string Name { get; set; }
-        public List<string> FileExts { get; }
-            = new List<string>();
-        public List<string> Langs { get; }
-            = new List<string>();
-        public List<string> Categories { get; }
-            = new List<string>();
-        public List<string> Flags { get; }
-            = new List<string>();
-        public List<TemplateProperty> Properties { get; }
-            = new List<TemplateProperty>();
+        public string TmpName
+        {
+            get => m_TemplateName;
+            set => m_TemplateName = value;
+        }
+        public List<string> FileExts => fileExts;
+        public List<string> Langs => langs;
+        public List<string> Categories => categories;
+        public List<string> Flags => flags;
+        public List<TemplateProperty> Properties => properties;
         
-        public TemplateProperty FileNameProperty { get; set; }
+        public TemplateProperty FileNameProperty
+        {
+            get => fileNameProperty;
+            set => fileNameProperty = value;
+        }
 
-        public string ShortDescription { get; set; } = "";
-        public string LongDescription { get; set; } = "";
+        public string ShortDescription
+        {
+            get => shortDescription;
+            set => shortDescription = value;
+        }
+        public string LongDescription
+        {
+            get => longDescription;
+            set => longDescription = value;
+        }
 
         public string GetContents() => location.GetContents();
 
@@ -61,15 +97,20 @@ namespace Iniciere
     [Serializable]
     public class TemplateLocation
     {
+        [SerializeField]
+        string filepath;
+        [SerializeField]
+        int startChar, charCount;
+
         public TemplateLocation(string filepath, int startInChars, int countInChars)
         {
-            Filepath = filepath;
-            StartChar = startInChars;
-            CharCount = countInChars;
+            this.filepath = filepath;
+            startChar = startInChars;
+            charCount = countInChars;
         }
-        public string Filepath { get; }
-        public int StartChar { get; }
-        public int CharCount { get; }
+        public string Filepath => filepath;
+        public int StartChar => startChar;
+        public int CharCount => charCount;
 
         string contentCache = null;
 
