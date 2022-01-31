@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -716,6 +717,65 @@ namespace Iniciere
         //}
         #endregion
 
+    }
+
+    public class NewCompiler
+    {
+        const string TEMPLATE_START = @"<#iniciere";
+        const string TEMPLATE_DIV = @"\\===//";
+        const string TEMPLATE_END = @"#/>";
+        /*
+         TODO TemplateInfo values:
+        * Name
+        * FileExts
+        * Langs
+        * Categories
+        * Flags
+        * Properties
+        * FileNameProperty
+        * ShortDescription
+        * LongDescription
+         */
+        public static int Precompile(TemplateLocation templateLocation, in TemplateInfo templateInfo)
+        {
+            var contents = templateLocation.GetContents(); // TODO: Get IEnumerator<char> from File at Location
+
+            var tokens = new ConcurrentQueue<Token>();
+            
+
+            var task = Lexer.ParseAsync(contents, tokens));
+            
+
+            var log = new StringBuilder();
+            log.AppendLine("============ TOKENS ============");
+            log.AppendLine("================================");
+            foreach (var item in tokens)
+            {
+                log.AppendLine(item.ToString());
+            }
+            Debug.Log(log);
+
+
+            return 0;
+
+            // ==================================== \\
+            static string TryStartTemplate(string line)
+            {
+                if (!line.StartsWith(TEMPLATE_START))
+                {
+                    throw new Exception($"Template code provided has invalid start: \n {line}");
+                }
+                return StringUtils.CaptureInBetween(line);
+                //template.Name = name;
+            }
+            static void TryEndTemplate(string line)
+            {
+                if (!line.StartsWith(TEMPLATE_END))
+                {
+                    throw new Exception($"Template code provided has invalid end: \n {line}");
+                }
+            }
+        }
     }
 
     public enum IniciereOperator

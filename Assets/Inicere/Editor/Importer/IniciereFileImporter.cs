@@ -22,23 +22,31 @@ namespace Iniciere
             if (!import)
                 return;
 
-            var templateLocations = GetTemplates(ctx.assetPath)
-                .ToList();
+            var templateLocations = GetTemplates(ctx.assetPath);
 
+            Debug.Log($"BREAK");
             foreach (var tmp in templateLocations)
             {
+                //Debug.Log($"BREAK");
                 var info = TemplateInfo.New(tmp);
-                int result = Compiler.Precompile(tmp, info);
+                int result = NewCompiler.Precompile(tmp, info);
 
-                if (result == 0)
-                {
-                    ctx.AddObjectToAsset(info.TmpName, info);
-                }
+                //if (result == 0)
+                //{
+                //    ctx.AddObjectToAsset(info.TmpName, info);
+                //}
             }
 
             
 
         }
+
+        //static IEnumerable<TemplateLocation> NewGetTemplates(string path)
+        //{
+        //    var text = File.ReadAllText(path);
+
+        //    text.FindAll(TMP_START)
+        //}
 
         static IEnumerable<TemplateLocation> GetTemplates(string path)
         {
@@ -50,9 +58,19 @@ namespace Iniciere
             //int start = 0;
             int i = 0;
             int c;
+
+            int watchDog = 20000;
+
             do
             {
                 c = stream.Read();
+                watchDog--;
+                
+                if (watchDog < 0)
+                {
+                    throw new System.Exception("Watch Dog Limit");
+                }
+
                 char debug = (char)c;
                 if (inside)
                 {
@@ -94,6 +112,7 @@ namespace Iniciere
                 i++;
             }
             while (c != -1);
+
         }
     }
 

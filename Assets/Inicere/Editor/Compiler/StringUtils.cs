@@ -1065,6 +1065,27 @@ namespace Iniciere
         public static bool InRange<T>(this T[] array, int i) => i >= 0 && i < array.Length;
         public static bool InRange<T>(this List<T> list, int i) => i >= 0 && i < list.Count;
 
+        public static IEnumerable<int> FindAll(this string text, string value)
+        {
+            
+            for (int i = 0; i < text.Length; i++)
+            {
+                int c = 0;
+                while (text.IsInBounds(i - c) &&
+                    text[i - c] == value[(value.Length - 1) - c])
+                {
+                    c++;
+                    if (c >= value.Length)
+                    {
+                        yield return i - c;
+                        break;
+                    }
+                }
+            }
 
+        }
+
+        public static bool IsInBounds(this string str, in int i) =>
+            i > -1 && str.Length > i;
     }
 }

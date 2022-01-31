@@ -30,6 +30,8 @@ namespace Iniciere
         List<TemplateProperty> properties = new List<TemplateProperty>();
         [SerializeField]
         TemplateProperty fileNameProperty;
+        [SerializeField]
+        List<Token> tokens = new List<Token>();
 
         //public TemplateInfo(TemplateLocation location)
         //{
@@ -75,6 +77,8 @@ namespace Iniciere
             get => longDescription;
             set => longDescription = value;
         }
+
+
 
         public string GetContents() => location.GetContents();
 

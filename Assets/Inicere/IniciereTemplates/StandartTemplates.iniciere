@@ -17,32 +17,32 @@
 	[Toggle("Add Empty Constructor")]
 	var $constructor
 	
-	#FORMAT($filename)
+	@FORMAT($filename)
 	file "{}.cs"
 
-	add "
+	add '''
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;"
+using System.Linq;'''
 
-	//TODO: IF, VERIFYNAMESPACE
-	#IF($unitynamespace)
+	# TODO: IF, VERIFYNAMESPACE
+	@IF($unitynamespace)
 	add "using UnityEngine;#n"
 	
-	//TODO: ENCAPSULATESCOPE (adds tabs before every '\n')
-	//TODO: if statements (if, else, endif, elif, keywords) these act like the C# precompiler
+	# TODO: ENCAPSULATESCOPE (adds tabs before every '\n')
+	# TODO: if statements (if, else, endif, elif, keywords) these act like the C# precompiler
 
-	//#TABIF() //TODO: Fix IsAt() StringBuilder Extension Function
+	#@TABIF() #TODO: Fix IsAt() StringBuilder Extension Function
 	
-	#FORMAT($filename)
-	add "
+	@FORMAT($filename)
+	add '''
 public class {}
-{#n#t"
+{#n#t'''
 
-#FORMAT($filename)
-#IF($constructor)
-#TABIF($constructor)
+@FORMAT($filename)
+@IF($constructor)
+@TABIF($constructor)
 add "#tpublic {}()#n{#n#t#n}#n"
 	
 add "}"
@@ -64,12 +64,18 @@ add "}"
 	[ClassType("Inherit From")]
 	var $baseType
 
-	#FORMAT($filename)
+	@FORMAT($filename)
 	file "{}.cs"
 
 
-
 #/>
+
+AST for Above:
+Template
+|___Statements:
+	|___[Name|sdesc], [StringLit, "CSharp class implementing another class"]
+	|___ ...
+	
 
 <#iniciere "Unity MonoBehaviour"
 
@@ -77,7 +83,7 @@ add "}"
 	ldesc "Unity MonoBehaviour Class, most similar to default script creation"
 	
 	language "C##"
-	category "standart"
+	category "stand"
 	flags "std, oop"
 	fileext "cs"
 	
@@ -93,37 +99,33 @@ add "}"
 	[Toggle("Add FixedUpdate Method")]
 	var $mtdFixedUpdate
 	
-	#FORMAT($filename)
+	@FORMAT($filename)
 	file "{}.cs"
 	
-	add "
+	add '''
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;#n"
+using UnityEngine;#n'''
 	
-	#FORMAT($filename)
-	add "
+	@FORMAT($filename)
+	add '''
 public class {} : MonoBehaviour
 {
-#t"
+#t'''
 
-#IF($mtdAwake)
-add "
-#tvoid Awake()#n#t{#n#t#t#n#t}"
+@IF($mtdAwake)
+add "#n#tvoid Awake()#n#t{#n#t#t#n#t}"
 
-#IF($mtdStart)
-add "
-#tvoid Start()#n#t{#n#t#t#n#t}"
+@IF($mtdStart)
+add "#n#tvoid Start()#n#t{#n#t#t#n#t}"
 
-#IF($mtdUpdate)
-add "
-#tvoid Update()#n#t{#n#t#t#n#t}"
+@IF($mtdUpdate)
+add "#n#tvoid Update()#n#t{#n#t#t#n#t}"
 
-#IF($mtdFixedUpdate)
-add "
-#tvoid FixedUpdate()#n#t{#n#t#t#n#t}"
+@IF($mtdFixedUpdate)
+add "#n#tvoid FixedUpdate()#n#t{#n#t#t#n#t}"
 
 add "}"
 	
@@ -150,33 +152,35 @@ add "}"
 	[Toggle("Add CreateAssetMenu")]
 	var $createAssetMenu
 	
-	#FORMAT($filename)
+	@FORMAT($filename)
 	file "{}.cs"
 	
-	add "
+	add '''
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;#n"
+using UnityEngine;#n'''
 	
-	#IF($createAssetMenu)
+	@IF($createAssetMenu)
 	add "[CreateAssetMenu]"
 	
-	#FORMAT($filename)
-	add "class {} : ScriptableObject
+	@FORMAT($filename)
+	add '''class {} : ScriptableObject
 {
-#t"
+#t'''
 
-#IF($mtdOnEnable)
+	@IF($mtdOnEnable)
 	add "#tvoid OnEnable()#n#t{#n#t#t#n#t}#n"
 
-#IF($mtdOnDisable)
+	@IF($mtdOnDisable)
 	add "#tvoid OnDisable()#n#t{#n#t#t#n#t}#n"
 
 	add "}"
 	
 #/>
+
+OLD
 
 TODO:
 * ClassType Editor Window

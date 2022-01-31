@@ -215,6 +215,19 @@ namespace Iniciere
             return new string(ccol.ToArray());
         }
         //public static bool HasCommonItem<T1, T2>()
+
+        public static T FirstOr<T>(this IEnumerable<T> it, T value)
+        {
+            var e = it.GetEnumerator();
+            if (e.MoveNext())
+            {
+                return e.Current;
+            }
+            else
+            {
+                return value;
+            }
+        }
     }
     
     public delegate void Procedure<T>(ref T obj);
