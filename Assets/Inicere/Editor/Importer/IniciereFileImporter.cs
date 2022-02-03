@@ -1,20 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UnityEditor.AssetImporters;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Iniciere
 {
     [ScriptedImporter(0, "iniciere")]
     public class IniciereFileImporter : ScriptedImporter
     {
-        const string TMP_START = "<#iniciere";
-        const string TMP_END = "#/>";
-
+        const string TEMPLATE_START = @"<#iniciere";
+        const string TEMPLATE_DIV = @"\=/";
+        const string TEMPLATE_END = @"//>";
         [SerializeField]
-        bool import;
+        bool import, importFirstOnly;
         //List<string> files;
 
         public override void OnImportAsset(AssetImportContext ctx)
@@ -24,21 +26,26 @@ namespace Iniciere
 
             var templateLocations = GetTemplates(ctx.assetPath);
 
-            Debug.Log($"BREAK");
+            List<TemplateInfo> list = new List<TemplateInfo>();
+            //Debug.Log($"BREAK");
             foreach (var tmp in templateLocations)
             {
                 //Debug.Log($"BREAK");
                 var info = TemplateInfo.New(tmp);
                 int result = NewCompiler.Precompile(tmp, info);
 
-                //if (result == 0)
-                //{
-                //    ctx.AddObjectToAsset(info.TmpName, info);
-                //}
+                if (result == 0)
+                {
+                    ctx.AddObjectToAsset(info.name, info);
+                    list.Add(info);
+                }
+                if (importFirstOnly)
+                    break;
             }
 
-            
-
+            var header = TemplateHeader.From(list);
+            ctx.AddObjectToAsset(Path.GetFileNameWithoutExtension(ctx.assetPath) + "_tmps", header);
+            ctx.SetMainObject(header);
         }
 
         //static IEnumerable<TemplateLocation> NewGetTemplates(string path)
@@ -59,7 +66,11 @@ namespace Iniciere
             int i = 0;
             int c;
 
-            int watchDog = 20000;
+            /*
+            
+            4000 = 80K
+             */
+            int watchDog = 50000;
 
             do
             {
@@ -75,13 +86,17 @@ namespace Iniciere
                 if (inside)
                 {
                     count++;
-                    if ((char)c == TMP_END[insideCount])
+                    if ((char)c == TEMPLATE_END[insideCount])
                     {
                         insideCount++;
-                        if (TMP_END.Length == insideCount)
+                        if (TEMPLATE_END.Length == insideCount)
                         {
                             //all.Add(new TemplateLocation(path, i - count - tmpStart.Length, count + tmpStart.Length));
-                            yield return new TemplateLocation(path, i - count - TMP_START.Length, count + TMP_START.Length);
+                            yield return new TemplateLocation(
+                                path,
+                                i - count - TEMPLATE_START.Length,
+                                count + TEMPLATE_START.Length
+                                );
 
                             inside = false;
                             insideCount = 0;
@@ -95,10 +110,10 @@ namespace Iniciere
                 }
                 else
                 {
-                    if ((char)c == TMP_START[insideCount])
+                    if ((char)c == TEMPLATE_START[insideCount])
                     {
                         insideCount++;
-                        if (TMP_START.Length == insideCount)
+                        if (TEMPLATE_START.Length == insideCount)
                         {
                             inside = true;
                             insideCount = 0;
@@ -115,5 +130,4 @@ namespace Iniciere
 
         }
     }
-
 }

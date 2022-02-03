@@ -197,7 +197,7 @@ namespace Iniciere
 
             const float TMP_ITEM_HEIGHT = 80;
             const float TMP_ITEM_MARGIN = 2.2f;
-            Color tmpColor1 = new Color(0.3f, 0.3f, 0.3f);
+            Color tmpColor1 = new Color(0.3f, 0.3f, 0.3f); // TODO: EditorBackround thing
             Color tmpColor2 = new Color(0.4f, 0.4f, 0.4f);
             bool colToUse = false;
             bool selected = false;

@@ -2,6 +2,7 @@
 <#iniciere "Empty CSharp Class"
 
 	sdesc "Standart CSharp class"
+	
 	ldesc "Standart CSharp class with no code"
 
 	language "C##"
@@ -9,25 +10,28 @@
 	flags "std, oop"
 	fileext "cs"
 
-	[FileName]
-	var $filename
-	[Toggle("Add using UnityEngine Statement")]
-	var $unitynamespace
+	@FileName 
+	var filename
+	@Toggle("Add using UnityEngine Statement") 
+	var unitynamespace
 
-	[Toggle("Add Empty Constructor")]
-	var $constructor
+	@Toggle("Add Empty Constructor") 
+	var constructor
 	
-	@FORMAT($filename)
+	\=/
+	
+	@FORMAT(filename)
 	file "{}.cs"
 
 	add '''
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;'''
+using System.Linq;
+'''
 
 	# TODO: IF, VERIFYNAMESPACE
-	@IF($unitynamespace)
+	@IF(unitynamespace)
 	add "using UnityEngine;#n"
 	
 	# TODO: ENCAPSULATESCOPE (adds tabs before every '\n')
@@ -35,19 +39,20 @@ using System.Linq;'''
 
 	#@TABIF() #TODO: Fix IsAt() StringBuilder Extension Function
 	
-	@FORMAT($filename)
+	@FORMAT(filename)
 	add '''
 public class {}
 {#n#t'''
 
-@FORMAT($filename)
-@IF($constructor)
-@TABIF($constructor)
+@FORMAT(filename)
+@IF(constructor)
+@TABIF(constructor)
 add "#tpublic {}()#n{#n#t#n}#n"
 	
 add "}"
 
-#/>
+//>
+
 
 <#iniciere "Inherited CSharp Class"
 
@@ -59,21 +64,23 @@ add "}"
 	flags "std, oop"
 	fileext "cs"
 
-	[FileName]
+	@FileName 
 	var $filename
-	[ClassType("Inherit From")]
+	@ClassType("Inherit From") 
 	var $baseType
+
+	\=/
 
 	@FORMAT($filename)
 	file "{}.cs"
 
 
-#/>
+//>
 
 AST for Above:
 Template
 |___Statements:
-	|___[Name|sdesc], [StringLit, "CSharp class implementing another class"]
+	|___@Name|sdesc , @StringLit, "CSharp class implementing another class "
 	|___ ...
 	
 
@@ -87,19 +94,21 @@ Template
 	flags "std, oop"
 	fileext "cs"
 	
-	[FileName]
-	var $filename
+	@FileName 
+	var filename
 	
-	[Toggle("Add Awake Method")]
-	var $mtdAwake
-	[Toggle("Add Start Method")]
-	var $mtdStart
-	[Toggle("Add Update Method")]
-	var $mtdUpdate
-	[Toggle("Add FixedUpdate Method")]
-	var $mtdFixedUpdate
+	@Toggle("Add Awake Method") 
+	var mtdAwake
+	@Toggle("Add Start Method") 
+	var mtdStart
+	@Toggle("Add Update Method") 
+	var mtdUpdate
+	@Toggle("Add FixedUpdate Method") 
+	var mtdFixedUpdate
 	
-	@FORMAT($filename)
+	\=/
+	
+	@FORMAT(filename)
 	file "{}.cs"
 	
 	add '''
@@ -109,27 +118,27 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;#n'''
 	
-	@FORMAT($filename)
+	@FORMAT(filename)
 	add '''
 public class {} : MonoBehaviour
 {
 #t'''
 
-@IF($mtdAwake)
+@IF(mtdAwake)
 add "#n#tvoid Awake()#n#t{#n#t#t#n#t}"
 
-@IF($mtdStart)
+@IF(mtdStart)
 add "#n#tvoid Start()#n#t{#n#t#t#n#t}"
 
-@IF($mtdUpdate)
+@IF(mtdUpdate)
 add "#n#tvoid Update()#n#t{#n#t#t#n#t}"
 
-@IF($mtdFixedUpdate)
+@IF(mtdFixedUpdate)
 add "#n#tvoid FixedUpdate()#n#t{#n#t#t#n#t}"
 
 add "}"
 	
-#/>
+//>
 
 <#iniciere "Unity ScriptableObject"
 
@@ -141,18 +150,20 @@ add "}"
 	flags "std, oop"
 	fileext "cs"
 	
-	[FileName]
-	var $filename
+	@FileName 
+	var filename
 	
-	[Toggle("Add OnEnable Method")]
-	var $mtdOnEnable
-	[Toggle("Add OnDisable Method")]
-	var $mtdOnDisable
+	@Toggle("Add OnEnable Method") 
+	var mtdOnEnable
+	@Toggle("Add OnDisable Method") 
+	var mtdOnDisable
 	
-	[Toggle("Add CreateAssetMenu")]
-	var $createAssetMenu
+	@Toggle("Add CreateAssetMenu") 
+	var createAssetMenu
 	
-	@FORMAT($filename)
+	\=/
+	
+	@FORMAT(filename)
 	file "{}.cs"
 	
 	add '''
@@ -162,23 +173,23 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;#n'''
 	
-	@IF($createAssetMenu)
-	add "[CreateAssetMenu]"
+	@IF(createAssetMenu)
+	add "@CreateAssetMenu "
 	
-	@FORMAT($filename)
+	@FORMAT(filename)
 	add '''class {} : ScriptableObject
 {
 #t'''
 
-	@IF($mtdOnEnable)
+	@IF(mtdOnEnable)
 	add "#tvoid OnEnable()#n#t{#n#t#t#n#t}#n"
 
-	@IF($mtdOnDisable)
+	@IF(mtdOnDisable)
 	add "#tvoid OnDisable()#n#t{#n#t#t#n#t}#n"
 
 	add "}"
 	
-#/>
+//>
 
 OLD
 

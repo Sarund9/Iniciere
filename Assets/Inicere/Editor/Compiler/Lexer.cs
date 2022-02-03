@@ -13,13 +13,22 @@ namespace Iniciere
     {
 
         private static readonly HashSet<char> s_Operators
-            = new HashSet<char>("{}()[].,:;=+-*/%&|^~<>!?$#@");
+            = new HashSet<char>("{}()[].,:;=+-*/%&|^~<>!?$#@\\");
 
         private readonly static Dictionary<string, TokenType> s_CompoundOperators
             = new Dictionary<string, TokenType>()
             {
                 { "<#", TokenType.OpTemplateStart },
-                { "#/>", TokenType.OpTemplateEnd },
+                { "//>", TokenType.OpTemplateEnd },
+                { "\\=/", TokenType.OpTemplateSeparate },
+            };
+
+        static readonly Dictionary<string, TokenType> s_ValueKeywords =
+            new Dictionary<string, TokenType>()
+            {
+                { "null", TokenType.Err },
+                { "true", TokenType.Err },
+                { "false", TokenType.Err },
             };
 
 
@@ -99,7 +108,7 @@ namespace Iniciere
 
                         if (!tkAdd.LastWas2Tick && (!isIt || it.Current == '\n' || it.Current == '\r'))
                         {
-                            Debug.LogError($"String End of Line Error at [{build}]");
+                            tkAdd.Add(new Token(TokenType.Err, $"String End of Line Error at[{ build }]"));
                             return false;
                         }
                         //throw new Exception("String Error");
@@ -120,7 +129,7 @@ namespace Iniciere
 
                         if (!tkAdd.LastWas2Tick && (!isIt || it.Current == '\n' || it.Current == '\r'))
                         {
-                            Debug.LogError($"String End of Line Error at [{build}]");
+                            tkAdd.Add(new Token(TokenType.Err, $"String End of Line Error at[{build}]"));
                             return false;
                         }
                         //throw new Exception("String Error");
@@ -172,7 +181,7 @@ namespace Iniciere
                         isIt = it.MoveNext();
                     }
 
-                    // Operator 
+                    // Compound Operator 
                     if (s_CompoundOperators.TryGetValue(build.ToString(), out var type))
                     {
                         tkAdd.Add(new Token(type, ""));
@@ -192,6 +201,7 @@ namespace Iniciere
                 Debug.LogError($"Unknown Char: {it.Current}");
                 return false;
             }
+            tkAdd.Add(new Token(TokenType.EoT, ""));
 
             return true;
         }
@@ -272,11 +282,16 @@ namespace Iniciere
         {
             return $"[{Type}|{Value}]";
         }
+
+        public string ToSrc()
+        {
+            return "[Format Not Supported]";
+        }
     }
     public enum TokenType
     {
         Err = 0,
-        /// <summary> End of Template (#/>) </summary>
+        /// <summary> End of Template (//>) </summary>
         EoT,
         /// <summary> Name, Value is String </summary>
         Name,
@@ -288,6 +303,9 @@ namespace Iniciere
         Comment,
         /// <summary> NewLine, No Value </summary>
         NewLine,
+
+        // TODO: Keywords
+        KwNull, KwFalse, KwTrue,
 
         // Brackets
         LeftBracket,            // {
@@ -319,13 +337,16 @@ namespace Iniciere
         DollarSign,             // $
         HashSign,               // #
         AtSign,                 // @
+        Backslash,              // \
 
         // Compound Operators
         OpMacroNode,            // ===
         OpNullAssign,           // ---
 
         OpTemplateStart,        // <#
-        OpTemplateEnd,          // #/>
+        OpTemplateEnd,          // //>
+        OpTemplateSeparate,     // \=/
+
     }
 
 }

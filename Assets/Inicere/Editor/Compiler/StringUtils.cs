@@ -1087,5 +1087,87 @@ namespace Iniciere
 
         public static bool IsInBounds(this string str, in int i) =>
             i > -1 && str.Length > i;
+
+        public static string AggrToString<T>(this IEnumerable<T> it, Func<T, string> getstr)
+        {
+            var build = new StringBuilder();
+            foreach (var item in it)
+            {
+                build.Append(getstr(item));
+            }
+            return build.ToString();
+        }
+        public static string AggrToString<T>(this IEnumerable<T> it, string separator)
+        {
+            var build = new StringBuilder();
+            foreach (var item in it)
+            {
+                build.Append(item);
+                build.Append(separator);
+            }
+            build.Remove(build.Length - separator.Length, separator.Length);
+            return build.ToString();
+        }
+        public static string AggrToString<T>(this IEnumerable<T> it)
+        {
+            var build = new StringBuilder();
+            foreach (var item in it)
+            {
+                build.Append(item);
+            }
+            return build.ToString();
+        }
+
+        public static bool TryParse(string text, out string str)
+        {
+            var build = new StringBuilder();
+            bool raw = text[0] == '`';
+            bool escape = false;
+            for (int i = 1; i < text.Length; i++)
+            {
+                char C = text[i];
+
+                if (escape)
+                {
+                    switch (C)
+                    {
+                        case '#':
+                            build.Append('#');
+                            break;
+                        case 'n':
+                            build.Append(Environment.NewLine);
+                            break;
+                        case 't':
+                            build.Append('\t');
+                            break;
+                        case '"':
+                            build.Append('"');
+                            break;
+                        case '\'':
+                            build.Append('\'');
+                            break;
+
+                        default:
+                            str = null;
+                            return false;
+                    }
+                }
+                else
+                {
+                    if (!raw && C == '#')
+                    {
+                        escape = true;
+                        continue;
+                    }
+                    else
+                    {
+                        build.Append(C);
+                    }
+                }
+            }
+            str = build.ToString();
+            return true;
+        }
+
     }
 }

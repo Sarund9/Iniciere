@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
@@ -719,63 +722,392 @@ namespace Iniciere
 
     }
 
-    public class NewCompiler
+    public static class NewCompiler
     {
-        const string TEMPLATE_START = @"<#iniciere";
-        const string TEMPLATE_DIV = @"\\===//";
-        const string TEMPLATE_END = @"#/>";
+
+
+
         /*
          TODO TemplateInfo values:
-        * Name
-        * FileExts
-        * Langs
-        * Categories
-        * Flags
+        * Name          |
+        * Langs         |
+        * Categories    |
+        * Flags         |
+        * FileExts      |
         * Properties
         * FileNameProperty
-        * ShortDescription
-        * LongDescription
+        * ShortDescription  |
+        * LongDescription   |
+        TODO:
+        * AST
+        * Value Resolution
          */
-        public static int Precompile(TemplateLocation templateLocation, in TemplateInfo templateInfo)
+        
+        public static int Precompile(TemplateLocation templateLocation, TemplateInfo templateInfo)
         {
             var contents = templateLocation.GetContents(); // TODO: Get IEnumerator<char> from File at Location
 
             var tokens = new ConcurrentQueue<Token>();
             
-
-            var task = Lexer.ParseAsync(contents, tokens));
+            var log = new StringBuilder(" === LOG === ");
+            var tklog = new StringBuilder();
+            tklog.AppendLine("============ TOKENS ============");
+            tklog.AppendLine("================================");
             
+            var task = Lexer.ParseAsync(contents, tokens);
 
-            var log = new StringBuilder();
-            log.AppendLine("============ TOKENS ============");
-            log.AppendLine("================================");
-            foreach (var item in tokens)
+            var current = new Token();
+            
+            int linecount = 0;
+            bool AwaitDequeue(bool log = false)
             {
-                log.AppendLine(item.ToString());
-            }
-            Debug.Log(log);
+                if (log)
+                    Debug.Log($"{tokens.Count} < 1 && {task.IsCompleted}");
+                
+                if (tokens.Count < 1 && task.IsCompleted)
+                {
+                    return false;
+                }
 
+                while (!tokens.TryDequeue(out current) || current.Type == TokenType.Comment)
+                {
+                    if (tokens.Count < 1 && task.IsCompleted)
+                    {
+                        break;
+                    }
+                }
+                tklog.AppendLine(current.ToString());
+
+                //if (current.Type == TokenType.OpTemplateSeparate)
+                //{
+                //    Debug.Log("FOUND");
+                //}
+
+                if (current.Type == TokenType.NewLine)
+                    linecount++;
+                
+                if (log)
+                    Debug.Log($"Logging {current}");
+
+                if (current.Type == TokenType.Err)
+                {
+                    Log(current.Value);
+                    return false;
+                }
+
+                
+                return true;
+            }
+
+            // TODO: Throw Errors in Each
+            if (!AwaitDequeue()) Debug.Log("BAD1"); // -> Start
+            //Debug.Log($"EXT LOG: {current}");
+            if (!AwaitDequeue()) Debug.Log("BAD2"); // -> Name = iniciere 
+            if (!AwaitDequeue()) Debug.Log("BAD3"); // -> StringLit
+
+            //Debug.Log($"SETTING NAME TO {current}");
+            if (!StringUtils.TryParse(current.Value, out var tmpName)) {
+                Log($"Unable to parse Template Name: {current.Value}");
+                return -1;
+            }
+            templateInfo.name = tmpName;
+            templateInfo.TmpName = tmpName;
+            AwaitDequeue(); // -> Template Begins...
+
+            while (current.Type != TokenType.OpTemplateSeparate &&
+                current.Type != TokenType.EoT)
+            {
+                // Ignore Comments & NewLines
+                while (current.Type == TokenType.NewLine)
+                {
+                    AwaitDequeue();
+                    if (current.Type == TokenType.OpTemplateSeparate ||
+                        current.Type == TokenType.EoT) 
+                    {
+                        break;
+                    }
+                }
+                
+                // Catch Expressions
+                var buffer = new List<Token>();
+                do
+                {
+                    // TODO: Catch '()', Scopes: '{}', Scoped Expressions
+                    if (current.Type == TokenType.NewLine ||
+                        current.Type == TokenType.Semicolon ||
+                        current.Type == TokenType.OpTemplateSeparate ||
+                        current.Type == TokenType.EoT)
+                    {
+                        if (buffer.Count == 0)
+                            continue;
+
+                        // END EXPRESSION, PARSE
+                        if (TryParseExpression(buffer))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            //Debug.Log(log);
+                            //return -1;
+                            break;
+                        }
+                    }
+                    
+                    buffer.Add(current);
+                } while (AwaitDequeue());
+
+            }
+
+            tklog.AppendLine("================================");
+
+            Debug.Log(tklog);
+            Debug.Log(log);
 
             return 0;
 
             // ==================================== \\
-            static string TryStartTemplate(string line)
+            
+            bool TryParseExpression(List<Token> toks)
             {
-                if (!line.StartsWith(TEMPLATE_START))
+                if (toks.Count == 0)
+                    return false;
+
+                Log($"PARSING: {toks.AggrToString(", ")}");
+
+                switch (toks[0].Type)
                 {
-                    throw new Exception($"Template code provided has invalid start: \n {line}");
+                    // Functions
+                    case TokenType.Name:
+                        Log($"Function Call: '{toks[0].Value}'");
+                        /* TODO:
+                         * var Expression
+                         * Set Variables
+                         * Variable function Call
+                        */
+                        if (toks[0].Value == "var")
+                        {
+                            return HandleVarDecl(toks.Skip(1));
+                        }
+
+                        return HandleFunctionCall(toks);
+                    // Macros and Decorators
+                    case TokenType.AtSign:
+                        Log($"Decorator/Macro not Supported");
+                        break;
+
+                    default: break;
                 }
-                return StringUtils.CaptureInBetween(line);
-                //template.Name = name;
+                Log($"Exrpession could not be Parsed, Unexpected: '{toks[0].ToPrint()}'");
+                return false;
             }
-            static void TryEndTemplate(string line)
+
+            bool HandleFunctionCall(List<Token> toks)
             {
-                if (!line.StartsWith(TEMPLATE_END))
+                string name = toks[0].Value;
+
+                object value;
+                switch (name)
                 {
-                    throw new Exception($"Template code provided has invalid end: \n {line}");
+                    #region SHORT_DESC
+                    case "sdesc":
+                        if (toks.Count < 1)
+                        {
+                            Log($"Function 'sdesc' expected a string, got nothing");
+                            return false;
+                        }
+                        value = HandleExpression(toks.Skip(1));
+                        if (value is null) {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string) {
+                            templateInfo.ShortDescription = value as string;
+                            return true;
+                        }
+                        Log($"Function 'sdesc' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region LONG_DESC
+                    case "ldesc":
+                        if (toks.Count < 1)
+                        {
+                            Log($"Function 'ldesc' expected a string, got nothing");
+                            return false;
+                        }
+                        value = HandleExpression(toks.Skip(1));
+                        if (value is null) {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string) {
+                            templateInfo.LongDescription = value as string;
+                            return true;
+                        }
+                        Log($"Function 'ldesc' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region LANGUAGE
+                    case "language":
+                        if (toks.Count < 1)
+                        {
+                            Log($"Function 'language' expected a string, got nothing");
+                            return false;
+                        }
+                        value = HandleExpression(toks.Skip(1));
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string)
+                        {
+                            templateInfo.Langs.AddRange(((string)value).CustomSplit());
+                            return true;
+                        }
+                        Log($"Function 'language' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region CATEGORY
+                    case "category":
+                        if (toks.Count < 1)
+                        {
+                            Log($"Function 'category' expected a string, got nothing");
+                            return false;
+                        }
+                        value = HandleExpression(toks.Skip(1));
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string)
+                        {
+                            templateInfo.Categories.AddRange(((string)value).CustomSplit());
+                            return true;
+                        }
+                        Log($"Function 'category' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region FLAGS
+                    case "flags":
+                        if (toks.Count < 1)
+                        {
+                            Log($"Function 'flags' expected a string, got nothing");
+                            return false;
+                        }
+                        value = HandleExpression(toks.Skip(1));
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string)
+                        {
+                            templateInfo.Flags.AddRange(((string)value).CustomSplit());
+                            return true;
+                        }
+                        Log($"Function 'flags' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region FILEEX
+                    case "fileext":
+                        if (toks.Count < 1)
+                        {
+                            Log($"Function 'fileext' expected a string, got nothing");
+                            return false;
+                        }
+                        value = HandleExpression(toks.Skip(1));
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string)
+                        {
+                            templateInfo.FileExts.AddRange(((string)value).CustomSplit());
+                            return true;
+                        }
+                        Log($"Function 'fileext' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    default:
+                        Log($"Unknown Function: {name}");
+                        return false;
                 }
             }
+            bool HandleVarDecl(IEnumerable<Token> toks)
+            {
+                var it = toks.GetEnumerator();
+                var isIt = it.MoveNext();
+                if (!isIt) {
+                    Log("Missing arguments in Variable Declaration");
+                    return false;
+                }
+
+                var current = it.Current;
+                if (current.Type != TokenType.Name) {
+                    Log($"Expected Name, got '{current.ToSrc()}'");
+                    return false;
+                }
+
+                return false;
+            }
+
+            // TODO: AST
+            object HandleExpression(IEnumerable<Token> toks)
+            {
+                int i = 0;
+                var sbuild = new StringBuilder();
+                StringNode last = null;
+
+                foreach (var item in toks)
+                {
+                    if (item.Type == TokenType.StringLit)
+                    {
+                        if (StringNode.TryParse(item.Value, out var newStrNode))
+                        {
+                            newStrNode.Last = last;
+                            last = newStrNode;
+                        }
+                        else
+                        {
+                            Log("String Parse error!");
+                            return null;
+                        }
+                    }
+                    else
+                    {
+                        Log("Non String not supported");
+                        return null;
+                    }
+
+                    
+                }
+
+                return last.BuildToRoot();
+
+                //Log($"Could not Parse Expression {toks.AggrToString(", ")}");
+                //return null;
+            }
+
+            bool AwaitDequeueAssert(params TokenType[] assert)
+            {
+                while (!tokens.TryDequeue(out current) || current.Type == TokenType.Comment)
+                { }
+                foreach (var item in assert)
+                    if (item == current.Type)
+                        return false;
+                
+
+                return true;
+            }
+            void Log(string msg)
+            {
+                log.AppendLine(
+                    $"[{templateLocation.Filepath} - " +
+                    $"{linecount}]\n{msg}\n");
+            }
+            
         }
+
+        // TODO: Move to Extensions
+        static bool IsRunning(this Task task) =>
+            !task.IsCompleted && !task.IsFaulted && !task.IsCanceled;
     }
 
     public enum IniciereOperator
@@ -791,9 +1123,112 @@ namespace Iniciere
         LessOrEqual,    // <=
     }
 
-    //public class VariableInstance
-    //{
-    //    public Type type;
-    //    public object value;
-    //}
+    class NumberNoder
+    {
+        
+    }
+    class BinOpNode
+    {
+
+    }
+    class StringNode
+    {
+        StringNode m_Next, m_Last;
+
+        private StringNode(string value)
+        {
+            Value = value;
+        }
+        public string Value { get; private set; }
+        
+        public StringNode Next
+        {
+            get => m_Next;
+            set
+            {
+                m_Next = value;
+                if (value is null || value.m_Last == this)
+                    return;
+
+                if (value.m_Last != null)
+                    value.m_Last.m_Next = null;
+
+                value.m_Last = this;
+            }
+        }
+        public StringNode Last
+        {
+            get => m_Last;
+            set
+            {
+                m_Last = value;
+                if (value is null || value.m_Next == this)
+                    return;
+
+                if (value.m_Next != null)
+                    value.m_Next.m_Last = null;
+
+                value.m_Next = this;
+            }
+        }
+
+        public static bool TryParse(string text, out StringNode node)
+        {
+            if (StringUtils.TryParse(text, out var str)) {
+                node = new StringNode(str);
+                return true;
+            }
+            node = null;
+            return false;
+        }
+
+        public string BuildToRoot()
+        {
+            var build = new StringBuilder(Value);
+            var curr = Last;
+            while (curr is StringNode)
+            {
+                build.Append(curr.Value);
+                curr = curr.Last;
+            }
+            return build.ToString();
+        }
+    }
+
+    
 }
+
+#region OLD_CODE
+/*
+public class VariableInstance
+{
+    public Type type;
+    public object value;
+}
+
+class ASTNode
+{
+    private readonly Token m_Token;
+    private ASTNode m_Parent;
+    private readonly HashSet<ASTNode> m_Children
+        = new HashSet<ASTNode>();
+    public ASTNode(Token token)
+    {
+        m_Token = token;
+    }
+    public TokenType Type => m_Token.Type;
+    public string Value => m_Token.Value;
+    public ASTNode Parent
+    {
+        get => m_Parent;
+        set
+        {
+            m_Parent.m_Children.Remove(this);
+            m_Parent = value;
+            m_Parent.m_Children.Add(this);
+        }
+    }
+    public IEnumerable<ASTNode> Children => m_Children;
+}
+*/
+#endregion

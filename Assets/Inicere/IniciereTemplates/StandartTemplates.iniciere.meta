@@ -9,3 +9,4 @@ ScriptedImporter:
   assetBundleVariant: 
   script: {fileID: 11500000, guid: b7914787c12ed624abbb1b5c1d351862, type: 3}
   import: 1
+  importFirstOnly: 0
