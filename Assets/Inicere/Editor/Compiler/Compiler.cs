@@ -724,8 +724,22 @@ namespace Iniciere
 
     public static class NewCompiler
     {
+        static List<LogEntry> s_Log = new List<LogEntry>();
 
-
+        public static void PrintLog(Action<LogEntry> logmethod)
+        {
+            lock (s_Log)
+            {
+                for (int i = 0; i < s_Log.Count; i++)
+                {
+                    logmethod(s_Log[i]);
+                }
+                s_Log.Clear();
+            }
+        }
+        static void LogMsg(string msg) => s_Log.Add(new LogEntry(LogLevel.Msg, msg));
+        static void LogWrn(string msg) => s_Log.Add(new LogEntry(LogLevel.Wrn, msg));
+        static void LogErr(string msg) => s_Log.Add(new LogEntry(LogLevel.Err, msg));
 
         /*
          TODO TemplateInfo values:
@@ -742,7 +756,7 @@ namespace Iniciere
         * AST
         * Value Resolution
          */
-        
+
         public static int Precompile(TemplateLocation templateLocation, TemplateInfo templateInfo)
         {
             var contents = templateLocation.GetContents(); // TODO: Get IEnumerator<char> from File at Location
@@ -1105,9 +1119,32 @@ namespace Iniciere
             
         }
 
+        public static int Compile(TemplateInfo templateInfo, TemplateOutput templateOutput)
+        {
+            
+            return -1;
+        }
+
         // TODO: Move to Extensions
         static bool IsRunning(this Task task) =>
             !task.IsCompleted && !task.IsFaulted && !task.IsCanceled;
+    }
+
+    public struct LogEntry
+    {
+        public LogEntry(LogLevel level, string message)
+        {
+            Level = level;
+            Message = message;
+        }
+        public LogLevel Level { get; }
+        public string Message { get; }
+    }
+    public enum LogLevel
+    {
+        Msg,
+        Wrn,
+        Err,
     }
 
     public enum IniciereOperator

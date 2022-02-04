@@ -6,6 +6,7 @@ namespace Iniciere
     public class TemplateInfoEditor : Editor
     {
         TemplateInfo obj;
+        TemplateGUI ui = new TemplateGUI();
 
         private void OnEnable()
         {
@@ -14,7 +15,7 @@ namespace Iniciere
 
         public override void OnInspectorGUI()
         {
-            TemplateGUI.Draw(obj);
+            ui.Draw(obj);
         }
     }
 }

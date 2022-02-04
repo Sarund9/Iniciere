@@ -9,6 +9,7 @@ namespace Iniciere
     public class TemplateHeaderEditor : Editor
     {
         TemplateHeader obj;
+        TemplateGUI ui = new TemplateGUI();
 
         private void OnEnable()
         {
@@ -20,7 +21,8 @@ namespace Iniciere
             //base.OnInspectorGUI();
             foreach (var template in obj.Templates)
             {
-                TemplateGUI.Draw(template);
+                ui.Draw(template);
+                GUILayout.Space(10f);
             }
         }
         
