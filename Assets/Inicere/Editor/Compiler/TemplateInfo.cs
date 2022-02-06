@@ -78,9 +78,11 @@ namespace Iniciere
             set => longDescription = value;
         }
 
+        public string Filepath => location.Filepath;
 
+        public string GetInfoContents() => location.GetInfoContents();
 
-        public string GetContents() => location.GetContents();
+        public string GetBodyContents() => location.GetBodyContents();
 
         /// <summary> Load a string from the file </summary>
         //public string GetFromFile()
@@ -104,40 +106,91 @@ namespace Iniciere
         [SerializeField]
         string filepath;
         [SerializeField]
-        int startChar, charCount;
+        int infoCharPos, infoCharCount,
+            bodyCharPos, bodyCharCount;
 
-        public TemplateLocation(string filepath, int startInChars, int countInChars)
+        public TemplateLocation(string filepath, int startInChars, int infoPosInChars, int bodyPosInChars = 0)
         {
             this.filepath = filepath;
-            startChar = startInChars;
-            charCount = countInChars;
-        }
-        public string Filepath => filepath;
-        public int StartChar => startChar;
-        public int CharCount => charCount;
+            //startChar = startInChars;
+            infoCharPos = infoPosInChars;
+            bodyCharPos = bodyPosInChars;
 
-        string contentCache = null;
-
-        public string GetContents() //TODO: Cache Results
-        {
-            if (contentCache is object)
+            // Verification
+            if (startInChars < infoPosInChars || infoPosInChars < bodyPosInChars)
             {
-                return contentCache;
+                throw new ArgumentException("Bad Template Location");
+            }
+        }
+
+        public TemplateLocation(string filepath,
+            int infoCharPos, int infoCharCount,
+            int bodyCharPos, int bodyCharCount)
+        {
+            this.filepath = filepath;
+            
+            this.infoCharPos = infoCharPos;
+            this.infoCharCount = infoCharCount;
+
+            this.bodyCharPos = bodyCharPos;
+            this.bodyCharCount = bodyCharCount;
+            
+            // Verification
+            if (infoCharPos >= bodyCharPos ||
+                infoCharCount < 1 ||
+                bodyCharCount < 1)
+            {
+                throw new ArgumentException("Bad Template Location");
+            }
+        }
+
+        public string Filepath => filepath;
+        public int StartChar => 0;
+        public int InfoCharPos => infoCharPos;
+        public int InfoCharCount => infoCharCount;
+        public int BodyCharPos => bodyCharPos;
+        public int BodyCharCount => bodyCharCount;
+
+        string infocontentCache = null;
+        string bodycontentCache = null;
+
+        public string GetInfoContents() //TODO: Cache Results
+        {
+            if (infocontentCache is object)
+            {
+                return infocontentCache;
             }
 
             using var read = File.OpenText(Filepath);
 
-            char[] contents = new char[CharCount];
+            char[] contents = new char[InfoCharCount];
 
-            read.ReadBlock(new char[StartChar + 1], 0, StartChar + 1);
-            read.ReadBlock(contents, 0, CharCount);
+            read.ReadBlock(new char[InfoCharPos], 0, InfoCharPos);
+            read.ReadBlock(contents, 0, InfoCharCount);
             
+            return infocontentCache = new string(contents);
+        }
 
-            //var d = new string(contents);
+        public string GetBodyContents()
+        {
+            if (bodycontentCache is object)
+            {
+                return bodycontentCache;
+            }
 
-            //Debug.Log($"Getting contents at {StartChar} for {CharCount}, returns lenght {d.Length}:\n{d}");
+            using var read = File.OpenText(Filepath);
 
-            return contentCache = new string(contents);
+            char[] contents = new char[BodyCharCount];
+
+            read.ReadBlock(new char[BodyCharPos], 0, BodyCharPos);
+            read.ReadBlock(contents, 0, BodyCharCount);
+
+            return bodycontentCache = new string(contents);
+        }
+
+        public override string ToString()
+        {
+            return $"TMP IN '{Filepath}' AT {StartChar} FOR {InfoCharCount} + {BodyCharPos}";
         }
     }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -27,7 +28,15 @@ namespace Iniciere
             {
                 color = Color.HSVToRGB(.7f, .3f, .1f);
             }
-            
+
+            EditorGUI.EndDisabledGroup();
+
+            if (GUILayout.Button("TEST"))
+            {
+
+            }
+
+            EditorGUI.BeginDisabledGroup(true);
         }
 
     }

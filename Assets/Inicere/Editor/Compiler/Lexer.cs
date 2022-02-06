@@ -52,9 +52,9 @@ namespace Iniciere
 
         }
 
-        public static async Task ParseAsync(IEnumerable<char> source, ConcurrentQueue<Token> tokens)
+        public static async Task<bool> ParseAsync(IEnumerable<char> source, ConcurrentQueue<Token> tokens)
         {
-            await Task.Run(() => Parse(source, tokens));
+            return await Task.Run(() => Parse(source, tokens));
         }
 
         public static bool Parse(IEnumerable<char> source, ConcurrentQueue<Token> tokens)

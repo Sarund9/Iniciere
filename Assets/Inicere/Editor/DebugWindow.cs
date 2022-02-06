@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEditor;
@@ -15,6 +16,7 @@ namespace Iniciere
         TemplateInfo lastInfo;
 
         string filename;
+        string filepath;
 
         string s_FullTemplate;
 
@@ -44,6 +46,43 @@ namespace Iniciere
                 Testing(lastInfo);
             }
 
+            filepath = EditorGUILayout.TextField("PATH", filepath);
+
+            if (GUILayout.Button("FIND_TEST"))
+            {
+                var it = IniciereFileImporter.GetTemplates(filepath);
+
+                foreach (var item in it)
+                {
+                    var build = new StringBuilder(item.ToString());
+                    build.AppendLine(
+                        "\n\n=================================== INFO ===================================");
+                    try
+                    {
+                        build.AppendLine(item.GetInfoContents());
+                    }
+                    catch
+                    {
+                        build.AppendLine("INFO CONTENT ERROR");
+                    }
+
+                    build.AppendLine(
+                        "\n=================================== BODY ===================================");
+                    try
+                    {
+                        build.AppendLine(item.GetBodyContents());
+                    }
+                    catch (Exception ex)
+                    {
+                        build.AppendLine("BODY CONTENT ERROR");
+                        build.AppendLine(ex.ToString());
+                    }
+                    build.AppendLine(
+                        "\n============================================================================");
+                    Debug.Log(build.ToString());
+                }
+            }
+
             if (templates is null)
                 return;
 
@@ -52,7 +91,7 @@ namespace Iniciere
             foreach (var file in templates)
             {
                 //GUILayout.FlexibleSpace();
-                var contents = file.GetContents();
+                var contents = file.GetInfoContents();
                 GUILayout.TextArea(contents);
 
                 //GUILayout.BeginHorizontal();
@@ -132,9 +171,9 @@ namespace Iniciere
 
             foreach (var item in templates)
             {
-                build.AppendLine($"TMP at {item.Filepath} from {item.StartChar} for {item.CharCount} returns:");
+                build.AppendLine($"TMP in {item.Filepath} at {item.InfoCharPos} and {item.InfoCharPos} returns:");
 
-                string contents = item.GetContents();
+                string contents = item.GetInfoContents();
 
                 build.AppendLine(contents);
 
@@ -273,7 +312,7 @@ namespace Iniciere
             }
 
             build.AppendLine("=== CONTENTS ===");
-            build.Append(info.GetContents());
+            build.Append(info.GetInfoContents());
 
             Debug.Log(build.ToString());
         }

@@ -17,9 +17,7 @@
 
 	@Toggle("Add Empty Constructor") 
 	var constructor
-	
 	\=/
-	
 	@FORMAT(filename)
 	file "{}.cs"
 
@@ -51,7 +49,7 @@ add "#tpublic {}()#n{#n#t#n}#n"
 	
 add "}"
 
-//>
+//>s
 
 
 <#iniciere "Inherited CSharp Class"

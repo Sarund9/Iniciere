@@ -23,7 +23,7 @@ namespace Iniciere
         
         public static int Precompile(TemplateLocation templateLocation, in TemplateInfo templateInfo)
         {
-            var filteredContents = StringUtils.FilterAllComments(templateLocation.GetContents());
+            var filteredContents = StringUtils.FilterAllComments(templateLocation.GetInfoContents());
             var lines = new List<string>(filteredContents.Split('\n'));
 
             if (!templateInfo)
@@ -424,7 +424,7 @@ namespace Iniciere
             }
 
 
-            var lines = new List<string>(info.GetContents().Split('\n'));
+            var lines = new List<string>(info.GetInfoContents().Split('\n'));
 
 
             for (int l = 0; l < lines.Count; l++)
@@ -722,6 +722,23 @@ namespace Iniciere
 
     }
 
+    public struct LogEntry
+    {
+        public LogEntry(LogLevel level, string message)
+        {
+            Level = level;
+            Message = message;
+        }
+        public LogLevel Level { get; }
+        public string Message { get; }
+    }
+    public enum LogLevel
+    {
+        Msg,
+        Wrn,
+        Err,
+    }
+    
     public static class NewCompiler
     {
         static List<LogEntry> s_Log = new List<LogEntry>();
@@ -757,9 +774,9 @@ namespace Iniciere
         * Value Resolution
          */
 
-        public static int Precompile(TemplateLocation templateLocation, TemplateInfo templateInfo)
+        public static int Precompile(TemplateLocation templateLocation, TemplateInfo r_templateInfo)
         {
-            var contents = templateLocation.GetContents(); // TODO: Get IEnumerator<char> from File at Location
+            var contents = templateLocation.GetInfoContents(); // TODO: Get IEnumerator<char> from File at Location
 
             var tokens = new ConcurrentQueue<Token>();
             
@@ -770,24 +787,31 @@ namespace Iniciere
             
             var task = Lexer.ParseAsync(contents, tokens);
 
+            // I dont know why the above function wont run unless we wait for 1 ms
+            Thread.Sleep(1);
+
             var current = new Token();
             
             int linecount = 0;
             bool AwaitDequeue(bool log = false)
             {
                 if (log)
-                    Debug.Log($"{tokens.Count} < 1 && {task.IsCompleted}");
+                    Debug.Log($"{tokens.Count} < 1 && {!task.IsRunning()}");
                 
-                if (tokens.Count < 1 && task.IsCompleted)
+                if (tokens.Count < 1 && !task.IsRunning())
                 {
                     return false;
                 }
 
                 while (!tokens.TryDequeue(out current) || current.Type == TokenType.Comment)
                 {
-                    if (tokens.Count < 1 && task.IsCompleted)
+                    if (tokens.Count < 1 && !task.IsRunning())
                     {
                         break;
+                    }
+                    if (task.IsResultFalse())
+                    {
+                        var d = 0;
                     }
                 }
                 tklog.AppendLine(current.ToString());
@@ -814,18 +838,18 @@ namespace Iniciere
             }
 
             // TODO: Throw Errors in Each
-            if (!AwaitDequeue()) Debug.Log("BAD1"); // -> Start
-            //Debug.Log($"EXT LOG: {current}");
-            if (!AwaitDequeue()) Debug.Log("BAD2"); // -> Name = iniciere 
-            if (!AwaitDequeue()) Debug.Log("BAD3"); // -> StringLit
+            if (!AwaitDequeue()) {
+                Log($"Template is Empty!");
+                return -1;
+            }
 
             //Debug.Log($"SETTING NAME TO {current}");
             if (!StringUtils.TryParse(current.Value, out var tmpName)) {
                 Log($"Unable to parse Template Name: {current.Value}");
                 return -1;
             }
-            templateInfo.name = tmpName;
-            templateInfo.TmpName = tmpName;
+            r_templateInfo.name = tmpName;
+            r_templateInfo.TmpName = tmpName;
             AwaitDequeue(); // -> Template Begins...
 
             while (current.Type != TokenType.OpTemplateSeparate &&
@@ -935,7 +959,7 @@ namespace Iniciere
                             return false; // Function above logs the Error
                         }
                         if (value is string) {
-                            templateInfo.ShortDescription = value as string;
+                            r_templateInfo.ShortDescription = value as string;
                             return true;
                         }
                         Log($"Function 'sdesc' expected a string, got nothing");
@@ -953,7 +977,7 @@ namespace Iniciere
                             return false; // Function above logs the Error
                         }
                         if (value is string) {
-                            templateInfo.LongDescription = value as string;
+                            r_templateInfo.LongDescription = value as string;
                             return true;
                         }
                         Log($"Function 'ldesc' expected a string, got nothing");
@@ -973,7 +997,7 @@ namespace Iniciere
                         }
                         if (value is string)
                         {
-                            templateInfo.Langs.AddRange(((string)value).CustomSplit());
+                            r_templateInfo.Langs.AddRange(((string)value).CustomSplit());
                             return true;
                         }
                         Log($"Function 'language' expected a string, got nothing");
@@ -993,7 +1017,7 @@ namespace Iniciere
                         }
                         if (value is string)
                         {
-                            templateInfo.Categories.AddRange(((string)value).CustomSplit());
+                            r_templateInfo.Categories.AddRange(((string)value).CustomSplit());
                             return true;
                         }
                         Log($"Function 'category' expected a string, got nothing");
@@ -1013,7 +1037,7 @@ namespace Iniciere
                         }
                         if (value is string)
                         {
-                            templateInfo.Flags.AddRange(((string)value).CustomSplit());
+                            r_templateInfo.Flags.AddRange(((string)value).CustomSplit());
                             return true;
                         }
                         Log($"Function 'flags' expected a string, got nothing");
@@ -1033,7 +1057,7 @@ namespace Iniciere
                         }
                         if (value is string)
                         {
-                            templateInfo.FileExts.AddRange(((string)value).CustomSplit());
+                            r_templateInfo.FileExts.AddRange(((string)value).CustomSplit());
                             return true;
                         }
                         Log($"Function 'fileext' expected a string, got nothing");
@@ -1119,32 +1143,33 @@ namespace Iniciere
             
         }
 
-        public static int Compile(TemplateInfo templateInfo, TemplateOutput templateOutput)
+        public static int Compile(TemplateInfo templateInfo, out TemplateOutput templateOutput)
         {
+            templateOutput = new TemplateOutput
+            {
+                Name = templateInfo.TmpName,
+            };
+
+            var filecontents = templateInfo.GetInfoContents();
             
+
+
             return -1;
         }
 
         // TODO: Move to Extensions
         static bool IsRunning(this Task task) =>
-            !task.IsCompleted && !task.IsFaulted && !task.IsCanceled;
-    }
+            !task.IsCompleted && !task.IsFaulted && !task.IsCanceled &&
+            task.Status != TaskStatus.WaitingForActivation;
 
-    public struct LogEntry
-    {
-        public LogEntry(LogLevel level, string message)
+        static bool IsResultFalse(this Task<bool> task)
         {
-            Level = level;
-            Message = message;
+            if (task.IsCompleted)
+                return !task.Result;
+
+
+            return false;
         }
-        public LogLevel Level { get; }
-        public string Message { get; }
-    }
-    public enum LogLevel
-    {
-        Msg,
-        Wrn,
-        Err,
     }
 
     public enum IniciereOperator

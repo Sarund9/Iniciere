@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -48,86 +49,158 @@ namespace Iniciere
             ctx.SetMainObject(header);
         }
 
-        //static IEnumerable<TemplateLocation> NewGetTemplates(string path)
-        //{
-        //    var text = File.ReadAllText(path);
 
-        //    text.FindAll(TMP_START)
-        //}
-
-        static IEnumerable<TemplateLocation> GetTemplates(string path)
+        public static IEnumerable<TemplateLocation> GetTemplates(string path)
         {
             using StreamReader stream = File.OpenText(path);
 
-            bool inside = false;
-            int insideCount = 0;
+            var state = State.Outside;
+            int infoCharPos = 0, infoCharCount = 0,
+                bodyCharPos = 0, bodyCharCount = 0;
+
+            string line = "";
             int count = 0;
-            //int start = 0;
-            int i = 0;
-            int c;
-
-            /*
-            
-            4000 = 80K
-             */
-            int watchDog = 50000;
-
-            do
+            int newLineLenght = Environment.NewLine.Length;
+            while (true)
             {
-                c = stream.Read();
-                watchDog--;
+                line = stream.ReadLine();
+                if (line == null)
+                    break;
                 
-                if (watchDog < 0)
+                switch (state)
                 {
-                    throw new System.Exception("Watch Dog Limit");
-                }
-
-                char debug = (char)c;
-                if (inside)
-                {
-                    count++;
-                    if ((char)c == TEMPLATE_END[insideCount])
-                    {
-                        insideCount++;
-                        if (TEMPLATE_END.Length == insideCount)
+                    case State.Outside:
+                        int sfind = line.IndexOf(TEMPLATE_START);
+                        if (sfind > -1)
                         {
-                            //all.Add(new TemplateLocation(path, i - count - tmpStart.Length, count + tmpStart.Length));
-                            yield return new TemplateLocation(
-                                path,
-                                i - count - TEMPLATE_START.Length,
-                                count + TEMPLATE_START.Length
-                                );
-
-                            inside = false;
-                            insideCount = 0;
-                            count = 0;
+                            //Debug.Log($"ENTER at {sfind}");
+                            state = State.InsideInfo;
+                            infoCharPos = count + sfind + TEMPLATE_START.Length;
                         }
-                    }
-                    else
-                    {
-                        insideCount = 0;
-                    }
-                }
-                else
-                {
-                    if ((char)c == TEMPLATE_START[insideCount])
-                    {
-                        insideCount++;
-                        if (TEMPLATE_START.Length == insideCount)
+                        break;
+                    case State.InsideInfo:
+                        int dfind = line.IndexOf(TEMPLATE_DIV);
+                        if (dfind > -1)
                         {
-                            inside = true;
-                            insideCount = 0;
+                            state = State.InsideBody;
+                            infoCharCount = (count + dfind + 3) - infoCharPos;
+                            bodyCharPos = count + dfind;
                         }
-                    }
-                    else
-                    {
-                        insideCount = 0;
-                    }
+                        break;
+                    case State.InsideBody:
+                        int efind = line.IndexOf(TEMPLATE_END);
+                        if (efind > -1)
+                        {
+                            bodyCharCount = (count + efind + 3) - bodyCharPos;
+
+                            yield return new TemplateLocation(path,
+                                infoCharPos, infoCharCount,
+                                bodyCharPos, bodyCharCount);
+
+                            state = State.Outside;
+                            infoCharPos = 0; infoCharCount = 0;
+                            bodyCharPos = 0; bodyCharCount = 0;
+                        }
+                        break;
+                    default: break;
                 }
-                i++;
+                count += line.Length + newLineLenght;
             }
-            while (c != -1);
-
+            
+            
+            yield break;
+        }
+        enum State : byte
+        {
+            Outside,
+            InsideInfo,
+            InsideBody,
         }
     }
 }
+
+#region OLD_CODE
+/*
+
+//static IEnumerable<TemplateLocation> NewGetTemplates(string path)
+//{
+//    var text = File.ReadAllText(path);
+
+//    text.FindAll(TMP_START)
+//}
+
+//static IEnumerable<TemplateLocation> GetTemplates(string path)
+//{
+//    using StreamReader stream = File.OpenText(path);
+
+//    bool inside = false;
+//    int insideCount = 0;
+//    int count = 0;
+//    //int start = 0;
+//    int i = 0;
+//    int c;
+//    // 4000 = 80K
+//     
+//    int watchDog = 50000;
+
+//    do
+//    {
+//        c = stream.Read();
+//        watchDog--;
+
+//        if (watchDog < 0)
+//        {
+//            throw new System.Exception("Watch Dog Limit");
+//        }
+
+//        char debug = (char)c;
+//        if (inside)
+//        {
+//            count++;
+//            if ((char)c == TEMPLATE_END[insideCount])
+//            {
+//                insideCount++;
+//                if (TEMPLATE_END.Length == insideCount)
+//                {
+//                    //all.Add(new TemplateLocation(path, i - count - tmpStart.Length, count + tmpStart.Length));
+//                    yield return new TemplateLocation(
+//                        path,
+//                        i - count - TEMPLATE_START.Length,
+//                        count + TEMPLATE_START.Length
+//                        );
+
+//                    inside = false;
+//                    insideCount = 0;
+//                    count = 0;
+//                }
+//            }
+//            else
+//            {
+//                insideCount = 0;
+//            }
+//        }
+//        else
+//        {
+//            if ((char)c == TEMPLATE_START[insideCount])
+//            {
+//                insideCount++;
+//                if (TEMPLATE_START.Length == insideCount)
+//                {
+//                    inside = true;
+//                    insideCount = 0;
+//                }
+//            }
+//            else
+//            {
+//                insideCount = 0;
+//            }
+//        }
+//        i++;
+//    }
+//    while (c != -1);
+
+//}
+
+
+*/
+#endregion
