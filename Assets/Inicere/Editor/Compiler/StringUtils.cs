@@ -1105,7 +1105,8 @@ namespace Iniciere
                 build.Append(item);
                 build.Append(separator);
             }
-            build.Remove(build.Length - separator.Length, separator.Length);
+            if (build.Length - separator.Length > 0)
+                build.Remove(build.Length - separator.Length, separator.Length);
             return build.ToString();
         }
         public static string AggrToString<T>(this IEnumerable<T> it)

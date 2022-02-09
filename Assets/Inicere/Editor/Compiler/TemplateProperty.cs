@@ -15,7 +15,10 @@ namespace Iniciere
         UBox valueBox = new UBox();
 
         [SerializeField]
-        InicierePropertyEditor editor;
+        UBox editor = new UBox();
+
+        [SerializeField]
+        bool isFileName;
 
         public TemplateProperty(string name, TemplateInfo templateInfo)
         {
@@ -32,9 +35,13 @@ namespace Iniciere
 
         public TemplateInfo Template => template;
 
-        public InicierePropertyEditor Editor { get => editor; set => editor = value; }
+        public InicierePropertyEditor Editor
+        {
+            get => (InicierePropertyEditor)editor.Get();
+            set => editor.Set(value);
+        }
 
-        public bool IsFileName => Template.FileNameProperty == this;
+        public bool IsFileName => isFileName;
         public bool HasEditor => Editor is object;
 
         public Type Type => Value?.GetType();
@@ -43,13 +50,13 @@ namespace Iniciere
 
         public void MarkAsFileName()
         {
-            Template.FileNameProperty = this;
+            isFileName = true;
         }
 
         public override string ToString()
         {
             var val = Value == null ? "NULL" : Value.ToString();
-            return $"[{Typename}] '{Name}' = {val};";
+            return $"{Typename} {Name} = {val};";
         }
     }
 

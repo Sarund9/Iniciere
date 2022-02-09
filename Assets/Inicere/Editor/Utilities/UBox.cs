@@ -18,7 +18,7 @@ namespace Iniciere
 
         Type typeCache;
 
-        public Type ValueType
+        Type ValueType
         {
             get
             {
@@ -56,6 +56,69 @@ namespace Iniciere
         public object Get()
         {
             return JsonUtility.FromJson(json, ValueType);
+        }
+    }
+
+    /// <summary>
+    /// Serializes functions by MethodInfo into unity
+    /// </summary>
+    [Serializable]
+    public class UFuncBox
+    {
+        [SerializeField]
+        string typeID = "", aseID = "", fnname = "";
+
+        Type typeCache;
+        MethodInfo infoCache;
+
+        Type GetDeclType()
+        {
+            if (string.IsNullOrEmpty(fnname))
+                return null;
+            if (typeCache is null)
+            {
+                typeCache = Type.GetType(typeID);
+                if (typeCache is null)
+                {
+                    typeCache = Type.GetType(aseID);
+                }
+            }
+            return typeCache;
+        }
+        MethodInfo GetFnInfo()
+        {
+            if (infoCache is null) {
+                var type = GetDeclType();
+                infoCache = type.GetMethod(fnname);
+            }
+            return infoCache;
+        }
+
+        public void Set<T>(T del)
+            where T : Delegate
+        {
+            if (del is null || del == null)
+            {
+                typeID = ""; aseID = ""; fnname = "";
+                typeCache = null;
+            }
+            else
+            {
+                infoCache = del.GetMethodInfo();
+                typeCache = infoCache.DeclaringType;
+
+                typeID = typeCache.FullName;
+                aseID = typeCache.AssemblyQualifiedName;
+                fnname = infoCache.Name;
+            }
+        }
+
+        public T Get<T>()
+            where T : Delegate
+        {
+            var info = GetFnInfo();
+
+            return (T)info.CreateDelegate(typeof(T));
         }
     }
 }

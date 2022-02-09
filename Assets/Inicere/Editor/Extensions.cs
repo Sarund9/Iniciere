@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using UnityEditor;
 using UnityEngine;
 
 namespace Iniciere
@@ -66,9 +67,13 @@ namespace Iniciere
                 "Can't find internal main window. Maybe something has changed inside Unity");
         }
 
-        public static void CenterOnMainWin(this UnityEditor.EditorWindow aWin)
+        public static void CenterOnMainWin(this EditorWindow aWin)
         {
+#if UNITY_2020_1_OR_NEWER
+            var main = EditorGUIUtility.GetMainWindowPosition();
+#else
             var main = GetEditorMainWindowPos2019();
+#endif
             var pos = aWin.position;
             float w = (main.width - pos.width) * 0.5f;
             float h = (main.height - pos.height) * 0.5f;
@@ -228,7 +233,36 @@ namespace Iniciere
                 return value;
             }
         }
+
+        public static IEnumerable<T> SkipLast<T>(this IEnumerable<T> source)
+        {
+            var it = source.GetEnumerator();
+            bool hasRemainingItems;
+            bool isFirst = true;
+            T item = default;
+
+            do
+            {
+                hasRemainingItems = it.MoveNext();
+                if (hasRemainingItems)
+                {
+                    if (!isFirst) yield return item;
+                    item = it.Current;
+                    isFirst = false;
+                }
+            } while (hasRemainingItems);
+        }
+        public static string GetExceptionText(this Exception exception)
+        {
+            if (exception.InnerException is object)
+            {
+                return exception.ToString() + " |Inner: \n\n"
+                    + exception.InnerException.GetExceptionText();
+            }
+            return exception.ToString();
+        }
+
     }
-    
+
     public delegate void Procedure<T>(ref T obj);
 }

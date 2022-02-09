@@ -8,6 +8,8 @@ using UnityEngine;
 
 namespace Iniciere
 {
+    public delegate void FnInicierePropertyEditor(Rect area, TemplateProperty property, object state);
+    
     public static class StandartDecorators
     {
 
@@ -24,128 +26,33 @@ namespace Iniciere
             ctx.Property.Value = "";
             //ctx.Property.LitValue = "";
             ctx.Property.Editor = new TextEditor();
-        }
-
-        class TextEditor : InicierePropertyEditor
-        {
-            public override void DrawGUI(Rect area, TemplateProperty property)
-            {
-                EditorGUI.BeginChangeCheck();
-
-                var str = EditorGUI.TextField(area, property.Name, property.Value.ToString());
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    property.Value = str;
-                }
-            }
+            //ctx.Property.CreateEditor(DrawGUI, null);
         }
         
+
         [IniciereDecorator("Toggle")]
         public static void ToggleDecorator(DecoratorContext ctx, string editorName = null)
         {
             //Debug.Log($"Toggle decorator : '{editorName}'");
             ctx.Property.Value = false;
-            ctx.Property.Editor = ToggleEditor.New(editorName);
-        }
-        
-        class ToggleEditor : InicierePropertyEditor
-        {
-            [SerializeField]
-            private string editorName;
-
-            public ToggleEditor(string editorName)
-            {
-                this.editorName = editorName;
-            }
-            public static ToggleEditor New(string editorName)
-            {
-                var obj = CreateInstance<ToggleEditor>();
-                obj.editorName = editorName;
-                return obj;
-            }
-
-            public override void DrawGUI(Rect area, TemplateProperty property)
-            {
-                EditorGUI.BeginChangeCheck();
-
-                bool value = EditorGUI.ToggleLeft(area,
-                    editorName ?? property.Name,
-                    (bool)property.Value);
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    property.Value = value;
-                }
-            }
+            ctx.Property.Editor = new ToggleEditor(editorName);
         }
         
         [IniciereDecorator("OptionalText")]
         public static void OptionalText(DecoratorContext ctx)
         {
-            ctx.Property.Editor = ScriptableObject.CreateInstance<OptTextEditor>();
+            ctx.Property.Editor = new OptTextEditor();
         }
         
-        class OptTextEditor : InicierePropertyEditor
-        {
-            public override void DrawGUI(Rect area, TemplateProperty property)
-            {
-                EditorGUI.BeginChangeCheck();
-                //Rect text = area.Shrink(0, 10, 0, 0);
-                var str = EditorGUI.TextField(area, property.Name, property.Value.ToString());
-                if (EditorGUI.EndChangeCheck())
-                {
-                    property.Value = str;
-                }
-
-                EditorGUI.BeginChangeCheck();
-                Rect toggle = area.Shrink(area.width - 10, 0, 0, 0);
-                toggle.x += area.width - 10;
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    property.Value = str;
-                }
-            }
-        }
-
         //[IniciereDecorator("ClassType")]
         public static void ClassType(DecoratorContext ctx, string msg = null, Type requiredImpl = null)
         {
-            ctx.Property.Editor = ClassTypeEditor.New(msg, requiredImpl);
+            ctx.Property.Editor = new ClassTypeEditor(msg, requiredImpl);
         }
-        
-        class ClassTypeEditor : InicierePropertyEditor
-        {
-            string msg;
-            Type requiredImpl; // TODO: UBox This
 
-            public ClassTypeEditor(string msg, Type requiredImpl)
-            {
-                this.msg = msg;
-                this.requiredImpl = requiredImpl;
-            }
-            public static ClassTypeEditor New(string msg, Type requiredImpl)
-            {
-                var obj = CreateInstance<ClassTypeEditor>();
-                obj.msg = msg;
-                obj.requiredImpl = requiredImpl;
-                return obj;
-            }
 
-            public override void DrawGUI(Rect area, TemplateProperty property)
-            {
-                
-                if (GUI.Button(area, Msg(), "DropDownButton"))
-                {
-                    var win = ClassTypeSearchWindow.Create(EditorWindow.GetWindow<CreateScriptWindow>(), "Select Type", area, 240);
-
-                }
-
-                string Msg() => msg ?? property.Name;
-            }
-        }
     }
+
 
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
     public sealed class IniciereDecoratorAttribute : Attribute
@@ -177,11 +84,6 @@ namespace Iniciere
         public void Prepare(TemplateProperty property)
         {
             Property = property;
-        }
-
-        public void AddPropertyEditor()
-        {
-
         }
 
         public static IEnumerable<DecoratorTypeInstance> InitializeDecoratorSystem(AppDomain domain, out DecoratorContext ctx)
@@ -232,8 +134,12 @@ namespace Iniciere
         }
     }
 
+    [Serializable]
     public class DecoratorTypeInstance
     {
+        //[SerializeField]
+        //UBox serialized = new UBox();
+
         public DecoratorTypeInstance(MethodInfo method, IniciereDecoratorAttribute atr)
         {
             Method = method;
@@ -244,13 +150,25 @@ namespace Iniciere
             ParamCount = ps.Length - 1;
         }
 
-        public MethodInfo Method { get; }
-        public IniciereDecoratorAttribute Atr { get; }
+        public MethodInfo Method { get; private set; }
+        public IniciereDecoratorAttribute Atr { get; private set; }
 
-        public bool UsesParams { get; }
-        public int ParamCount { get; }
+        public bool UsesParams { get; private set; }
+        public int ParamCount { get; private set; }
 
         public string Name => Atr.Name;
+
+        //public void OnBeforeSerialize()
+        //{
+        //    serialized.Set(this);
+        //}
+
+        //public void OnAfterDeserialize()
+        //{
+        //    var clone = serialized.Get() as DecoratorTypeInstance;
+        //    Method = clone.Method;
+        //    Atr = clone.Atr;
+        //}
     }
 
     public class DecoratorExecInstance
@@ -308,17 +226,5 @@ namespace Iniciere
                 return false;
             }
         }
-    }
-
-    [Serializable]
-    public abstract class InicierePropertyEditor : ScriptableObject
-    {
-        public abstract void DrawGUI(Rect area, TemplateProperty property);
-        public virtual float GetHeight(TemplateProperty property) => EditorGUIUtility.singleLineHeight;
-
-        //public virtual float GetHeight(float? prevHeight, TemplateProperty property) =>
-        //    prevHeight is null ?
-        //        EditorGUIUtility.singleLineHeight
-        //        : (float)prevHeight;
     }
 }

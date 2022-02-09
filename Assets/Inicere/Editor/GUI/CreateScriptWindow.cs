@@ -317,7 +317,7 @@ namespace Iniciere
 
                 }
 
-                void TagDisplay(Rect rect, List<string> tags, string title)
+                static void TagDisplay(Rect rect, List<string> tags, string title)
                 {
                     StringBuilder str = new StringBuilder("\n");
 

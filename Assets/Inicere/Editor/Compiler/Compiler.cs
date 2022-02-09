@@ -65,198 +65,198 @@ namespace Iniciere
 
             //Debug.Log($"Starts Compiling: '{templateInfo.Name}'");
 
-            for (int l = 0; l < lines.Count; l++)
-            {
-                bool checkForSkip = true;
-                //FILEEXT KEYWORD
-                {
-                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "fileext", templateInfo.Properties,
-                        out var result, out var end))
-                    {
-                        var rs = result.Split(
-                            new char[] {' ',',' },
-                            StringSplitOptions.RemoveEmptyEntries);
-                        for (int i = 0; i < rs.Length; i++)
-                            templateInfo.FileExts.Add(rs[i]);
+            //for (int l = 0; l < lines.Count; l++)
+            //{
+            //    bool checkForSkip = true;
+            //    //FILEEXT KEYWORD
+            //    {
+            //        if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "fileext", templateInfo.Properties,
+            //            out var result, out var end))
+            //        {
+            //            var rs = result.Split(
+            //                new char[] {' ',',' },
+            //                StringSplitOptions.RemoveEmptyEntries);
+            //            for (int i = 0; i < rs.Length; i++)
+            //                templateInfo.FileExts.Add(rs[i]);
 
-                        //Debug.Log($"FILE EX: '{result}'");
-                        l = end.l;
-                        checkForSkip = false;
-                        continue;
-                    }
-                }
-                //LANGUAGE KEYWORD
-                {
-                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "language", templateInfo.Properties,
-                        out var result, out var end))
-                    {
-                        var rs = result.Split(
-                            new char[] { ' ', ',' },
-                            StringSplitOptions.RemoveEmptyEntries);
-                        for (int i = 0; i < rs.Length; i++)
-                            templateInfo.Langs.Add(rs[i]);
+            //            //Debug.Log($"FILE EX: '{result}'");
+            //            l = end.l;
+            //            checkForSkip = false;
+            //            continue;
+            //        }
+            //    }
+            //    //LANGUAGE KEYWORD
+            //    {
+            //        if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "language", templateInfo.Properties,
+            //            out var result, out var end))
+            //        {
+            //            var rs = result.Split(
+            //                new char[] { ' ', ',' },
+            //                StringSplitOptions.RemoveEmptyEntries);
+            //            for (int i = 0; i < rs.Length; i++)
+            //                templateInfo.Langs.Add(rs[i]);
 
-                        //Debug.Log($"LANGUAGE: '{result}'");
-                        l = end.l;
-                        checkForSkip = false;
-                        continue;
-                    }
-                }
-                //CATEGORY KEYWORD
-                {
-                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "category", templateInfo.Properties,
-                        out var result, out var end))
-                    {
-                        var rs = result.Split(
-                            new char[] { ' ', ',' },
-                            StringSplitOptions.RemoveEmptyEntries);
-                        for (int i = 0; i < rs.Length; i++)
-                            templateInfo.Categories.Add(rs[i]);
+            //            //Debug.Log($"LANGUAGE: '{result}'");
+            //            l = end.l;
+            //            checkForSkip = false;
+            //            continue;
+            //        }
+            //    }
+            //    //CATEGORY KEYWORD
+            //    {
+            //        if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "category", templateInfo.Properties,
+            //            out var result, out var end))
+            //        {
+            //            var rs = result.Split(
+            //                new char[] { ' ', ',' },
+            //                StringSplitOptions.RemoveEmptyEntries);
+            //            for (int i = 0; i < rs.Length; i++)
+            //                templateInfo.Categories.Add(rs[i]);
 
-                        //Debug.Log($"CATEGORY: '{result}'");
-                        l = end.l;
-                        checkForSkip = false;
-                        continue;
-                    }
-                }
-                //FLAGS KEYWORD
-                {
-                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "flags", templateInfo.Properties,
-                        out var result, out var end))
-                    {
-                        var rs = result.Split(
-                            new char[] { ' ', ',' },
-                            StringSplitOptions.RemoveEmptyEntries);
-                        for (int i = 0; i < rs.Length; i++)
-                            templateInfo.Flags.Add(rs[i]);
+            //            //Debug.Log($"CATEGORY: '{result}'");
+            //            l = end.l;
+            //            checkForSkip = false;
+            //            continue;
+            //        }
+            //    }
+            //    //FLAGS KEYWORD
+            //    {
+            //        if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "flags", templateInfo.Properties,
+            //            out var result, out var end))
+            //        {
+            //            var rs = result.Split(
+            //                new char[] { ' ', ',' },
+            //                StringSplitOptions.RemoveEmptyEntries);
+            //            for (int i = 0; i < rs.Length; i++)
+            //                templateInfo.Flags.Add(rs[i]);
 
-                        //Debug.Log($"FLAGS: '{result}'");
-                        l = end.l;
-                        checkForSkip = false;
-                        continue;
-                    }
-                }
-                //USING KEYWORD
-                {
-                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "using", templateInfo.Properties,
-                        out var result, out var end))
-                    {
-                        if (!ResolveNamespace(result, types))
-                        {
-                            Debug.LogError($"Iniciere Error: namespace '{result}' could not be found");
-                            return -1;
-                        }
+            //            //Debug.Log($"FLAGS: '{result}'");
+            //            l = end.l;
+            //            checkForSkip = false;
+            //            continue;
+            //        }
+            //    }
+            //    //USING KEYWORD
+            //    {
+            //        if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "using", templateInfo.Properties,
+            //            out var result, out var end))
+            //        {
+            //            if (!ResolveNamespace(result, types))
+            //            {
+            //                Debug.LogError($"Iniciere Error: namespace '{result}' could not be found");
+            //                return -1;
+            //            }
 
-                        includes.Add(result);
-                        //Debug.Log($"USING: '{result}'");
-                        l = end.l;
-                        checkForSkip = false;
-                        continue;
-                    }
-                }
-                //(OLD)IN KEYWORD (PROPERTIES)
-                #region ...
-                //{
-                //    if (StringUtils.TryHandleProperty(lines, new TextPos(l),
-                //        out var typename, out var varname, out var end))
-                //    {
-                //        if (!TryResolveType(typename, includes, out var type))
-                //        {
-                //            Debug.LogError($"TYPE '{typename}' could not be found");
-                //            foreach (var item in includes)
-                //            {
-                //                Debug.LogError($"Including: '{item}'");
-                //            }
-                //            return -1;
-                //        }
+            //            includes.Add(result);
+            //            //Debug.Log($"USING: '{result}'");
+            //            l = end.l;
+            //            checkForSkip = false;
+            //            continue;
+            //        }
+            //    }
+            //    //(OLD)IN KEYWORD (PROPERTIES)
+            //    #region ...
+            //    //{
+            //    //    if (StringUtils.TryHandleProperty(lines, new TextPos(l),
+            //    //        out var typename, out var varname, out var end))
+            //    //    {
+            //    //        if (!TryResolveType(typename, includes, out var type))
+            //    //        {
+            //    //            Debug.LogError($"TYPE '{typename}' could not be found");
+            //    //            foreach (var item in includes)
+            //    //            {
+            //    //                Debug.LogError($"Including: '{item}'");
+            //    //            }
+            //    //            return -1;
+            //    //        }
 
-                //        templateInfo.Properties.Add(new TemplateProperty(varname)
-                //        {
-                //            Type = type,
-                //            Value = null,
-                //        });
-                //        //Debug.Log($"PROPERTY: '{varname}' ({typename})");
-                //        l = end.l;
-                //        checkForSkip = false;
-                //        continue;
-                //    }
-                //}
-                #endregion
-                //DECORATORS
-                {
-                    if (StringUtils.TryHandleDecorator(lines, new TextPos(l),
-                        decoContext, templateInfo.Properties,
-                        decorators, out DecoratorExecInstance execInstance, out TextPos end))
-                    {
-                        //Debug.Log($"DECORATOR AT [{l}]: {execInstance.Decor.Name}");
-                        decoratorQueue.Enqueue(execInstance);
-                    }
+            //    //        templateInfo.Properties.Add(new TemplateProperty(varname)
+            //    //        {
+            //    //            Type = type,
+            //    //            Value = null,
+            //    //        });
+            //    //        //Debug.Log($"PROPERTY: '{varname}' ({typename})");
+            //    //        l = end.l;
+            //    //        checkForSkip = false;
+            //    //        continue;
+            //    //    }
+            //    //}
+            //    #endregion
+            //    //DECORATORS
+            //    {
+            //        if (StringUtils.TryHandleDecorator(lines, new TextPos(l),
+            //            decoContext, templateInfo.Properties,
+            //            decorators, out DecoratorExecInstance execInstance, out TextPos end))
+            //        {
+            //            //Debug.Log($"DECORATOR AT [{l}]: {execInstance.Decor.Name}");
+            //            decoratorQueue.Enqueue(execInstance);
+            //        }
 
-                }
-                //VAR KEYWORD (PROPERTIES)
-                {
-                    if (StringUtils.TryHandleDynamicProperty(lines, new TextPos(l),
-                        out var varname, out var end))
-                    {
-                        var prop = new TemplateProperty(varname, templateInfo)
-                        {
-                            Value = null,
-                            //LitValue = "null",
-                        };
+            //    }
+            //    //VAR KEYWORD (PROPERTIES)
+            //    {
+            //        if (StringUtils.TryHandleDynamicProperty(lines, new TextPos(l),
+            //            out var varname, out var end))
+            //        {
+            //            var prop = new TemplateProperty(varname, templateInfo)
+            //            {
+            //                Value = null,
+            //                //LitValue = "null",
+            //            };
                         
-                        decoContext.Prepare(prop);
+            //            decoContext.Prepare(prop);
 
-                        while (decoratorQueue.Count > 0)
-                        {
-                            var exec = decoratorQueue.Dequeue();
+            //            while (decoratorQueue.Count > 0)
+            //            {
+            //                var exec = decoratorQueue.Dequeue();
                             
-                            if (!exec.Execute(decoContext))
-                                return -1;
-                        }
+            //                if (!exec.Execute(decoContext))
+            //                    return -1;
+            //            }
 
 
-                        templateInfo.Properties.Add(prop);
-                        l = end.l;
-                        checkForSkip = false;
-                        continue;
-                    }
-                }
-                //SDESC KEYWORD (DESCRIPTION)
-                {
-                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "sdesc", templateInfo.Properties,
-                        out var result, out var end))
-                    {
-                        templateInfo.ShortDescription += result;
+            //            templateInfo.Properties.Add(prop);
+            //            l = end.l;
+            //            checkForSkip = false;
+            //            continue;
+            //        }
+            //    }
+            //    //SDESC KEYWORD (DESCRIPTION)
+            //    {
+            //        if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "sdesc", templateInfo.Properties,
+            //            out var result, out var end))
+            //        {
+            //            templateInfo.ShortDescription += result;
 
-                        l = end.l;
-                        checkForSkip = false;
-                        continue;
-                    }
-                }
-                //LDESC KEYWORD (DESCRIPTION)
-                {
-                    if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "ldesc", templateInfo.Properties,
-                        out var result, out var end))
-                    {
-                        templateInfo.LongDescription += result;
+            //            l = end.l;
+            //            checkForSkip = false;
+            //            continue;
+            //        }
+            //    }
+            //    //LDESC KEYWORD (DESCRIPTION)
+            //    {
+            //        if (StringUtils.TryHandleKeyword(lines, new TextPos(l), "ldesc", templateInfo.Properties,
+            //            out var result, out var end))
+            //        {
+            //            templateInfo.LongDescription += result;
 
-                        l = end.l;
-                        checkForSkip = false;
-                        continue;
-                    }
-                }
-                //STRING SKIPPING
-                {
-                    if (checkForSkip && StringUtils.TrySkip(lines, new TextPos(l), out var end))
-                    {
-                        //Debug.Log($"SKIPPING FROM - TO:\n" +
-                        //    $"{l}: {m_Lines[l]}\n" +
-                        //    $"{end.l}: {m_Lines[end.l]}\n");
-                        //Debug.Log($"Skipping {l} to {end.l}");
-                        l = end.l;
-                    }
-                }
-            }
+            //            l = end.l;
+            //            checkForSkip = false;
+            //            continue;
+            //        }
+            //    }
+            //    //STRING SKIPPING
+            //    {
+            //        if (checkForSkip && StringUtils.TrySkip(lines, new TextPos(l), out var end))
+            //        {
+            //            //Debug.Log($"SKIPPING FROM - TO:\n" +
+            //            //    $"{l}: {m_Lines[l]}\n" +
+            //            //    $"{end.l}: {m_Lines[end.l]}\n");
+            //            //Debug.Log($"Skipping {l} to {end.l}");
+            //            l = end.l;
+            //        }
+            //    }
+            //}
 
             //templateInfo.Contents = string.Join(Environment.NewLine, lines);
 
@@ -426,7 +426,7 @@ namespace Iniciere
 
             var lines = new List<string>(info.GetInfoContents().Split('\n'));
 
-
+            /*
             for (int l = 0; l < lines.Count; l++)
             {
                 bool checkForSkip = true;
@@ -520,7 +520,7 @@ namespace Iniciere
                         l = end.l;
                     }
                 }
-            }
+            } //*/
 
             //POST-COMPILATION
             foreach (var finalFile in output.Files)
@@ -851,6 +851,15 @@ namespace Iniciere
             r_templateInfo.name = tmpName;
             r_templateInfo.TmpName = tmpName;
             AwaitDequeue(); // -> Template Begins...
+           
+            Dictionary<string, DecoratorTypeInstance> decorators = new Dictionary<string, DecoratorTypeInstance>();
+            DecoratorContext decoContext;
+            foreach (var item in
+                DecoratorContext.InitializeDecoratorSystem(AppDomain.CurrentDomain, out decoContext))
+                decorators.Add(item.Name, item);
+
+            var decoratorQueue = new Queue<DecoratorExecInstance>();
+
 
             while (current.Type != TokenType.OpTemplateSeparate &&
                 current.Type != TokenType.EoT)
@@ -886,8 +895,6 @@ namespace Iniciere
                         }
                         else
                         {
-                            //Debug.Log(log);
-                            //return -1;
                             break;
                         }
                     }
@@ -931,8 +938,9 @@ namespace Iniciere
                         return HandleFunctionCall(toks);
                     // Macros and Decorators
                     case TokenType.AtSign:
-                        Log($"Decorator/Macro not Supported");
-                        break;
+                        //Log($"Decorator/Macro not Supported");
+
+                        return HandleDecorator(toks.Skip(1));
 
                     default: break;
                 }
@@ -949,12 +957,16 @@ namespace Iniciere
                 {
                     #region SHORT_DESC
                     case "sdesc":
-                        if (toks.Count < 1)
+                        if (toks.Count < 2)
                         {
                             Log($"Function 'sdesc' expected a string, got nothing");
                             return false;
                         }
-                        value = HandleExpression(toks.Skip(1));
+                        if (!HandleExpression(toks.Skip(1), out value))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
                         if (value is null) {
                             return false; // Function above logs the Error
                         }
@@ -967,12 +979,16 @@ namespace Iniciere
                     #endregion
                     #region LONG_DESC
                     case "ldesc":
-                        if (toks.Count < 1)
+                        if (toks.Count < 2)
                         {
                             Log($"Function 'ldesc' expected a string, got nothing");
                             return false;
                         }
-                        value = HandleExpression(toks.Skip(1));
+                        if (!HandleExpression(toks.Skip(1), out value))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
                         if (value is null) {
                             return false; // Function above logs the Error
                         }
@@ -985,12 +1001,16 @@ namespace Iniciere
                     #endregion
                     #region LANGUAGE
                     case "language":
-                        if (toks.Count < 1)
+                        if (toks.Count < 2)
                         {
                             Log($"Function 'language' expected a string, got nothing");
                             return false;
                         }
-                        value = HandleExpression(toks.Skip(1));
+                        if (!HandleExpression(toks.Skip(1), out value))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
                         if (value is null)
                         {
                             return false; // Function above logs the Error
@@ -1005,12 +1025,16 @@ namespace Iniciere
                     #endregion
                     #region CATEGORY
                     case "category":
-                        if (toks.Count < 1)
+                        if (toks.Count < 2)
                         {
                             Log($"Function 'category' expected a string, got nothing");
                             return false;
                         }
-                        value = HandleExpression(toks.Skip(1));
+                        if (!HandleExpression(toks.Skip(1), out value))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
                         if (value is null)
                         {
                             return false; // Function above logs the Error
@@ -1025,12 +1049,16 @@ namespace Iniciere
                     #endregion
                     #region FLAGS
                     case "flags":
-                        if (toks.Count < 1)
+                        if (toks.Count < 2)
                         {
                             Log($"Function 'flags' expected a string, got nothing");
                             return false;
                         }
-                        value = HandleExpression(toks.Skip(1));
+                        if (!HandleExpression(toks.Skip(1), out value))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
                         if (value is null)
                         {
                             return false; // Function above logs the Error
@@ -1045,12 +1073,16 @@ namespace Iniciere
                     #endregion
                     #region FILEEX
                     case "fileext":
-                        if (toks.Count < 1)
+                        if (toks.Count < 2)
                         {
                             Log($"Function 'fileext' expected a string, got nothing");
                             return false;
                         }
-                        value = HandleExpression(toks.Skip(1));
+                        if (!HandleExpression(toks.Skip(1), out value))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
                         if (value is null)
                         {
                             return false; // Function above logs the Error
@@ -1083,11 +1115,196 @@ namespace Iniciere
                     return false;
                 }
 
-                return false;
+                var prop = new TemplateProperty(current.Value, r_templateInfo);
+                r_templateInfo.Properties.Add(prop);
+
+                // RUN DECORATORS
+                if (!ApplyDecorators(prop))
+                {
+                    Log("Operators could not be Applied");
+                    return false;
+                }
+
+                return true;
+            }
+            bool HandleDecorator(IEnumerable<Token> toks)
+            {
+                var it = toks.GetEnumerator();
+                var isIt = it.MoveNext();
+                if (!isIt) {
+                    Log("Missing arguments in Decoration");
+                    return false;
+                }
+                var current = it.Current;
+                bool Advance(bool check = true) {
+                    isIt = it.MoveNext();
+                    if (check && !isIt) {
+                        Log("Missing arguments in Decoration");
+                        return false;
+                    }
+                    current = it.Current;
+                    return true;
+                } // if (!Advance()) return false;
+
+                if (current.Type != TokenType.Name)
+                {
+                    Log($"Expected Decorator Name, got '{current.ToSrc()}'");
+                    return false;
+                }
+
+                if (!decorators.TryGetValue(current.Value, out var decoratorTypeInstance))
+                {
+                    Log($"Unknown Decorator: '{current.Value}'");
+                    return false;
+                }
+
+                Advance(false);
+                
+                // Left Parenthesis
+                if (!isIt) {
+                    if (decoratorTypeInstance.ParamCount > 0) {
+                        Log($"Decorator: '{current.Value}' expected {decoratorTypeInstance.ParamCount} arguments, got None");
+                        return false;
+                    } else {
+                        //Log($"#$$# CALLING {decoratorTypeInstance.Name}");
+                        //try {
+                        //    decoratorTypeInstance.Method.Invoke(null, new object[] { decoContext });
+                        //    return true;
+                        //}
+                        //catch (Exception c) {
+                        //    Log($"{decoratorTypeInstance.Name} raised an Exception\n{c.Message}");
+                        //    return false;
+                        //}
+                        decoratorQueue.Enqueue(new DecoratorExecInstance(
+                            decoratorTypeInstance,
+                            new object[0]));
+                        return false;
+                    }
+                }
+
+                if (current.Type != TokenType.LeftParen)
+                {
+                    Log($"Expected '('");
+                    return false;
+                }
+
+                // Expressions
+                var dec_toks = new List<Token>();
+                var calling_params = new List<object>();
+                //calling_params.Add(decoContext);
+                if (!Advance()) return false;
+
+                // ("my str", 0)
+                while (current.Type != TokenType.RightParen)
+                {
+                    while (current.Type != TokenType.RightParen
+                        && current.Type != TokenType.Comma)
+                    {
+                        if (!isIt) {
+                            Log("Expected End of ()");
+                            return false;
+                        }
+                        dec_toks.Add(current);
+                        if (!Advance()) {
+                            Log("Expected )");
+                            return false;
+                        }
+                    }
+                    if (dec_toks.Count == 0) {
+                        Log("Empty Decorator Parameter");
+                        Advance(false);
+                        continue;
+                    }
+                    if (HandleExpression(dec_toks, out var value)) {
+                        calling_params.Add(value);
+                        dec_toks.Clear();
+                        if (current.Type == TokenType.RightParen) {
+                            break;
+                        }
+                    } else {
+                        //calling_params.Add(null);
+                        Log("Expression could not be Parsed");
+                        return false;
+                    }
+                }
+
+                //string callargsdebug = calling_params.AggrToString(", ");
+                //Log($"#$$# CALLING {decoratorTypeInstance.Name} [{callargsdebug}]");
+                if (decoratorTypeInstance.ParamCount != calling_params.Count)
+                {
+                    Debug.Log($"Parameters did not match Function Lenght");
+                    return false;
+                }
+
+                var execInstance = new DecoratorExecInstance(
+                    decoratorTypeInstance,
+                    calling_params.ToArray());
+                decoratorQueue.Enqueue(execInstance);
+                return true;
+
+                #region OLD
+                /*
+                try {
+                    decoContext.Prepare();
+                    //decoratorTypeInstance.Method.Invoke(null, );
+                    return true;
+                } catch (Exception c) {
+                    Log($"{decoratorTypeInstance.Name} raised an Exception\n{c.GetExceptionText()}");
+                    return false;
+                }
+
+                if (current.Type == TokenType.Comma || current.Type == TokenType.RightParen)
+                    {
+                        // Handle Expression
+                        if (dec_toks.Count == 0)
+                        {
+                            Log("Empty Decorator Parameter");
+                            if (current.Type != TokenType.RightParen)
+                                Advance();
+                            continue;
+                        }
+                        if (HandleExpression(dec_toks, out var value))
+                        {
+                            calling_params.Add(value);
+                        }
+                        else Log("Expresion could not be Handled");
+
+                        dec_toks.Clear();
+                        Advance();
+                        if (current.Type == TokenType.RightParen)
+                            break;
+
+                        continue;
+                    }
+                    
+                    if (current.Type == TokenType.RightParen)
+                    {
+                        break;
+                    }
+                */
+                #endregion
+            }
+
+            bool ApplyDecorators(TemplateProperty property)
+            {
+                while (decoratorQueue.Count > 0)
+                {
+                    var curr = decoratorQueue.Dequeue();
+                    decoContext.Prepare(property);
+                    try {
+                        decoContext.Prepare(property);
+                        curr.Execute(decoContext);
+                    }
+                    catch (Exception c) {
+                        Log($"{curr.Decor.Name} raised an Exception:\n{c.GetExceptionText()}");
+                        return false;
+                    }
+                }
+                return true;
             }
 
             // TODO: AST
-            object HandleExpression(IEnumerable<Token> toks)
+            bool HandleExpression(IEnumerable<Token> toks, out object value)
             {
                 int i = 0;
                 var sbuild = new StringBuilder();
@@ -1105,24 +1322,36 @@ namespace Iniciere
                         else
                         {
                             Log("String Parse error!");
-                            return null;
+                            value = null;
+                            return false;
                         }
                     }
                     else
                     {
                         Log("Non String not supported");
-                        return null;
+                        value = null;
+                        return false;
                     }
 
                     
                 }
 
-                return last.BuildToRoot();
-
+                value = last.BuildToRoot();
+                return true;
                 //Log($"Could not Parse Expression {toks.AggrToString(", ")}");
                 //return null;
             }
 
+            
+            void Log(string msg)
+            {
+                log.AppendLine(
+                    $"[{templateLocation.Filepath} - " +
+                    $"{linecount}]\n{msg}\n");
+            }
+
+            #region OLD
+            /*
             bool AwaitDequeueAssert(params TokenType[] assert)
             {
                 while (!tokens.TryDequeue(out current) || current.Type == TokenType.Comment)
@@ -1130,17 +1359,10 @@ namespace Iniciere
                 foreach (var item in assert)
                     if (item == current.Type)
                         return false;
-                
-
                 return true;
             }
-            void Log(string msg)
-            {
-                log.AppendLine(
-                    $"[{templateLocation.Filepath} - " +
-                    $"{linecount}]\n{msg}\n");
-            }
-            
+            */
+            #endregion
         }
 
         public static int Compile(TemplateInfo templateInfo, out TemplateOutput templateOutput)

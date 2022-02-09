@@ -1,4 +1,5 @@
 ﻿using UnityEditor;
+using UnityEngine;
 
 namespace Iniciere
 {
@@ -15,6 +16,11 @@ namespace Iniciere
 
         public override void OnInspectorGUI()
         {
+            //EditorGUI.EndDisabledGroup();
+            base.OnInspectorGUI();
+            //EditorGUI.BeginDisabledGroup(true);
+
+            GUILayout.Space(5);
             ui.Draw(obj);
         }
     }

@@ -29,8 +29,6 @@ namespace Iniciere
         [SerializeField]
         List<TemplateProperty> properties = new List<TemplateProperty>();
         [SerializeField]
-        TemplateProperty fileNameProperty;
-        [SerializeField]
         List<Token> tokens = new List<Token>();
 
         //public TemplateInfo(TemplateLocation location)
@@ -59,13 +57,9 @@ namespace Iniciere
         public List<string> Langs => langs;
         public List<string> Categories => categories;
         public List<string> Flags => flags;
-        public List<TemplateProperty> Properties => properties;
-        
-        public TemplateProperty FileNameProperty
-        {
-            get => fileNameProperty;
-            set => fileNameProperty = value;
-        }
+        public IList<TemplateProperty> Properties => properties;
+
+        public TemplateProperty FileNameProperty => Properties.FirstOrDefault(x => x.IsFileName);
 
         public string ShortDescription
         {
