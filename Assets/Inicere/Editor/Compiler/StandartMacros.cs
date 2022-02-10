@@ -133,7 +133,7 @@ namespace Iniciere
                 build.AppendLine(contents);
             }
         }
-        [IniciereMacro("OPTIONALTEXT")]
+        //[IniciereMacro("OPTIONALTEXT")]
         public static void OptionalText(StringBuilder build, MacroContext ctx, object variable)
         {
             
@@ -193,14 +193,6 @@ namespace Iniciere
             //    !info.IsOut && info.
         }
 
-        public void ThrowExeption(string msg)
-        {
-
-        }
-        public void Warn(string msg)
-        {
-            Debug.LogWarning(msg);
-        }
     }
 
     public class MacroTypeInstance

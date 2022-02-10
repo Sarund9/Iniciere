@@ -37,7 +37,7 @@ namespace Iniciere
 
         public InicierePropertyEditor Editor
         {
-            get => (InicierePropertyEditor)editor.Get();
+            get => editor.Get() as InicierePropertyEditor;
             set => editor.Set(value);
         }
 

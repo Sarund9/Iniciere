@@ -17,28 +17,27 @@ namespace Iniciere
         string typeID = "", aseID = "", json = "";
 
         Type typeCache;
+        object valueCache;
 
-        Type ValueType
+        private Type GetValueType()
         {
-            get
-            {
-                if (string.IsNullOrEmpty(json))
-                    return null;
+            if (string.IsNullOrEmpty(json))
+                return null;
 
+            if (typeCache is null)
+            {
+                typeCache = Type.GetType(typeID);
                 if (typeCache is null)
                 {
-                    typeCache = Type.GetType(typeID);
-                    if (typeCache is null)
-                    {
-                        typeCache = Type.GetType(aseID);
-                    }
+                    typeCache = Type.GetType(aseID);
                 }
-                return typeCache;
             }
+            return typeCache;
         }
 
         public void Set(object value)
         {
+            valueCache = null;
             if (value is null || value == null)
             {
                 typeID = ""; aseID = ""; json = "";
@@ -49,13 +48,23 @@ namespace Iniciere
                 typeCache = value.GetType();
                 typeID = typeCache.FullName;
                 aseID = typeCache.AssemblyQualifiedName;
-                json = JsonUtility.ToJson(value, false);
+                if (typeCache == typeof(string))
+                    json = (string)value;
+                else
+                    json = JsonUtility.ToJson(value, false);
             }
         }
 
         public object Get()
         {
-            return JsonUtility.FromJson(json, ValueType);
+            if (valueCache is null) {
+                var type = GetValueType();
+                if (type == typeof(string))
+                    valueCache = json;
+                else
+                    valueCache = JsonUtility.FromJson(json, type);
+            }
+            return valueCache;
         }
     }
 

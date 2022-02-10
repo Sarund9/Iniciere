@@ -11,7 +11,1224 @@ using UnityEngine;
 
 namespace Iniciere
 {
-    public class Compiler
+    
+    public struct LogEntry
+    {
+        public LogEntry(LogLevel level, string message)
+        {
+            Level = level;
+            Message = message;
+        }
+        public LogLevel Level { get; }
+        public string Message { get; }
+
+    }
+    public enum LogLevel
+    {
+        Msg,
+        Wrn,
+        Err,
+    }
+    
+    public static class Compiler
+    {
+        static List<LogEntry> s_Log = new List<LogEntry>();
+
+        public static void PrintLog(Action<LogEntry> logmethod)
+        {
+            lock (s_Log)
+            {
+                for (int i = 0; i < s_Log.Count; i++)
+                {
+                    logmethod(s_Log[i]);
+                }
+                s_Log.Clear();
+            }
+        }
+        static void LogMsg(string msg) => s_Log.Add(new LogEntry(LogLevel.Msg, msg));
+        static void LogWrn(string msg) => s_Log.Add(new LogEntry(LogLevel.Wrn, msg));
+        static void LogErr(string msg) => s_Log.Add(new LogEntry(LogLevel.Err, msg));
+
+        /*
+         TODO TemplateInfo values:
+        * Name          |
+        * Langs         |
+        * Categories    |
+        * Flags         |
+        * FileExts      |
+        * Properties
+        * FileNameProperty
+        * ShortDescription  |
+        * LongDescription   |
+        TODO:
+        * AST
+        * Value Resolution
+         */
+
+        public static int Precompile(TemplateLocation templateLocation, TemplateInfo r_templateInfo)
+        {
+            var contents = templateLocation.GetInfoContents(); // TODO: Get IEnumerator<char> from File at Location
+
+            var tokens = new ConcurrentQueue<Token>();
+            
+            var log = new StringBuilder(" === LOG === ");
+            var tklog = new StringBuilder();
+            tklog.AppendLine("============ TOKENS ============");
+            tklog.AppendLine("================================");
+            
+            var task = Lexer.ParseAsync(contents, tokens);
+
+            // I dont know why the above function wont run unless we wait for 1 ms
+            Thread.Sleep(1);
+
+            var current = new Token();
+            
+            int linecount = 0;
+            bool AwaitDequeue(bool log = false)
+            {
+                if (log)
+                    Debug.Log($"{tokens.Count} < 1 && {!task.IsRunning()}");
+                
+                if (tokens.Count < 1 && !task.IsRunning())
+                {
+                    return false;
+                }
+
+                while (!tokens.TryDequeue(out current) || current.Type == TokenType.Comment)
+                {
+                    if (tokens.Count < 1 && !task.IsRunning())
+                    {
+                        break;
+                    }
+                }
+                tklog.AppendLine(current.ToString());
+
+                if (current.Type == TokenType.NewLine)
+                    linecount++;
+                
+                if (log)
+                    Debug.Log($"Logging {current}");
+
+                if (current.Type == TokenType.Err)
+                {
+                    Log(current.Value);
+                    return false;
+                }
+
+                return true;
+            }
+            TemplateProperty GetProperty(string name)
+            {
+                foreach (var item in r_templateInfo.Properties)
+                {
+                    if (item.Name == name)
+                        return item;
+                }
+                return null;
+            }
+
+            // TODO: Throw Errors in Each
+            if (!AwaitDequeue()) {
+                Log($"Template is Empty!");
+                return -1;
+            }
+
+            //Debug.Log($"SETTING NAME TO {current}");
+            if (!StringUtils.TryParse(current.Value, out var tmpName)) {
+                Log($"Unable to parse Template Name: {current.Value}");
+                return -1;
+            }
+            r_templateInfo.name = tmpName;
+            r_templateInfo.TmpName = tmpName;
+            AwaitDequeue(); // -> Template Begins...
+           
+            Dictionary<string, DecoratorTypeInstance> decorators = new Dictionary<string, DecoratorTypeInstance>();
+            DecoratorContext decoContext;
+            foreach (var item in
+                DecoratorContext.InitializeDecoratorSystem(AppDomain.CurrentDomain, out decoContext))
+                decorators.Add(item.Name, item);
+
+            var decoratorQueue = new Queue<DecoratorExecInstance>();
+
+
+            while (current.Type != TokenType.OpTemplateSeparate &&
+                current.Type != TokenType.EoT)
+            {
+                // Ignore Comments & NewLines
+                while (current.Type == TokenType.NewLine)
+                {
+                    AwaitDequeue();
+                    if (current.Type == TokenType.OpTemplateSeparate ||
+                        current.Type == TokenType.EoT) 
+                    {
+                        break;
+                    }
+                }
+                
+                // Catch Expressions
+                var buffer = new List<Token>();
+                do
+                {
+                    // TODO: Catch '()', Scopes: '{}', Scoped Expressions
+                    if (current.Type == TokenType.NewLine ||
+                        current.Type == TokenType.Semicolon ||
+                        current.Type == TokenType.OpTemplateSeparate ||
+                        current.Type == TokenType.EoT)
+                    {
+                        if (buffer.Count == 0)
+                            continue;
+
+                        // END EXPRESSION, PARSE
+                        if (TryParseExpression(buffer))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    
+                    buffer.Add(current);
+                } while (AwaitDequeue());
+
+            }
+
+            tklog.AppendLine("================================");
+
+            Debug.Log(tklog);
+            Debug.Log(log);
+
+            return 0;
+
+            // ==================================== \\
+            
+            bool TryParseExpression(List<Token> toks)
+            {
+                if (toks.Count == 0)
+                    return false;
+
+                Log($"PARSING: {toks.AggrToString(", ")}");
+
+                switch (toks[0].Type)
+                {
+                    // Functions
+                    case TokenType.Name:
+                        Log($"Function Call: '{toks[0].Value}'");
+                        /* TODO:
+                         * var Expression
+                         * Set Variables
+                         * Variable function Call
+                        */
+                        if (toks[0].Value == "var")
+                        {
+                            return HandleVarDecl(toks.Skip(1));
+                        }
+
+                        return HandleFunctionCall(toks);
+                    // Macros and Decorators
+                    case TokenType.AtSign:
+                        //Log($"Decorator/Macro not Supported");
+
+                        return HandleDecorator(toks.Skip(1));
+
+                    default: break;
+                }
+                Log($"Exrpession could not be Parsed, Unexpected: '{toks[0].ToPrint()}'");
+                return false;
+            }
+
+            bool HandleFunctionCall(List<Token> toks)
+            {
+                string name = toks[0].Value;
+
+                object value;
+                switch (name)
+                {
+                    #region SHORT_DESC
+                    case "sdesc":
+                        if (toks.Count < 2)
+                        {
+                            Log($"Function 'sdesc' expected a string, got nothing");
+                            return false;
+                        }
+                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
+                        if (value is null) {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string) {
+                            r_templateInfo.ShortDescription = value as string;
+                            return true;
+                        }
+                        Log($"Function 'sdesc' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region LONG_DESC
+                    case "ldesc":
+                        if (toks.Count < 2)
+                        {
+                            Log($"Function 'ldesc' expected a string, got nothing");
+                            return false;
+                        }
+                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
+                        if (value is null) {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string) {
+                            r_templateInfo.LongDescription = value as string;
+                            return true;
+                        }
+                        Log($"Function 'ldesc' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region LANGUAGE
+                    case "language":
+                        if (toks.Count < 2)
+                        {
+                            Log($"Function 'language' expected a string, got nothing");
+                            return false;
+                        }
+                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string)
+                        {
+                            r_templateInfo.Langs.AddRange(((string)value).CustomSplit());
+                            return true;
+                        }
+                        Log($"Function 'language' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region CATEGORY
+                    case "category":
+                        if (toks.Count < 2)
+                        {
+                            Log($"Function 'category' expected a string, got nothing");
+                            return false;
+                        }
+                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string)
+                        {
+                            r_templateInfo.Categories.AddRange(((string)value).CustomSplit());
+                            return true;
+                        }
+                        Log($"Function 'category' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region FLAGS
+                    case "flags":
+                        if (toks.Count < 2)
+                        {
+                            Log($"Function 'flags' expected a string, got nothing");
+                            return false;
+                        }
+                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string)
+                        {
+                            r_templateInfo.Flags.AddRange(((string)value).CustomSplit());
+                            return true;
+                        }
+                        Log($"Function 'flags' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region FILEEX
+                    case "fileext":
+                        if (toks.Count < 2)
+                        {
+                            Log($"Function 'fileext' expected a string, got nothing");
+                            return false;
+                        }
+                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        {
+                            Log($"Failed to parse Expression");
+                            return false;
+                        }
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string)
+                        {
+                            r_templateInfo.FileExts.AddRange(((string)value).CustomSplit());
+                            return true;
+                        }
+                        Log($"Function 'fileext' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    default:
+                        Log($"Unknown Function: {name}");
+                        return false;
+                }
+            }
+            bool HandleVarDecl(IEnumerable<Token> toks)
+            {
+                var it = toks.GetEnumerator();
+                var isIt = it.MoveNext();
+                if (!isIt) {
+                    Log("Missing arguments in Variable Declaration");
+                    return false;
+                }
+
+                var current = it.Current;
+                if (current.Type != TokenType.Name) {
+                    Log($"Expected Name, got '{current.ToSrc()}'");
+                    return false;
+                }
+
+                var prop = new TemplateProperty(current.Value, r_templateInfo);
+                r_templateInfo.Properties.Add(prop);
+
+                // RUN DECORATORS
+                if (!ApplyDecorators(prop))
+                {
+                    Log("Operators could not be Applied");
+                    return false;
+                }
+
+                return true;
+            }
+            bool HandleDecorator(IEnumerable<Token> toks)
+            {
+                var it = toks.GetEnumerator();
+                var isIt = it.MoveNext();
+                if (!isIt) {
+                    Log("Missing arguments in Decoration");
+                    return false;
+                }
+                var current = it.Current;
+                bool Advance(bool check = true) {
+                    isIt = it.MoveNext();
+                    if (check && !isIt) {
+                        Log("Missing arguments in Decoration");
+                        return false;
+                    }
+                    current = it.Current;
+                    return true;
+                } // if (!Advance()) return false;
+
+                if (current.Type != TokenType.Name)
+                {
+                    Log($"Expected Decorator Name, got '{current.ToSrc()}'");
+                    return false;
+                }
+
+                if (!decorators.TryGetValue(current.Value, out var decoratorTypeInstance))
+                {
+                    Log($"Unknown Decorator: '{current.Value}'");
+                    return false;
+                }
+
+                Advance(false);
+                
+                // Left Parenthesis
+                if (!isIt) {
+                    if (decoratorTypeInstance.ParamCount > 0) {
+                        Log($"Decorator: '{current.Value}' expected {decoratorTypeInstance.ParamCount} arguments, got None");
+                        return false;
+                    } else {
+                        //Log($"#$$# CALLING {decoratorTypeInstance.Name}");
+                        //try {
+                        //    decoratorTypeInstance.Method.Invoke(null, new object[] { decoContext });
+                        //    return true;
+                        //}
+                        //catch (Exception c) {
+                        //    Log($"{decoratorTypeInstance.Name} raised an Exception\n{c.Message}");
+                        //    return false;
+                        //}
+                        decoratorQueue.Enqueue(new DecoratorExecInstance(
+                            decoratorTypeInstance,
+                            new object[0]));
+                        return true;
+                    }
+                }
+
+                if (current.Type != TokenType.LeftParen)
+                {
+                    Log($"Expected '('");
+                    return false;
+                }
+
+                // Expressions
+                var dec_toks = new List<Token>();
+                var calling_params = new List<object>();
+                //calling_params.Add(decoContext);
+                if (!Advance()) return false;
+
+                // ("my str", 0)
+                while (current.Type != TokenType.RightParen)
+                {
+                    while (current.Type != TokenType.RightParen
+                        && current.Type != TokenType.Comma)
+                    {
+                        if (!isIt) {
+                            Log("Expected End of ()");
+                            return false;
+                        }
+                        dec_toks.Add(current);
+                        if (!Advance()) {
+                            Log("Expected )");
+                            return false;
+                        }
+                    }
+                    if (dec_toks.Count == 0) {
+                        Log("Empty Decorator Parameter");
+                        Advance(false);
+                        continue;
+                    }
+                    if (HandleExpression(dec_toks, out var value, Log, GetProperty)) {
+                        calling_params.Add(value);
+                        dec_toks.Clear();
+                        if (current.Type == TokenType.RightParen) {
+                            break;
+                        }
+                    } else {
+                        //calling_params.Add(null);
+                        Log("Expression could not be Parsed");
+                        return false;
+                    }
+                }
+
+                //string callargsdebug = calling_params.AggrToString(", ");
+                //Log($"#$$# CALLING {decoratorTypeInstance.Name} [{callargsdebug}]");
+                if (decoratorTypeInstance.ParamCount != calling_params.Count)
+                {
+                    Debug.Log($"Parameters did not match Function Lenght");
+                    return false;
+                }
+
+                var execInstance = new DecoratorExecInstance(
+                    decoratorTypeInstance,
+                    calling_params.ToArray());
+                decoratorQueue.Enqueue(execInstance);
+                return true;
+
+                #region OLD
+                /*
+                try {
+                    decoContext.Prepare();
+                    //decoratorTypeInstance.Method.Invoke(null, );
+                    return true;
+                } catch (Exception c) {
+                    Log($"{decoratorTypeInstance.Name} raised an Exception\n{c.GetExceptionText()}");
+                    return false;
+                }
+
+                if (current.Type == TokenType.Comma || current.Type == TokenType.RightParen)
+                    {
+                        // Handle Expression
+                        if (dec_toks.Count == 0)
+                        {
+                            Log("Empty Decorator Parameter");
+                            if (current.Type != TokenType.RightParen)
+                                Advance();
+                            continue;
+                        }
+                        if (HandleExpression(dec_toks, out var value))
+                        {
+                            calling_params.Add(value);
+                        }
+                        else Log("Expresion could not be Handled");
+
+                        dec_toks.Clear();
+                        Advance();
+                        if (current.Type == TokenType.RightParen)
+                            break;
+
+                        continue;
+                    }
+                    
+                    if (current.Type == TokenType.RightParen)
+                    {
+                        break;
+                    }
+                */
+                #endregion
+            }
+
+            bool ApplyDecorators(TemplateProperty property)
+            {
+                while (decoratorQueue.Count > 0)
+                {
+                    var curr = decoratorQueue.Dequeue();
+                    decoContext.Prepare(property);
+                    try {
+                        decoContext.Prepare(property);
+                        curr.Execute(decoContext);
+                    }
+                    catch (Exception c) {
+                        Log($"{curr.Decor.Name} raised an Exception:\n{c.GetExceptionText()}");
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            
+            void Log(string msg)
+            {
+                log.AppendLine(
+                    $"[{templateLocation.Filepath} - " +
+                    $"{linecount}]\n{msg}\n");
+            }
+
+            #region OLD
+            /*
+            bool AwaitDequeueAssert(params TokenType[] assert)
+            {
+                while (!tokens.TryDequeue(out current) || current.Type == TokenType.Comment)
+                { }
+                foreach (var item in assert)
+                    if (item == current.Type)
+                        return false;
+                return true;
+            }
+            */
+            #endregion
+        }
+
+        public static int Compile(
+            TemplateInfo templateInfo,
+            Action<LogEntry> print,
+            TemplateOutput r_templateOutput)
+        {
+            r_templateOutput.Name = templateInfo.TmpName;
+
+            var filecontents = templateInfo.GetBodyContents();
+            var tokens = new ConcurrentQueue<Token>();
+
+            var tklog = new StringBuilder();
+            tklog.AppendLine("============ TOKENS ============");
+            tklog.AppendLine("================================");
+
+            var task = Lexer.ParseAsync(filecontents, tokens);
+            
+            // I dont know why the above function wont run unless we wait for 1 ms
+            Thread.Sleep(1);
+
+            // TODO: Delegate to Thead Object
+            Queue<MacroExecutionInstance> macroQueue = new Queue<MacroExecutionInstance>();
+            var allMacros =
+                MacroContext.InitializeMacroSystem(
+                    AppDomain.CurrentDomain, out MacroContext macroContext)
+                        .ToDictionary(x => x.Name);
+
+            var current = new Token();
+
+            int linecount = 0;
+            bool AwaitDequeue(bool log = false)
+            {
+                if (log)
+                    Debug.Log($"{tokens.Count} < 1 && {!task.IsRunning()}");
+
+                if (tokens.Count < 1 && !task.IsRunning())
+                {
+                    return false;
+                }
+
+                while (!tokens.TryDequeue(out current) || current.Type == TokenType.Comment)
+                {
+                    if (tokens.Count < 1 && !task.IsRunning())
+                    {
+                        break;
+                    }
+                }
+                tklog.AppendLine(current.ToString());
+
+                if (current.Type == TokenType.NewLine)
+                    linecount++;
+
+                if (log)
+                    Debug.Log($"Logging {current}");
+
+                if (current.Type == TokenType.Err)
+                {
+                    LogErr(current.Value);
+                    return false;
+                }
+
+                return true;
+            }
+            TemplateProperty GetProperty(string name)
+            {
+                foreach (var item in templateInfo.Properties)
+                {
+                    if (item.Name == name)
+                        return item;
+                }
+                return null;
+            }
+
+            AwaitDequeue();
+            if (current.Type != TokenType.OpTemplateSeparate)
+            {
+                LogErr("First token isn't Separator");
+                return -1;
+            }
+            AwaitDequeue();
+
+            while (current.Type != TokenType.OpTemplateEnd &&
+                current.Type != TokenType.EoT)
+            {
+                
+                while (current.Type == TokenType.NewLine) {
+                    AwaitDequeue();
+                    if (current.Type == TokenType.OpTemplateEnd ||
+                        current.Type == TokenType.EoT) {
+                        break;
+                    }
+                }
+
+
+                var buffer = new List<Token>();
+                do
+                {
+                    // TODO: Catch '()', Scopes: '{}', Scoped Expressions
+                    if (current.Type == TokenType.NewLine ||
+                        current.Type == TokenType.Semicolon ||
+                        current.Type == TokenType.OpTemplateSeparate ||
+                        current.Type == TokenType.EoT)
+                    {
+                        if (buffer.Count == 0)
+                            continue;
+
+                        // END EXPRESSION, PARSE
+                        if (TryParseExpression(buffer))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    buffer.Add(current);
+                } while (AwaitDequeue());
+            }
+
+
+            tklog.AppendLine("================================");
+            Debug.Log(tklog.ToString());
+
+            while (AwaitDequeue()) { }
+
+            return 0;
+            // =================== \\
+
+            bool TryParseExpression(List<Token> toks)
+            {
+                if (toks.Count == 0)
+                    return false;
+
+                LogMsg($"PARSING: {toks.AggrToString(", ")}");
+
+                switch (toks[0].Type)
+                {
+                    // Functions
+                    case TokenType.Name:
+                        LogMsg($"Function Call: '{toks[0].Value}'");
+                        /* TODO:
+                         * var Expression
+                         * Set Variables
+                         * Variable function Call
+                        */
+                        //if (toks[0].Value == "var")
+                        //{
+                        //    return HandleVarDecl(toks.Skip(1));
+                        //}
+
+                        return HandleFunctionCall(toks);
+                    // Macros and Decorators
+                    case TokenType.AtSign:
+                        LogMsg($"Macro not Supported");
+
+                        return HandleMacro(toks.Skip(1));
+
+                    default: break;
+                }
+                LogErr($"Exrpession could not be Parsed, Unexpected: '{toks[0].ToPrint()}'");
+                return false;
+            }
+            bool HandleFunctionCall(List<Token> toks)
+            {
+                string name = toks[0].Value;
+
+                object value;
+                switch (name)
+                {
+                    #region UNSUPPORTED
+                    case "sdesc":
+                    case "ldesc":
+                    case "language":
+                    case "category":
+                    case "flags":
+                    case "fileext":
+                        LogErr($"Function '{name}' cannot be called in the Body");
+                        return false;
+                    #endregion
+                    #region FILE
+                    case "file":
+                        if (toks.Count < 2)
+                        {
+                            LogErr($"Function 'file' expected a string, got nothing");
+                            return false;
+                        }
+                        if (!HandleExpression(toks.Skip(1), out value, LogErr, GetProperty))
+                        {
+                            LogErr($"Failed to parse Expression");
+                            return false;
+                        }
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string filename)
+                        {
+                            var fnamebuild = new StringBuilder(filename);
+
+                            if (!ApplyMacros(fnamebuild))
+                                return false;
+
+                            r_templateOutput.AddFile(fnamebuild.ToString());
+                            return true;
+                        }
+                        LogErr($"Function 'file' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region ADD
+                    case "add":
+                        if (toks.Count < 2)
+                        {
+                            LogErr($"Function 'add' expected a string, got nothing");
+                            return false;
+                        }
+                        if (!HandleExpression(toks.Skip(1), out value, LogErr, GetProperty))
+                        {
+                            LogErr($"Failed to parse Expression");
+                            return false;
+                        }
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string strvalue)
+                        {
+                            var linebuild = new StringBuilder(strvalue);
+
+                            if (!ApplyMacros(linebuild))
+                                return false;
+
+                            r_templateOutput.LastFile().AddLine(linebuild.ToString());
+                            return true;
+                        }
+                        LogErr($"Function 'add' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    default:
+                        LogErr($"Unknown Function: {name}");
+                        return false;
+                }
+            }
+            bool HandleVarDecl(IEnumerable<Token> toks)
+            {
+                var it = toks.GetEnumerator();
+                var isIt = it.MoveNext();
+                if (!isIt)
+                {
+                    LogErr("Missing arguments in Variable Declaration");
+                    return false;
+                }
+
+                var current = it.Current;
+                if (current.Type != TokenType.Name)
+                {
+                    LogErr($"Expected Name, got '{current.ToSrc()}'");
+                    return false;
+                }
+
+                var prop = new TemplateProperty(current.Value, templateInfo);
+                templateInfo.Properties.Add(prop);
+
+                // RUN DECORATORS
+                //if (!ApplyDecorators(prop))
+                //{
+                //    LogErr("Operators could not be Applied");
+                //    return false;
+                //}
+
+                return true;
+            }
+
+            bool HandleMacro(IEnumerable<Token> toks)
+            {
+                var it = toks.GetEnumerator();
+                var isIt = it.MoveNext();
+                if (!isIt) {
+                    LogErr("Missing arguments in Macro");
+                    return false;
+                }
+                var current = it.Current;
+                bool Advance(bool check = true) {
+                    isIt = it.MoveNext();
+                    if (check && !isIt) {
+                        LogErr("Missing arguments in Decoration");
+                        return false;
+                    }
+                    current = it.Current;
+                    return true;
+                }
+
+                if (current.Type != TokenType.Name)
+                {
+                    LogErr($"Expected Name, got '{current.ToSrc()}'");
+                    return false;
+                }
+
+                if (!allMacros.TryGetValue(current.Value, out var macroTypeInstance))
+                {
+                    LogErr($"Unknown Macro: '{current.ToSrc()}'");
+                    return false;
+                }
+
+                Advance(false);
+
+                // Left Parenthesis
+                if (!isIt)
+                {
+                    if (macroTypeInstance.ParamCount > 0)
+                    {
+                        LogErr($"Decorator: '{current.Value}' expected {macroTypeInstance.ParamCount} arguments, got None");
+                        return false;
+                    }
+                    else
+                    {
+                        macroQueue.Enqueue(new MacroExecutionInstance(
+                            macroTypeInstance,
+                            new object[0]));
+                        return true;
+                    }
+                }
+
+                if (current.Type != TokenType.LeftParen)
+                {
+                    LogErr($"Expected '('");
+                    return false;
+                }
+
+
+                // Expressions
+                var dec_toks = new List<Token>();
+                var calling_params = new List<object>();
+                //calling_params.Add(decoContext);
+                if (!Advance()) return false;
+
+                while (current.Type != TokenType.RightParen)
+                {
+                    while (current.Type != TokenType.RightParen
+                        && current.Type != TokenType.Comma)
+                    {
+                        if (!isIt) {
+                            LogErr("Expected End of ()");
+                            return false;
+                        }
+                        dec_toks.Add(current);
+                        if (!Advance()) {
+                            LogErr("Expected )");
+                            return false;
+                        }
+                    }
+                    if (dec_toks.Count == 0) {
+                        LogErr("Empty Decorator Parameter");
+                        Advance(false);
+                        continue;
+                    }
+                    if (HandleExpression(dec_toks, out var value, LogErr, GetProperty)) {
+                        calling_params.Add(value);
+                        dec_toks.Clear();
+                        if (current.Type == TokenType.RightParen) {
+                            break;
+                        }
+                    } else {
+                        //calling_params.Add(null);
+                        LogErr("Expression could not be Parsed");
+                        return false;
+                    }
+                }
+
+                if (macroTypeInstance.ParamCount != calling_params.Count)
+                {
+                    Debug.Log($"Parameters did not match Function Lenght");
+                    return false;
+                }
+
+                var execInstance = new MacroExecutionInstance(
+                    macroTypeInstance,
+                    calling_params.ToArray());
+
+                macroQueue.Enqueue(execInstance);
+
+                return true;
+            }
+
+            bool ApplyMacros(StringBuilder build)
+            {
+                while (macroQueue.Count > 0)
+                {
+                    var curr = macroQueue.Dequeue();
+                    var inputs = new object[curr.Macro.ParamCount + 2];
+                    for (int i = 0; i < curr.Params.Length; i++)
+                    {
+                        if (i == curr.Macro.ParamCount - 1 && curr.Macro.UsesParams)
+                        {
+                            int paramsLenght = curr.Params.Length - curr.Macro.ParamCount + 1;
+                            var paramArgument = new object[paramsLenght];
+                            for (int p = 0; p < paramsLenght; p++)
+                            {
+                                paramArgument[p] = curr.Params[i + p];
+                            }
+                            inputs[i + 2] = paramArgument;
+                            break;
+                        }
+                        inputs[i + 2] = curr.Params[i];
+                    }
+                    inputs[0] = build;
+                    inputs[1] = macroContext;
+                    try
+                    {
+                        curr.Macro.Method.Invoke(null, inputs); ;
+                    }
+                    catch (Exception c)
+                    {
+                        LogErr($"{curr.Macro.Name} raised an Exception:\n{c.GetExceptionText()}");
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+#pragma warning disable CS8321 // Local function is declared but never used
+            void LogMsg(string msg) => print(new LogEntry(LogLevel.Msg, msg + $" - {linecount}"));
+            void LogWrn(string msg) => print(new LogEntry(LogLevel.Wrn, msg + $" - {linecount}"));
+            void LogErr(string msg) => print(new LogEntry(LogLevel.Err, msg + $" - {linecount}"));
+#pragma warning restore CS8321 // Local function is declared but never used
+        }
+
+        // TODO: Move to Extensions
+        static bool IsRunning(this Task task) =>
+            !task.IsCompleted && !task.IsFaulted && !task.IsCanceled &&
+            task.Status != TaskStatus.WaitingForActivation;
+
+        static bool IsResultFalse(this Task<bool> task)
+        {
+            if (task.IsCompleted)
+                return !task.Result;
+
+
+            return false;
+        }
+
+        // TODO: AST
+        static bool HandleExpression(
+            IEnumerable<Token> toks,
+            out object value,
+            Action<string> logerr,
+            Func<string, TemplateProperty> getproperty)
+        {
+            //int i = 0;
+            StringNode last = null;
+
+            foreach (Token item in toks)
+            {
+                if (item.Type == TokenType.StringLit)
+                {
+                    if (StringNode.TryParse(item.Value, out var newStrNode))
+                    {
+                        newStrNode.Last = last;
+                        last = newStrNode;
+                    }
+                    else
+                    {
+                        logerr("String Parse error!");
+                        value = null;
+                        return false;
+                    }
+                }
+                else if (item.Type == TokenType.Name)
+                {
+                    var prop = getproperty(item.Value);
+
+                    if (prop is null)
+                    {
+                        logerr("Can't parse ");
+                        value = null;
+                        return false;
+                    }
+
+                    // TODO: FULL AST
+                    if (last != null)
+                    {
+                        logerr("Variable after String not supported");
+                        value = null;
+                        return false;
+                    }
+
+                    if (item != toks.Last())
+                    {
+                        logerr("String after Variable not supported");
+                        value = null;
+                        return false;
+                    }
+
+                    var tmpprop = getproperty(item.Value);
+                    if (tmpprop is null)
+                    {
+                        logerr($"Unknown Property '{item.Value}'");
+                        value = null;
+                        return false;
+                    }
+                    value = tmpprop.Value;
+
+                    return true;
+                }
+                else
+                {
+                    logerr($"Token '{item}' not Supported in Expression!");
+                    value = null;
+                    return false;
+                }
+
+
+            }
+
+            value = last.BuildToRoot();
+            return true;
+            //Log($"Could not Parse Expression {toks.AggrToString(", ")}");
+            //return null;
+        }
+
+    }
+
+    public enum IniciereOperator
+    {
+        Add,            // +
+        Sub,            // -
+        Mult,           // *
+        Div,            // /
+        Equals,         // ==
+        Greater,        // >
+        Less,           // <
+        GreaterOrEqual, // >=
+        LessOrEqual,    // <=
+    }
+
+    class NumberNoder
+    {
+        
+    }
+    class BinOpNode
+    {
+
+    }
+    class StringNode
+    {
+        StringNode m_Next, m_Last;
+
+        private StringNode(string value)
+        {
+            Value = value;
+        }
+        public string Value { get; private set; }
+        
+        public StringNode Next
+        {
+            get => m_Next;
+            set
+            {
+                m_Next = value;
+                if (value is null || value.m_Last == this)
+                    return;
+
+                if (value.m_Last != null)
+                    value.m_Last.m_Next = null;
+
+                value.m_Last = this;
+            }
+        }
+        public StringNode Last
+        {
+            get => m_Last;
+            set
+            {
+                m_Last = value;
+                if (value is null || value.m_Next == this)
+                    return;
+
+                if (value.m_Next != null)
+                    value.m_Next.m_Last = null;
+
+                value.m_Next = this;
+            }
+        }
+
+        public static bool TryParse(string text, out StringNode node)
+        {
+            if (StringUtils.TryParse(text, out var str)) {
+                node = new StringNode(str);
+                return true;
+            }
+            node = null;
+            return false;
+        }
+
+        public string BuildToRoot()
+        {
+            var build = new StringBuilder(Value);
+            var curr = Last;
+            while (curr is StringNode)
+            {
+                build.Append(curr.Value);
+                curr = curr.Last;
+            }
+            return build.ToString();
+        }
+    }
+
+    
+}
+
+#region OLD_CODE
+/*
+public class Compiler
     {
         #region CONST
         const string TEMPLATE_START = @"<#iniciere";
@@ -19,8 +1236,9 @@ namespace Iniciere
         const string TEMPLATE_END = @"#/>";
 
         #endregion
+*/
 
-        
+/* PRECOMPILER
         public static int Precompile(TemplateLocation templateLocation, in TemplateInfo templateInfo)
         {
             var filteredContents = StringUtils.FilterAllComments(templateLocation.GetInfoContents());
@@ -328,6 +1546,8 @@ namespace Iniciere
             //}
             #endregion
         }
+*/
+/*
 
         private static bool ResolveNamespace(string result, IEnumerable<Type> types)
         {
@@ -396,7 +1616,8 @@ namespace Iniciere
                 _ => null,
             };
         }
-
+*/
+/*
         public static int Compile(TemplateInfo info, out TemplateOutput output)
         {
             output = new TemplateOutput
@@ -426,7 +1647,8 @@ namespace Iniciere
 
             var lines = new List<string>(info.GetInfoContents().Split('\n'));
 
-            /*
+            */
+/* COMPILER LOOP
             for (int l = 0; l < lines.Count; l++)
             {
                 bool checkForSkip = true;
@@ -520,58 +1742,62 @@ namespace Iniciere
                         l = end.l;
                     }
                 }
-            } //*/
+            } 
 
-            //POST-COMPILATION
-            foreach (var finalFile in output.Files)
+//POST-COMPILATION
+foreach (var finalFile in output.Files)
+{
+    finalFile.CleanStart();
+}
+
+
+return 0;
+*/
+
+/*
+bool TryApplyMacros(StringBuilder build, int l)
+{
+    while (macroQueue.Count > 0)
+    {
+        var ex = macroQueue.Dequeue();
+
+        var inputs = new object[ex.Macro.ParamCount + 2];
+        for (int i = 0; i < ex.Params.Length; i++)
+        {
+            if (i == ex.Macro.ParamCount - 1 && ex.Macro.UsesParams)
             {
-                finalFile.CleanStart();
-            }
-
-
-            return 0;
-
-            bool TryApplyMacros(StringBuilder build, int l)
-            {
-                while (macroQueue.Count > 0)
+                int paramsLenght = ex.Params.Length - ex.Macro.ParamCount + 1;
+                var paramArgument = new object[paramsLenght];
+                for (int p = 0; p < paramsLenght; p++)
                 {
-                    var ex = macroQueue.Dequeue();
-
-                    var inputs = new object[ex.Macro.ParamCount + 2];
-                    for (int i = 0; i < ex.Params.Length; i++)
-                    {
-                        if (i == ex.Macro.ParamCount - 1 && ex.Macro.UsesParams)
-                        {
-                            int paramsLenght = ex.Params.Length - ex.Macro.ParamCount + 1;
-                            var paramArgument = new object[paramsLenght];
-                            for (int p = 0; p < paramsLenght; p++)
-                            {
-                                paramArgument[p] = ex.Params[i + p];
-                            }
-                            inputs[i + 2] = paramArgument;
-                            break;
-                        }
-                        inputs[i + 2] = ex.Params[i];
-
-                        //bool InRange(int i) => i >= 0 && i < ex.Macro.ParamCount;
-                        //bool Last() => i == ex.Macro.ParamCount - 1;
-                    }
-                    inputs[0] = build;
-                    inputs[1] = macroContext;
-                    try
-                    {
-                        //Debug.LogWarning($"EXECUTING");
-                        ex.Macro.Method.Invoke(null, inputs);
-                    }
-                    catch (Exception excep)
-                    {
-                        Debug.LogError($"Iniciere Error: macro '{ex.Macro.Name}' at {l} has incorrect Inputs \n {excep.Message}");
-                        return false;
-                    }
+                    paramArgument[p] = ex.Params[i + p];
                 }
-                return true;
+                inputs[i + 2] = paramArgument;
+                break;
             }
+            inputs[i + 2] = ex.Params[i];
+
+            //bool InRange(int i) => i >= 0 && i < ex.Macro.ParamCount;
+            //bool Last() => i == ex.Macro.ParamCount - 1;
         }
+        inputs[0] = build;
+        inputs[1] = macroContext;
+        try
+        {
+            //Debug.LogWarning($"EXECUTING");
+            ex.Macro.Method.Invoke(null, inputs);
+        }
+        catch (Exception excep)
+        {
+            Debug.LogError($"Iniciere Error: macro '{ex.Macro.Name}' at {l} has incorrect Inputs \n {excep.Message}");
+            return false;
+        }
+    }
+    return true;
+}
+        }
+*/
+/*
         #region OLD_CODE
         //while (macroQueue.Count > 0)
         //{
@@ -607,9 +1833,6 @@ namespace Iniciere
         //        return -1;
         //    }
         //}
-        #endregion
-
-        #region OLD_COMPILER
         //public int Compile(TemplateInfo info, out Template template)
         //{
         //    //result = new List<string>(m_Lines.Count);
@@ -718,771 +1941,10 @@ namespace Iniciere
         //        //template.Name = name;
         //    }
         //}
-        #endregion
-
-    }
-
-    public struct LogEntry
-    {
-        public LogEntry(LogLevel level, string message)
-        {
-            Level = level;
-            Message = message;
-        }
-        public LogLevel Level { get; }
-        public string Message { get; }
-    }
-    public enum LogLevel
-    {
-        Msg,
-        Wrn,
-        Err,
-    }
-    
-    public static class NewCompiler
-    {
-        static List<LogEntry> s_Log = new List<LogEntry>();
-
-        public static void PrintLog(Action<LogEntry> logmethod)
-        {
-            lock (s_Log)
-            {
-                for (int i = 0; i < s_Log.Count; i++)
-                {
-                    logmethod(s_Log[i]);
-                }
-                s_Log.Clear();
-            }
-        }
-        static void LogMsg(string msg) => s_Log.Add(new LogEntry(LogLevel.Msg, msg));
-        static void LogWrn(string msg) => s_Log.Add(new LogEntry(LogLevel.Wrn, msg));
-        static void LogErr(string msg) => s_Log.Add(new LogEntry(LogLevel.Err, msg));
-
-        /*
-         TODO TemplateInfo values:
-        * Name          |
-        * Langs         |
-        * Categories    |
-        * Flags         |
-        * FileExts      |
-        * Properties
-        * FileNameProperty
-        * ShortDescription  |
-        * LongDescription   |
-        TODO:
-        * AST
-        * Value Resolution
-         */
-
-        public static int Precompile(TemplateLocation templateLocation, TemplateInfo r_templateInfo)
-        {
-            var contents = templateLocation.GetInfoContents(); // TODO: Get IEnumerator<char> from File at Location
-
-            var tokens = new ConcurrentQueue<Token>();
-            
-            var log = new StringBuilder(" === LOG === ");
-            var tklog = new StringBuilder();
-            tklog.AppendLine("============ TOKENS ============");
-            tklog.AppendLine("================================");
-            
-            var task = Lexer.ParseAsync(contents, tokens);
-
-            // I dont know why the above function wont run unless we wait for 1 ms
-            Thread.Sleep(1);
-
-            var current = new Token();
-            
-            int linecount = 0;
-            bool AwaitDequeue(bool log = false)
-            {
-                if (log)
-                    Debug.Log($"{tokens.Count} < 1 && {!task.IsRunning()}");
-                
-                if (tokens.Count < 1 && !task.IsRunning())
-                {
-                    return false;
-                }
-
-                while (!tokens.TryDequeue(out current) || current.Type == TokenType.Comment)
-                {
-                    if (tokens.Count < 1 && !task.IsRunning())
-                    {
-                        break;
-                    }
-                    if (task.IsResultFalse())
-                    {
-                        var d = 0;
-                    }
-                }
-                tklog.AppendLine(current.ToString());
-
-                //if (current.Type == TokenType.OpTemplateSeparate)
-                //{
-                //    Debug.Log("FOUND");
-                //}
-
-                if (current.Type == TokenType.NewLine)
-                    linecount++;
-                
-                if (log)
-                    Debug.Log($"Logging {current}");
-
-                if (current.Type == TokenType.Err)
-                {
-                    Log(current.Value);
-                    return false;
-                }
-
-                
-                return true;
-            }
-
-            // TODO: Throw Errors in Each
-            if (!AwaitDequeue()) {
-                Log($"Template is Empty!");
-                return -1;
-            }
-
-            //Debug.Log($"SETTING NAME TO {current}");
-            if (!StringUtils.TryParse(current.Value, out var tmpName)) {
-                Log($"Unable to parse Template Name: {current.Value}");
-                return -1;
-            }
-            r_templateInfo.name = tmpName;
-            r_templateInfo.TmpName = tmpName;
-            AwaitDequeue(); // -> Template Begins...
-           
-            Dictionary<string, DecoratorTypeInstance> decorators = new Dictionary<string, DecoratorTypeInstance>();
-            DecoratorContext decoContext;
-            foreach (var item in
-                DecoratorContext.InitializeDecoratorSystem(AppDomain.CurrentDomain, out decoContext))
-                decorators.Add(item.Name, item);
-
-            var decoratorQueue = new Queue<DecoratorExecInstance>();
-
-
-            while (current.Type != TokenType.OpTemplateSeparate &&
-                current.Type != TokenType.EoT)
-            {
-                // Ignore Comments & NewLines
-                while (current.Type == TokenType.NewLine)
-                {
-                    AwaitDequeue();
-                    if (current.Type == TokenType.OpTemplateSeparate ||
-                        current.Type == TokenType.EoT) 
-                    {
-                        break;
-                    }
-                }
-                
-                // Catch Expressions
-                var buffer = new List<Token>();
-                do
-                {
-                    // TODO: Catch '()', Scopes: '{}', Scoped Expressions
-                    if (current.Type == TokenType.NewLine ||
-                        current.Type == TokenType.Semicolon ||
-                        current.Type == TokenType.OpTemplateSeparate ||
-                        current.Type == TokenType.EoT)
-                    {
-                        if (buffer.Count == 0)
-                            continue;
-
-                        // END EXPRESSION, PARSE
-                        if (TryParseExpression(buffer))
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                    
-                    buffer.Add(current);
-                } while (AwaitDequeue());
-
-            }
-
-            tklog.AppendLine("================================");
-
-            Debug.Log(tklog);
-            Debug.Log(log);
-
-            return 0;
-
-            // ==================================== \\
-            
-            bool TryParseExpression(List<Token> toks)
-            {
-                if (toks.Count == 0)
-                    return false;
-
-                Log($"PARSING: {toks.AggrToString(", ")}");
-
-                switch (toks[0].Type)
-                {
-                    // Functions
-                    case TokenType.Name:
-                        Log($"Function Call: '{toks[0].Value}'");
-                        /* TODO:
-                         * var Expression
-                         * Set Variables
-                         * Variable function Call
-                        */
-                        if (toks[0].Value == "var")
-                        {
-                            return HandleVarDecl(toks.Skip(1));
-                        }
-
-                        return HandleFunctionCall(toks);
-                    // Macros and Decorators
-                    case TokenType.AtSign:
-                        //Log($"Decorator/Macro not Supported");
-
-                        return HandleDecorator(toks.Skip(1));
-
-                    default: break;
-                }
-                Log($"Exrpession could not be Parsed, Unexpected: '{toks[0].ToPrint()}'");
-                return false;
-            }
-
-            bool HandleFunctionCall(List<Token> toks)
-            {
-                string name = toks[0].Value;
-
-                object value;
-                switch (name)
-                {
-                    #region SHORT_DESC
-                    case "sdesc":
-                        if (toks.Count < 2)
-                        {
-                            Log($"Function 'sdesc' expected a string, got nothing");
-                            return false;
-                        }
-                        if (!HandleExpression(toks.Skip(1), out value))
-                        {
-                            Log($"Failed to parse Expression");
-                            return false;
-                        }
-                        if (value is null) {
-                            return false; // Function above logs the Error
-                        }
-                        if (value is string) {
-                            r_templateInfo.ShortDescription = value as string;
-                            return true;
-                        }
-                        Log($"Function 'sdesc' expected a string, got nothing");
-                        return false;
-                    #endregion
-                    #region LONG_DESC
-                    case "ldesc":
-                        if (toks.Count < 2)
-                        {
-                            Log($"Function 'ldesc' expected a string, got nothing");
-                            return false;
-                        }
-                        if (!HandleExpression(toks.Skip(1), out value))
-                        {
-                            Log($"Failed to parse Expression");
-                            return false;
-                        }
-                        if (value is null) {
-                            return false; // Function above logs the Error
-                        }
-                        if (value is string) {
-                            r_templateInfo.LongDescription = value as string;
-                            return true;
-                        }
-                        Log($"Function 'ldesc' expected a string, got nothing");
-                        return false;
-                    #endregion
-                    #region LANGUAGE
-                    case "language":
-                        if (toks.Count < 2)
-                        {
-                            Log($"Function 'language' expected a string, got nothing");
-                            return false;
-                        }
-                        if (!HandleExpression(toks.Skip(1), out value))
-                        {
-                            Log($"Failed to parse Expression");
-                            return false;
-                        }
-                        if (value is null)
-                        {
-                            return false; // Function above logs the Error
-                        }
-                        if (value is string)
-                        {
-                            r_templateInfo.Langs.AddRange(((string)value).CustomSplit());
-                            return true;
-                        }
-                        Log($"Function 'language' expected a string, got nothing");
-                        return false;
-                    #endregion
-                    #region CATEGORY
-                    case "category":
-                        if (toks.Count < 2)
-                        {
-                            Log($"Function 'category' expected a string, got nothing");
-                            return false;
-                        }
-                        if (!HandleExpression(toks.Skip(1), out value))
-                        {
-                            Log($"Failed to parse Expression");
-                            return false;
-                        }
-                        if (value is null)
-                        {
-                            return false; // Function above logs the Error
-                        }
-                        if (value is string)
-                        {
-                            r_templateInfo.Categories.AddRange(((string)value).CustomSplit());
-                            return true;
-                        }
-                        Log($"Function 'category' expected a string, got nothing");
-                        return false;
-                    #endregion
-                    #region FLAGS
-                    case "flags":
-                        if (toks.Count < 2)
-                        {
-                            Log($"Function 'flags' expected a string, got nothing");
-                            return false;
-                        }
-                        if (!HandleExpression(toks.Skip(1), out value))
-                        {
-                            Log($"Failed to parse Expression");
-                            return false;
-                        }
-                        if (value is null)
-                        {
-                            return false; // Function above logs the Error
-                        }
-                        if (value is string)
-                        {
-                            r_templateInfo.Flags.AddRange(((string)value).CustomSplit());
-                            return true;
-                        }
-                        Log($"Function 'flags' expected a string, got nothing");
-                        return false;
-                    #endregion
-                    #region FILEEX
-                    case "fileext":
-                        if (toks.Count < 2)
-                        {
-                            Log($"Function 'fileext' expected a string, got nothing");
-                            return false;
-                        }
-                        if (!HandleExpression(toks.Skip(1), out value))
-                        {
-                            Log($"Failed to parse Expression");
-                            return false;
-                        }
-                        if (value is null)
-                        {
-                            return false; // Function above logs the Error
-                        }
-                        if (value is string)
-                        {
-                            r_templateInfo.FileExts.AddRange(((string)value).CustomSplit());
-                            return true;
-                        }
-                        Log($"Function 'fileext' expected a string, got nothing");
-                        return false;
-                    #endregion
-                    default:
-                        Log($"Unknown Function: {name}");
-                        return false;
-                }
-            }
-            bool HandleVarDecl(IEnumerable<Token> toks)
-            {
-                var it = toks.GetEnumerator();
-                var isIt = it.MoveNext();
-                if (!isIt) {
-                    Log("Missing arguments in Variable Declaration");
-                    return false;
-                }
-
-                var current = it.Current;
-                if (current.Type != TokenType.Name) {
-                    Log($"Expected Name, got '{current.ToSrc()}'");
-                    return false;
-                }
-
-                var prop = new TemplateProperty(current.Value, r_templateInfo);
-                r_templateInfo.Properties.Add(prop);
-
-                // RUN DECORATORS
-                if (!ApplyDecorators(prop))
-                {
-                    Log("Operators could not be Applied");
-                    return false;
-                }
-
-                return true;
-            }
-            bool HandleDecorator(IEnumerable<Token> toks)
-            {
-                var it = toks.GetEnumerator();
-                var isIt = it.MoveNext();
-                if (!isIt) {
-                    Log("Missing arguments in Decoration");
-                    return false;
-                }
-                var current = it.Current;
-                bool Advance(bool check = true) {
-                    isIt = it.MoveNext();
-                    if (check && !isIt) {
-                        Log("Missing arguments in Decoration");
-                        return false;
-                    }
-                    current = it.Current;
-                    return true;
-                } // if (!Advance()) return false;
-
-                if (current.Type != TokenType.Name)
-                {
-                    Log($"Expected Decorator Name, got '{current.ToSrc()}'");
-                    return false;
-                }
-
-                if (!decorators.TryGetValue(current.Value, out var decoratorTypeInstance))
-                {
-                    Log($"Unknown Decorator: '{current.Value}'");
-                    return false;
-                }
-
-                Advance(false);
-                
-                // Left Parenthesis
-                if (!isIt) {
-                    if (decoratorTypeInstance.ParamCount > 0) {
-                        Log($"Decorator: '{current.Value}' expected {decoratorTypeInstance.ParamCount} arguments, got None");
-                        return false;
-                    } else {
-                        //Log($"#$$# CALLING {decoratorTypeInstance.Name}");
-                        //try {
-                        //    decoratorTypeInstance.Method.Invoke(null, new object[] { decoContext });
-                        //    return true;
-                        //}
-                        //catch (Exception c) {
-                        //    Log($"{decoratorTypeInstance.Name} raised an Exception\n{c.Message}");
-                        //    return false;
-                        //}
-                        decoratorQueue.Enqueue(new DecoratorExecInstance(
-                            decoratorTypeInstance,
-                            new object[0]));
-                        return false;
-                    }
-                }
-
-                if (current.Type != TokenType.LeftParen)
-                {
-                    Log($"Expected '('");
-                    return false;
-                }
-
-                // Expressions
-                var dec_toks = new List<Token>();
-                var calling_params = new List<object>();
-                //calling_params.Add(decoContext);
-                if (!Advance()) return false;
-
-                // ("my str", 0)
-                while (current.Type != TokenType.RightParen)
-                {
-                    while (current.Type != TokenType.RightParen
-                        && current.Type != TokenType.Comma)
-                    {
-                        if (!isIt) {
-                            Log("Expected End of ()");
-                            return false;
-                        }
-                        dec_toks.Add(current);
-                        if (!Advance()) {
-                            Log("Expected )");
-                            return false;
-                        }
-                    }
-                    if (dec_toks.Count == 0) {
-                        Log("Empty Decorator Parameter");
-                        Advance(false);
-                        continue;
-                    }
-                    if (HandleExpression(dec_toks, out var value)) {
-                        calling_params.Add(value);
-                        dec_toks.Clear();
-                        if (current.Type == TokenType.RightParen) {
-                            break;
-                        }
-                    } else {
-                        //calling_params.Add(null);
-                        Log("Expression could not be Parsed");
-                        return false;
-                    }
-                }
-
-                //string callargsdebug = calling_params.AggrToString(", ");
-                //Log($"#$$# CALLING {decoratorTypeInstance.Name} [{callargsdebug}]");
-                if (decoratorTypeInstance.ParamCount != calling_params.Count)
-                {
-                    Debug.Log($"Parameters did not match Function Lenght");
-                    return false;
-                }
-
-                var execInstance = new DecoratorExecInstance(
-                    decoratorTypeInstance,
-                    calling_params.ToArray());
-                decoratorQueue.Enqueue(execInstance);
-                return true;
-
-                #region OLD
-                /*
-                try {
-                    decoContext.Prepare();
-                    //decoratorTypeInstance.Method.Invoke(null, );
-                    return true;
-                } catch (Exception c) {
-                    Log($"{decoratorTypeInstance.Name} raised an Exception\n{c.GetExceptionText()}");
-                    return false;
-                }
-
-                if (current.Type == TokenType.Comma || current.Type == TokenType.RightParen)
-                    {
-                        // Handle Expression
-                        if (dec_toks.Count == 0)
-                        {
-                            Log("Empty Decorator Parameter");
-                            if (current.Type != TokenType.RightParen)
-                                Advance();
-                            continue;
-                        }
-                        if (HandleExpression(dec_toks, out var value))
-                        {
-                            calling_params.Add(value);
-                        }
-                        else Log("Expresion could not be Handled");
-
-                        dec_toks.Clear();
-                        Advance();
-                        if (current.Type == TokenType.RightParen)
-                            break;
-
-                        continue;
-                    }
-                    
-                    if (current.Type == TokenType.RightParen)
-                    {
-                        break;
-                    }
-                */
-                #endregion
-            }
-
-            bool ApplyDecorators(TemplateProperty property)
-            {
-                while (decoratorQueue.Count > 0)
-                {
-                    var curr = decoratorQueue.Dequeue();
-                    decoContext.Prepare(property);
-                    try {
-                        decoContext.Prepare(property);
-                        curr.Execute(decoContext);
-                    }
-                    catch (Exception c) {
-                        Log($"{curr.Decor.Name} raised an Exception:\n{c.GetExceptionText()}");
-                        return false;
-                    }
-                }
-                return true;
-            }
-
-            // TODO: AST
-            bool HandleExpression(IEnumerable<Token> toks, out object value)
-            {
-                int i = 0;
-                var sbuild = new StringBuilder();
-                StringNode last = null;
-
-                foreach (var item in toks)
-                {
-                    if (item.Type == TokenType.StringLit)
-                    {
-                        if (StringNode.TryParse(item.Value, out var newStrNode))
-                        {
-                            newStrNode.Last = last;
-                            last = newStrNode;
-                        }
-                        else
-                        {
-                            Log("String Parse error!");
-                            value = null;
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        Log("Non String not supported");
-                        value = null;
-                        return false;
-                    }
-
-                    
-                }
-
-                value = last.BuildToRoot();
-                return true;
-                //Log($"Could not Parse Expression {toks.AggrToString(", ")}");
-                //return null;
-            }
-
-            
-            void Log(string msg)
-            {
-                log.AppendLine(
-                    $"[{templateLocation.Filepath} - " +
-                    $"{linecount}]\n{msg}\n");
-            }
-
-            #region OLD
-            /*
-            bool AwaitDequeueAssert(params TokenType[] assert)
-            {
-                while (!tokens.TryDequeue(out current) || current.Type == TokenType.Comment)
-                { }
-                foreach (var item in assert)
-                    if (item == current.Type)
-                        return false;
-                return true;
-            }
-            */
-            #endregion
-        }
-
-        public static int Compile(TemplateInfo templateInfo, out TemplateOutput templateOutput)
-        {
-            templateOutput = new TemplateOutput
-            {
-                Name = templateInfo.TmpName,
-            };
-
-            var filecontents = templateInfo.GetInfoContents();
-            
-
-
-            return -1;
-        }
-
-        // TODO: Move to Extensions
-        static bool IsRunning(this Task task) =>
-            !task.IsCompleted && !task.IsFaulted && !task.IsCanceled &&
-            task.Status != TaskStatus.WaitingForActivation;
-
-        static bool IsResultFalse(this Task<bool> task)
-        {
-            if (task.IsCompleted)
-                return !task.Result;
-
-
-            return false;
-        }
-    }
-
-    public enum IniciereOperator
-    {
-        Add,            // +
-        Sub,            // -
-        Mult,           // *
-        Div,            // /
-        Equals,         // ==
-        Greater,        // >
-        Less,           // <
-        GreaterOrEqual, // >=
-        LessOrEqual,    // <=
-    }
-
-    class NumberNoder
-    {
         
-    }
-    class BinOpNode
-    {
 
     }
-    class StringNode
-    {
-        StringNode m_Next, m_Last;
-
-        private StringNode(string value)
-        {
-            Value = value;
-        }
-        public string Value { get; private set; }
-        
-        public StringNode Next
-        {
-            get => m_Next;
-            set
-            {
-                m_Next = value;
-                if (value is null || value.m_Last == this)
-                    return;
-
-                if (value.m_Last != null)
-                    value.m_Last.m_Next = null;
-
-                value.m_Last = this;
-            }
-        }
-        public StringNode Last
-        {
-            get => m_Last;
-            set
-            {
-                m_Last = value;
-                if (value is null || value.m_Next == this)
-                    return;
-
-                if (value.m_Next != null)
-                    value.m_Next.m_Last = null;
-
-                value.m_Next = this;
-            }
-        }
-
-        public static bool TryParse(string text, out StringNode node)
-        {
-            if (StringUtils.TryParse(text, out var str)) {
-                node = new StringNode(str);
-                return true;
-            }
-            node = null;
-            return false;
-        }
-
-        public string BuildToRoot()
-        {
-            var build = new StringBuilder(Value);
-            var curr = Last;
-            while (curr is StringNode)
-            {
-                build.Append(curr.Value);
-                curr = curr.Last;
-            }
-            return build.ToString();
-        }
-    }
-
-    
-}
-
-#region OLD_CODE
+*/
 /*
 public class VariableInstance
 {

@@ -33,7 +33,7 @@ namespace Iniciere
             {
                 //Debug.Log($"BREAK");
                 var info = TemplateInfo.New(tmp);
-                int result = NewCompiler.Precompile(tmp, info);
+                int result = Compiler.Precompile(tmp, info);
 
                 if (result == 0)
                 {

@@ -22,6 +22,8 @@ namespace Iniciere
 
         Vector2 scroll;
 
+        UBox box = new UBox();
+
         [MenuItem("Tools/Iniciere/DebugWindow")]
         public static void OpenWindow()
         {
@@ -42,12 +44,15 @@ namespace Iniciere
             }
             if (GUILayout.Button("TEST"))
             {
-                if (lastInfo != null) PopulateProperties();
-                Testing(lastInfo);
+                //if (lastInfo != null) PopulateProperties();
+                //Testing(lastInfo);
+                //var json = JsonUtility.ToJson("TEST", true);
+                //Debug.Log($"'TEST' = '{json}'");
             }
 
             filepath = EditorGUILayout.TextField("PATH", filepath);
 
+            #region FIND_TEST
             if (GUILayout.Button("FIND_TEST"))
             {
                 var it = IniciereFileImporter.GetTemplates(filepath);
@@ -81,6 +86,17 @@ namespace Iniciere
                         "\n============================================================================");
                     Debug.Log(build.ToString());
                 }
+            }
+            #endregion
+
+            if (GUILayout.Button("SET_BOX"))
+            {
+                box.Set(filepath);
+            }
+            if (GUILayout.Button("GET_BOX"))
+            {
+                var test = box.Get();
+                Debug.Log($"VALUE: '{test}'");
             }
 
             if (templates is null)
@@ -129,11 +145,13 @@ namespace Iniciere
                 //Fill string properties with something
                 if (lastInfo != null) PopulateProperties();
 
-                int result = Compiler.Compile(lastInfo, out TemplateOutput template);
+                TemplateOutput templateOutput = new TemplateOutput();
+
+                int result = Compiler.Compile(lastInfo, x => { }, templateOutput);
                 if (result == 0)
                 {
                     Debug.Log($"Compiler succeded");
-                    PrintTemplateOutput(template);
+                    PrintTemplateOutput(templateOutput);
                 }
                 else if (result < 0)
                 {

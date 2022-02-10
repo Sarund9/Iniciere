@@ -5,12 +5,12 @@ using UnityEngine;
 namespace Iniciere
 {
     [Serializable]
-    public class ToggleEditor : InicierePropertyEditor
+    public class PropertyToggleEditor : InicierePropertyEditor
     {
         [SerializeField]
         private string editorName;
 
-        public ToggleEditor(string editorName)
+        public PropertyToggleEditor(string editorName)
         {
             this.editorName = editorName;
         }

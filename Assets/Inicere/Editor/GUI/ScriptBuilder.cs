@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -11,6 +12,9 @@ namespace Iniciere
         string directoryPath;
 
         string tmpName;
+
+        List<LogEntry> m_Log = new List<LogEntry>();
+        Vector2 m_Scroll;
 
         public static void CreateScript(TemplateInfo info, string directoryPath)
         {
@@ -30,44 +34,74 @@ namespace Iniciere
 
             win.ShowUtility();
 
-            win.compiling = CompileAsync(info);
+            win.compiling = CompileAsync(info, win);
         }
 
         private void OnGUI()
         {
-            GUILayout.Label($"Generating Script: '{tmpName}' ...");
+            GUILayout.Label(GetStateMessage());
+
+            m_Scroll = GUILayout.BeginScrollView(m_Scroll, "Box");
+
+            try
+            {
+                foreach (var item in m_Log)
+                {
+                    GUILayout.Label($"[{item.Level}] - {item.Message}");
+                    //static string GetStyle(LogLevel lvl) => lvl switch
+                    //{
+                    //    LogLevel.Wrn => "WarningStyle",
+                    //    LogLevel.Err => "ErrorStyle",
+                    //    _ => "LogStyle",
+                    //};
+                }
+            }
+            catch { }
+            
+            GUILayout.EndScrollView();
+        }
+
+        private string GetStateMessage()
+        {
+            if (compiling is null)
+                return $"Finished Generating '{tmpName}'";
+            return $"Generating Script: '{tmpName}' ...";
         }
 
         private void OnInspectorUpdate()
         {
             if (compiling is null)
             {
-                Close();
+                //Close();
                 return;
             }
             if (compiling.IsFaulted)
             {
                 Debug.LogError($"Script Build Canceled, Compilation Error:\n{compiling.Exception.InnerException.Message}");
                 compiling = null;
-                Close();
+                //Close();
             }
             else if (compiling.IsCompleted)
             {
                 var r = compiling.Result;
-                if (r.result != 0)
-                {
-                    compiling = null;
-                }
-                else
+                if (r.result == 0)
                 {
                     CreateFile(r.template, directoryPath);
                 }
-                Close();
+                compiling = null;
+                Log(new LogEntry(LogLevel.Msg, "Finished Generating"));
+                //Close();
             }
         }
 
         void CreateFile(TemplateOutput template, string directoryPath)
         {
+            if (template.Files.Count == 0)
+            {
+                Debug.LogWarning($"No files were created from '{template.Name}'");
+                return;
+            }
+            
             foreach (var file in template.Files)
             {
                 var filepath = $"{directoryPath}/{file.Name}";
@@ -82,10 +116,10 @@ namespace Iniciere
         }
 
 
-        static async Task<TemplateResult> CompileAsync(TemplateInfo info)
+        static async Task<TemplateResult> CompileAsync(TemplateInfo info, ScriptBuilder instance)
         {
-            TemplateOutput template = null;
-            int result = await Task.Run(() => Compiler.Compile(info, out template));
+            TemplateOutput template = new TemplateOutput();
+            int result = await Task.Run(() => Compiler.Compile(info, instance.Log, template));
 
             if (result != 0)
             {
@@ -93,6 +127,15 @@ namespace Iniciere
             }
 
             return new TemplateResult(result, template);
+        }
+
+        private void Log(LogEntry obj)
+        {
+            lock(m_Log)
+            {
+                m_Log.Add(obj);
+                //m_Scroll.y += 400; // TODO: Better go down
+            }
         }
 
         struct TemplateResult

@@ -14,15 +14,17 @@ namespace Iniciere
         string m_Path;
         int m_NumColumns = 2;
         Vector2 m_Scroll;
+        string m_FileName;
 
         public static void OpenFrom(TemplateInfo info)
         {
-            var win = CreateWindow<UseTemplateWindow>();
+            var win = CreateInstance<UseTemplateWindow>();
             win.CenterOnMainWin();
             win.minSize = new Vector2(420, 360);
             win.titleContent = new GUIContent("Create Template");
 
-            win.m_Info = info;
+            win.m_Info = Instantiate(info);
+            win.ShowUtility();
         }
 
         public void OnGUI()
@@ -35,6 +37,11 @@ namespace Iniciere
             PropertyUI();
             
             BottomUI();
+        }
+
+        private void OnDisable()
+        {
+            DestroyImmediate(m_Info);
         }
 
         void PropertyUI()
@@ -56,18 +63,10 @@ namespace Iniciere
             TagDisplay(rects[3], m_Info.Flags, "Flags");
             #endregion
 
+
+            GUILayout.Space(4f);
+
             m_Scroll = GUILayout.BeginScrollView(m_Scroll, "Box");
-
-            var fileNameProperty = m_Info.FileNameProperty;
-            if (fileNameProperty != null)
-            {
-                var str = EditorGUILayout.TextField("File Name", fileNameProperty.Value.ToString());
-
-                if (EditorGUI.EndChangeCheck())
-                {
-                    fileNameProperty.Value = str;
-                }
-            }
 
             using (new GUILayout.HorizontalScope())
             {
@@ -116,6 +115,28 @@ namespace Iniciere
         void BottomUI()
         {
             GUILayout.FlexibleSpace();
+            GUILayout.Space(4f);
+
+            EditorGUI.BeginChangeCheck();
+
+            var fileNameProperty = m_Info.FileNameProperty;
+            if (fileNameProperty != null)
+            {
+                var str = EditorGUILayout.TextField("File Name", m_FileName);
+
+                if (EditorGUI.EndChangeCheck())
+                {
+                    fileNameProperty.Value = str;
+                    m_Info.FileNameProperty.Value = str;
+                    m_FileName = str;
+                }
+            }
+
+            //if (GUILayout.Button("TEST"))
+            //{
+            //    Debug.Log($"{m_Info.FileNameProperty.Value}");
+            //}
+
             using (var _ = new GUILayout.HorizontalScope())
             {
                 //m_Path = GUILayout.TextArea(m_Path, GUILayout.Height(18));
@@ -128,10 +149,15 @@ namespace Iniciere
                 //        "");
                 //}
             }
+            EditorGUI.BeginDisabledGroup(string.IsNullOrEmpty(m_FileName));
+
             if (GUILayout.Button("Create"))
             {
-
+                var path = Extensions.GetPathToProjectWindowFolder();
+                ScriptBuilder.CreateScript(m_Info, path);
+                Close();
             }
+            EditorGUI.EndDisabledGroup();
         }
 
         static void TagDisplay(Rect rect, List<string> tags, string title)

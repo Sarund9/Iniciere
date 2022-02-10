@@ -287,6 +287,20 @@ namespace Iniciere
         {
             return "[Format Not Supported]";
         }
+
+        public override bool Equals(object obj) =>
+            obj is Token tok &&
+            Type == tok.Type &&
+            Value == tok.Value;
+
+        public static bool operator ==(Token a, Token b) =>
+            a.Type == b.Type &&
+            a.Value == b.Value;
+
+        public static bool operator !=(Token a, Token b) =>
+            a.Type != b.Type ||
+            a.Value != b.Value;
+
     }
     public enum TokenType
     {

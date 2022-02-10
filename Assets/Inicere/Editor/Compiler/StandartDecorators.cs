@@ -35,7 +35,7 @@ namespace Iniciere
         {
             //Debug.Log($"Toggle decorator : '{editorName}'");
             ctx.Property.Value = false;
-            ctx.Property.Editor = new ToggleEditor(editorName);
+            ctx.Property.Editor = new PropertyToggleEditor(editorName);
         }
         
         [IniciereDecorator("OptionalText")]
