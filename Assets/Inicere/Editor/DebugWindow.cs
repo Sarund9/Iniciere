@@ -17,6 +17,7 @@ namespace Iniciere
 
         string filename;
         string filepath;
+        string label = "";
 
         string s_FullTemplate;
 
@@ -32,27 +33,32 @@ namespace Iniciere
 
         private void OnGUI()
         {
-            if (GUILayout.Button("Find Files"))
+            //if (GUILayout.Button("Find Files"))
             {
-                var files = InicereScriptFinder.FindFilePaths();
-                templates = InicereScriptFinder.FindTemplatesLite(files).ToList();
+                //var files = InicereScriptFinder.FindFilePaths();
+                //templates = InicereScriptFinder.FindTemplatesLite(files).ToList();
                 //Debug.Log($"FILES {files.Count()}");
                 //foreach (var template in templates)
                 //{
                 //    Debug.Log($"FILE: \n{template}");
                 //}
             }
+
+            filepath = EditorGUILayout.TextField("PATH", filepath);
             if (GUILayout.Button("TEST"))
             {
                 //if (lastInfo != null) PopulateProperties();
                 //Testing(lastInfo);
                 //var json = JsonUtility.ToJson("TEST", true);
                 //Debug.Log($"'TEST' = '{json}'");
+                label = StringUtils.TryParse(filepath, out var val)? val : "NULL";
+                
             }
 
-            filepath = EditorGUILayout.TextField("PATH", filepath);
+            GUILayout.Label(label);
 
             #region FIND_TEST
+            /*
             if (GUILayout.Button("FIND_TEST"))
             {
                 var it = IniciereFileImporter.GetTemplates(filepath);
@@ -86,18 +92,18 @@ namespace Iniciere
                         "\n============================================================================");
                     Debug.Log(build.ToString());
                 }
-            }
+            } //*/
             #endregion
 
-            if (GUILayout.Button("SET_BOX"))
-            {
-                box.Set(filepath);
-            }
-            if (GUILayout.Button("GET_BOX"))
-            {
-                var test = box.Get();
-                Debug.Log($"VALUE: '{test}'");
-            }
+            //if (GUILayout.Button("SET_BOX"))
+            //{
+            //    box.Set(filepath);
+            //}
+            //if (GUILayout.Button("GET_BOX"))
+            //{
+            //    var test = box.Get();
+            //    Debug.Log($"VALUE: '{test}'");
+            //}
 
             if (templates is null)
                 return;

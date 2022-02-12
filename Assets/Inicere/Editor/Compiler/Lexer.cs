@@ -293,6 +293,14 @@ namespace Iniciere
             Type == tok.Type &&
             Value == tok.Value;
 
+        public override int GetHashCode() // Auto Generated
+        {
+            int hashCode = 1265339359;
+            hashCode = hashCode * -1521134295 + Type.GetHashCode();
+            hashCode = hashCode * -1521134295 + EqualityComparer<string>.Default.GetHashCode(Value);
+            return hashCode;
+        }
+
         public static bool operator ==(Token a, Token b) =>
             a.Type == b.Type &&
             a.Value == b.Value;

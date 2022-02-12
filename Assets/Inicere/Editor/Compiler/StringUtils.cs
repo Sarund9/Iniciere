@@ -1121,7 +1121,8 @@ namespace Iniciere
 
         public static bool TryParse(string text, out string str)
         {
-            // TODO: There is a bug here
+            // TODO: There is a bug here 
+            // '#t#n
             var build = new StringBuilder();
             bool raw = text[0] == '`';
             bool escape = false;
@@ -1153,6 +1154,7 @@ namespace Iniciere
                             str = null;
                             return false;
                     }
+                    escape = false;
                 }
                 else
                 {
