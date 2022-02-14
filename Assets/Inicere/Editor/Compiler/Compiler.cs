@@ -45,9 +45,9 @@ namespace Iniciere
                 s_Log.Clear();
             }
         }
-        static void LogMsg(string msg) => s_Log.Add(new LogEntry(LogLevel.Msg, msg));
-        static void LogWrn(string msg) => s_Log.Add(new LogEntry(LogLevel.Wrn, msg));
-        static void LogErr(string msg) => s_Log.Add(new LogEntry(LogLevel.Err, msg));
+        //static void LogMsg(string msg) => s_Log.Add(new LogEntry(LogLevel.Msg, msg));
+        //static void LogWrn(string msg) => s_Log.Add(new LogEntry(LogLevel.Wrn, msg));
+        //static void LogErr(string msg) => s_Log.Add(new LogEntry(LogLevel.Err, msg));
 
         /*
          TODO TemplateInfo values:
@@ -65,7 +65,10 @@ namespace Iniciere
         * Value Resolution
          */
 
-        public static int Precompile(TemplateLocation templateLocation, TemplateInfo r_templateInfo)
+        public static int Precompile(
+            TemplateLocation templateLocation,
+            TemplateInfo r_templateInfo,
+            bool logtk = false)
         {
             var contents = templateLocation.GetInfoContents(); // TODO: Get IEnumerator<char> from File at Location
 
@@ -73,9 +76,12 @@ namespace Iniciere
             
             var log = new StringBuilder(" === LOG === ");
             var tklog = new StringBuilder();
-            tklog.AppendLine("============ TOKENS ============");
-            tklog.AppendLine("================================");
-            
+            if (logtk)
+            {
+                tklog.AppendLine("============ TOKENS ============");
+                tklog.AppendLine("================================");
+            }
+
             var task = Lexer.ParseAsync(contents, tokens);
 
             // I dont know why the above function wont run unless we wait for 1 ms
@@ -101,7 +107,8 @@ namespace Iniciere
                         break;
                     }
                 }
-                tklog.AppendLine(current.ToString());
+                if (logtk)
+                    tklog.AppendLine(current.ToString());
 
                 if (current.Type == TokenType.NewLine)
                     linecount++;
@@ -111,7 +118,7 @@ namespace Iniciere
 
                 if (current.Type == TokenType.Err)
                 {
-                    Log(current.Value);
+                    r_templateInfo.LogErr(current.Value);
                     return false;
                 }
 
@@ -129,13 +136,13 @@ namespace Iniciere
 
             // TODO: Throw Errors in Each
             if (!AwaitDequeue()) {
-                Log($"Template is Empty!");
+                r_templateInfo.LogErr($"Template is Empty!");
                 return -1;
             }
 
             //Debug.Log($"SETTING NAME TO {current}");
             if (!StringUtils.TryParse(current.Value, out var tmpName)) {
-                Log($"Unable to parse Template Name: {current.Value}");
+                r_templateInfo.LogErr($"Unable to parse Template Name: {current.Value}");
                 return -1;
             }
             r_templateInfo.name = tmpName;
@@ -194,9 +201,11 @@ namespace Iniciere
 
             }
 
-            tklog.AppendLine("================================");
-
-            Debug.Log(tklog);
+            if (logtk)
+            {
+                tklog.AppendLine("================================");
+                Debug.Log(tklog);
+            }
             Debug.Log(log);
 
             return 0;
@@ -208,13 +217,13 @@ namespace Iniciere
                 if (toks.Count == 0)
                     return false;
 
-                Log($"PARSING: {toks.AggrToString(", ")}");
+                r_templateInfo.LogMsg($"PARSING: {toks.AggrToString(", ")}");
 
                 switch (toks[0].Type)
                 {
                     // Functions
                     case TokenType.Name:
-                        Log($"Function Call: '{toks[0].Value}'");
+                        r_templateInfo.LogMsg($"Function Call: '{toks[0].Value}'");
                         /* TODO:
                          * var Expression
                          * Set Variables
@@ -234,7 +243,7 @@ namespace Iniciere
 
                     default: break;
                 }
-                Log($"Exrpession could not be Parsed, Unexpected: '{toks[0].ToPrint()}'");
+                r_templateInfo.LogErr($"Exrpession could not be Parsed, Unexpected: '{toks[0].ToPrint()}'");
                 return false;
             }
 
@@ -249,12 +258,12 @@ namespace Iniciere
                     case "sdesc":
                         if (toks.Count < 2)
                         {
-                            Log($"Function 'sdesc' expected a string, got nothing");
+                            r_templateInfo.LogErr($"Function 'sdesc' expected a string, got nothing");
                             return false;
                         }
-                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        if (!HandleExpression(toks.Skip(1), out value, r_templateInfo.LogErr, GetProperty))
                         {
-                            Log($"Failed to parse Expression");
+                            r_templateInfo.LogErr($"Failed to parse Expression");
                             return false;
                         }
                         if (value is null) {
@@ -264,19 +273,19 @@ namespace Iniciere
                             r_templateInfo.ShortDescription = value as string;
                             return true;
                         }
-                        Log($"Function 'sdesc' expected a string, got nothing");
+                        r_templateInfo.LogErr($"Function 'sdesc' expected a string, got nothing");
                         return false;
                     #endregion
                     #region LONG_DESC
                     case "ldesc":
                         if (toks.Count < 2)
                         {
-                            Log($"Function 'ldesc' expected a string, got nothing");
+                            r_templateInfo.LogErr($"Function 'ldesc' expected a string, got nothing");
                             return false;
                         }
-                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        if (!HandleExpression(toks.Skip(1), out value, r_templateInfo.LogErr, GetProperty))
                         {
-                            Log($"Failed to parse Expression");
+                            r_templateInfo.LogErr($"Failed to parse Expression");
                             return false;
                         }
                         if (value is null) {
@@ -286,19 +295,19 @@ namespace Iniciere
                             r_templateInfo.LongDescription = value as string;
                             return true;
                         }
-                        Log($"Function 'ldesc' expected a string, got nothing");
+                        r_templateInfo.LogErr($"Function 'ldesc' expected a string, got nothing");
                         return false;
                     #endregion
                     #region LANGUAGE
                     case "language":
                         if (toks.Count < 2)
                         {
-                            Log($"Function 'language' expected a string, got nothing");
+                            r_templateInfo.LogErr($"Function 'language' expected a string, got nothing");
                             return false;
                         }
-                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        if (!HandleExpression(toks.Skip(1), out value, r_templateInfo.LogErr, GetProperty))
                         {
-                            Log($"Failed to parse Expression");
+                            r_templateInfo.LogErr($"Failed to parse Expression");
                             return false;
                         }
                         if (value is null)
@@ -310,19 +319,19 @@ namespace Iniciere
                             r_templateInfo.Langs.AddRange(((string)value).CustomSplit());
                             return true;
                         }
-                        Log($"Function 'language' expected a string, got nothing");
+                        r_templateInfo.LogErr($"Function 'language' expected a string, got nothing");
                         return false;
                     #endregion
                     #region CATEGORY
                     case "category":
                         if (toks.Count < 2)
                         {
-                            Log($"Function 'category' expected a string, got nothing");
+                            r_templateInfo.LogErr($"Function 'category' expected a string, got nothing");
                             return false;
                         }
-                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        if (!HandleExpression(toks.Skip(1), out value, r_templateInfo.LogErr, GetProperty))
                         {
-                            Log($"Failed to parse Expression");
+                            r_templateInfo.LogErr($"Failed to parse Expression");
                             return false;
                         }
                         if (value is null)
@@ -334,19 +343,19 @@ namespace Iniciere
                             r_templateInfo.Categories.AddRange(((string)value).CustomSplit());
                             return true;
                         }
-                        Log($"Function 'category' expected a string, got nothing");
+                        r_templateInfo.LogErr($"Function 'category' expected a string, got nothing");
                         return false;
                     #endregion
                     #region FLAGS
                     case "flags":
                         if (toks.Count < 2)
                         {
-                            Log($"Function 'flags' expected a string, got nothing");
+                            r_templateInfo.LogErr($"Function 'flags' expected a string, got nothing");
                             return false;
                         }
-                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        if (!HandleExpression(toks.Skip(1), out value, r_templateInfo.LogErr, GetProperty))
                         {
-                            Log($"Failed to parse Expression");
+                            r_templateInfo.LogErr($"Failed to parse Expression");
                             return false;
                         }
                         if (value is null)
@@ -358,35 +367,35 @@ namespace Iniciere
                             r_templateInfo.Flags.AddRange(((string)value).CustomSplit());
                             return true;
                         }
-                        Log($"Function 'flags' expected a string, got nothing");
+                        r_templateInfo.LogErr($"Function 'flags' expected a string, got nothing");
                         return false;
                     #endregion
                     #region FILEEX
                     case "fileext":
                         if (toks.Count < 2)
                         {
-                            Log($"Function 'fileext' expected a string, got nothing");
+                            r_templateInfo.LogErr($"Function 'fileext' expected a string, got nothing");
                             return false;
                         }
-                        if (!HandleExpression(toks.Skip(1), out value, Log, GetProperty))
+                        if (!HandleExpression(toks.Skip(1), out value, r_templateInfo.LogErr, GetProperty))
                         {
-                            Log($"Failed to parse Expression");
+                            r_templateInfo.LogErr($"Failed to parse Expression");
                             return false;
                         }
                         if (value is null)
                         {
                             return false; // Function above logs the Error
                         }
-                        if (value is string)
+                        if (value is string fileExts)
                         {
-                            r_templateInfo.FileExts.AddRange(((string)value).CustomSplit());
+                            r_templateInfo.FileExts.AddRange(fileExts.CustomSplit());
                             return true;
                         }
-                        Log($"Function 'fileext' expected a string, got nothing");
+                        r_templateInfo.LogErr($"Function 'fileext' expected a string, got nothing");
                         return false;
                     #endregion
                     default:
-                        Log($"Unknown Function: {name}");
+                        r_templateInfo.LogErr($"Unknown Function: {name}");
                         return false;
                 }
             }
@@ -395,13 +404,13 @@ namespace Iniciere
                 var it = toks.GetEnumerator();
                 var isIt = it.MoveNext();
                 if (!isIt) {
-                    Log("Missing arguments in Variable Declaration");
+                    r_templateInfo.LogErr("Missing arguments in Variable Declaration");
                     return false;
                 }
 
                 var current = it.Current;
                 if (current.Type != TokenType.Name) {
-                    Log($"Expected Name, got '{current.ToSrc()}'");
+                    r_templateInfo.LogErr($"Expected Name, got '{current.ToSrc()}'");
                     return false;
                 }
 
@@ -411,7 +420,7 @@ namespace Iniciere
                 // RUN DECORATORS
                 if (!ApplyDecorators(prop))
                 {
-                    Log("Operators could not be Applied");
+                    r_templateInfo.LogErr("Operators could not be Applied");
                     return false;
                 }
 
@@ -422,14 +431,14 @@ namespace Iniciere
                 var it = toks.GetEnumerator();
                 var isIt = it.MoveNext();
                 if (!isIt) {
-                    Log("Missing arguments in Decoration");
+                    r_templateInfo.LogErr("Missing arguments in Decoration");
                     return false;
                 }
                 var current = it.Current;
                 bool Advance(bool check = true) {
                     isIt = it.MoveNext();
                     if (check && !isIt) {
-                        Log("Missing arguments in Decoration");
+                        r_templateInfo.LogErr("Missing arguments in Decoration");
                         return false;
                     }
                     current = it.Current;
@@ -438,13 +447,13 @@ namespace Iniciere
 
                 if (current.Type != TokenType.Name)
                 {
-                    Log($"Expected Decorator Name, got '{current.ToSrc()}'");
+                    r_templateInfo.LogErr($"Expected Decorator Name, got '{current.ToSrc()}'");
                     return false;
                 }
 
                 if (!decorators.TryGetValue(current.Value, out var decoratorTypeInstance))
                 {
-                    Log($"Unknown Decorator: '{current.Value}'");
+                    r_templateInfo.LogErr($"Unknown Decorator: '{current.Value}'");
                     return false;
                 }
 
@@ -453,7 +462,7 @@ namespace Iniciere
                 // Left Parenthesis
                 if (!isIt) {
                     if (decoratorTypeInstance.ParamCount > 0) {
-                        Log($"Decorator: '{current.Value}' expected {decoratorTypeInstance.ParamCount} arguments, got None");
+                        r_templateInfo.LogErr($"Decorator: '{current.Value}' expected {decoratorTypeInstance.ParamCount} arguments, got None");
                         return false;
                     } else {
                         //Log($"#$$# CALLING {decoratorTypeInstance.Name}");
@@ -474,7 +483,7 @@ namespace Iniciere
 
                 if (current.Type != TokenType.LeftParen)
                 {
-                    Log($"Expected '('");
+                    r_templateInfo.LogErr($"Expected '('");
                     return false;
                 }
 
@@ -491,21 +500,21 @@ namespace Iniciere
                         && current.Type != TokenType.Comma)
                     {
                         if (!isIt) {
-                            Log("Expected End of ()");
+                            r_templateInfo.LogErr("Expected End of ()");
                             return false;
                         }
                         dec_toks.Add(current);
                         if (!Advance()) {
-                            Log("Expected )");
+                            r_templateInfo.LogErr("Expected )");
                             return false;
                         }
                     }
                     if (dec_toks.Count == 0) {
-                        Log("Empty Decorator Parameter");
+                        r_templateInfo.LogErr("Empty Decorator Parameter");
                         Advance(false);
                         continue;
                     }
-                    if (HandleExpression(dec_toks, out var value, Log, GetProperty)) {
+                    if (HandleExpression(dec_toks, out var value, r_templateInfo.LogErr, GetProperty)) {
                         calling_params.Add(value);
                         dec_toks.Clear();
                         if (current.Type == TokenType.RightParen) {
@@ -513,7 +522,7 @@ namespace Iniciere
                         }
                     } else {
                         //calling_params.Add(null);
-                        Log("Expression could not be Parsed");
+                        r_templateInfo.LogErr("Expression could not be Parsed");
                         return false;
                     }
                 }
@@ -586,7 +595,7 @@ namespace Iniciere
                         curr.Execute(decoContext);
                     }
                     catch (Exception c) {
-                        Log($"{curr.Decor.Name} raised an Exception:\n{c.GetExceptionText()}");
+                        r_templateInfo.LogErr($"{curr.Decor.Name} raised an Exception:\n{c.GetExceptionText()}");
                         return false;
                     }
                 }
@@ -594,12 +603,6 @@ namespace Iniciere
             }
 
             
-            void Log(string msg)
-            {
-                log.AppendLine(
-                    $"[{templateLocation.Filepath} - " +
-                    $"{linecount}]\n{msg}\n");
-            }
 
             #region OLD
             /*
@@ -859,35 +862,7 @@ namespace Iniciere
                         return false;
                 }
             }
-            bool HandleVarDecl(IEnumerable<Token> toks)
-            {
-                var it = toks.GetEnumerator();
-                var isIt = it.MoveNext();
-                if (!isIt)
-                {
-                    LogErr("Missing arguments in Variable Declaration");
-                    return false;
-                }
 
-                var current = it.Current;
-                if (current.Type != TokenType.Name)
-                {
-                    LogErr($"Expected Name, got '{current.ToSrc()}'");
-                    return false;
-                }
-
-                var prop = new TemplateProperty(current.Value, templateInfo);
-                templateInfo.Properties.Add(prop);
-
-                // RUN DECORATORS
-                //if (!ApplyDecorators(prop))
-                //{
-                //    LogErr("Operators could not be Applied");
-                //    return false;
-                //}
-
-                return true;
-            }
 
             bool HandleMacro(IEnumerable<Token> toks)
             {
@@ -1227,6 +1202,37 @@ namespace Iniciere
 }
 
 #region OLD_CODE
+/* HandleVarDecl()
+//bool HandleVarDecl(IEnumerable<Token> toks)
+//{
+//    var it = toks.GetEnumerator();
+//    var isIt = it.MoveNext();
+//    if (!isIt)
+//    {
+//        LogErr("Missing arguments in Variable Declaration");
+//        return false;
+//    }
+
+//    var current = it.Current;
+//    if (current.Type != TokenType.Name)
+//    {
+//        LogErr($"Expected Name, got '{current.ToSrc()}'");
+//        return false;
+//    }
+
+//    var prop = new TemplateProperty(current.Value, templateInfo);
+//    templateInfo.Properties.Add(prop);
+
+//    // RUN DECORATORS
+//    //if (!ApplyDecorators(prop))
+//    //{
+//    //    LogErr("Operators could not be Applied");
+//    //    return false;
+//    //}
+
+//    return true;
+//}
+*/
 /*
 public class Compiler
     {

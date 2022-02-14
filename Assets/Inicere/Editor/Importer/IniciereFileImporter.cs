@@ -28,10 +28,11 @@ namespace Iniciere
             var templateLocations = GetTemplates(ctx.assetPath);
 
             List<TemplateInfo> list = new List<TemplateInfo>();
-            //Debug.Log($"BREAK");
+
             foreach (var tmp in templateLocations)
             {
-                //Debug.Log($"BREAK");
+                var log = new List<LogEntry>();
+
                 var info = TemplateInfo.New(tmp);
                 int result = Compiler.Precompile(tmp, info);
 

@@ -28,8 +28,9 @@ namespace Iniciere
         List<string> flags = new List<string>();
         [SerializeField]
         List<TemplateProperty> properties = new List<TemplateProperty>();
+        
         [SerializeField]
-        List<Token> tokens = new List<Token>();
+        List<LogEntry> precompileLog = new List<LogEntry>();
 
         //public TemplateInfo(TemplateLocation location)
         //{
@@ -58,6 +59,7 @@ namespace Iniciere
         public List<string> Categories => categories;
         public List<string> Flags => flags;
         public IList<TemplateProperty> Properties => properties;
+        public List<LogEntry> PrecompileLog => precompileLog;
 
         public TemplateProperty FileNameProperty => Properties.FirstOrDefault(x => x.IsFileName);
 
@@ -77,6 +79,13 @@ namespace Iniciere
         public string GetInfoContents() => location.GetInfoContents();
 
         public string GetBodyContents() => location.GetBodyContents();
+
+        public void LogMsg(string msg) =>
+            precompileLog.Add(new LogEntry(LogLevel.Msg, msg));
+        public void LogWrn(string msg) =>
+            precompileLog.Add(new LogEntry(LogLevel.Wrn, msg));
+        public void LogErr(string msg) =>
+            precompileLog.Add(new LogEntry(LogLevel.Err, msg));
 
         /// <summary> Load a string from the file </summary>
         //public string GetFromFile()
