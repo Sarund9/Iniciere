@@ -11,16 +11,20 @@ using UnityEngine;
 
 namespace Iniciere
 {
-    
+    [Serializable]
     public struct LogEntry
     {
+#pragma warning disable IDE0044 // Add readonly modifier
+        LogLevel m_Level;
+        string m_Message;
+#pragma warning restore IDE0044 // Add readonly modifier
         public LogEntry(LogLevel level, string message)
         {
-            Level = level;
-            Message = message;
+            m_Level = level;
+            m_Message = message;
         }
-        public LogLevel Level { get; }
-        public string Message { get; }
+        public LogLevel Level => m_Level;
+        public string Message => m_Message;
 
     }
     public enum LogLevel
@@ -741,7 +745,7 @@ namespace Iniciere
 
 
             tklog.AppendLine("================================");
-            Debug.Log(tklog.ToString());
+            //Debug.Log(tklog.ToString()); // TODO: Toggleable Logger
 
             while (AwaitDequeue()) { }
 
@@ -862,7 +866,6 @@ namespace Iniciere
                         return false;
                 }
             }
-
 
             bool HandleMacro(IEnumerable<Token> toks)
             {
