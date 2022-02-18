@@ -1,44 +1,145 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
 
 namespace Iniciere
 {
+    [Serializable]
     public class TemplateGUI
     {
-        Color color = Color.HSVToRGB(.7f, .3f, .1f);
-        
+        TemplateLogGUI m_LogUI = new TemplateLogGUI(); 
+
         public void Draw(TemplateInfo info)
         {
-            //var e = Event.current;
-            //var area = GUILayoutUtility.GetRect(20, 50);
-
-            //EditorGUI.DrawRect(
-            //    new Rect(e.mousePosition, Vector2.one * 5f),
-            //    Color.red);
-
             EditorGUI.EndDisabledGroup();
 
             GUILayout.Label(info.TmpName, "LargeLabel");
             GUILayout.Label(info.ShortDescription, "Label");
 
-            //if (area.Contains(e.mousePosition))
-            //{
-            //    color = Color.HSVToRGB(.02f, .6f, .7f);
-            //}
-            //else
-            //{
-            //    color = Color.HSVToRGB(.7f, .3f, .1f);
-            //}
+            m_LogUI.Draw(info.PrecompileLog);
+
+            // TODO: Log Window
+            GUILayout.Space(10f);
+
+            EditorGUI.BeginDisabledGroup(info.IsFailed);
 
             if (GUILayout.Button("Use this Template"))
             {
                 UseTemplateWindow.OpenFrom(info);
             }
 
+            EditorGUI.EndDisabledGroup();
+            
+
+
             EditorGUI.BeginDisabledGroup(true);
         }
 
+    }
+
+    [Serializable]
+    public class TemplateLogGUI
+    {
+        const float LOG_LENGHT = 203;
+        
+        bool m_Show;
+        Vector2 m_Scroll;
+
+        bool m_ShowMsg, m_ShowWrn, m_ShowErr;
+
+        public void Draw(List<LogEntry> log)
+        {
+            GUILayout.BeginHorizontal();
+            
+            var logHeaderArea = GUILayoutUtility
+                .GetRect(1, EditorGUIUtility.singleLineHeight,
+                GUILayout.MaxWidth(9999));
+            var fullArea = new Rect(logHeaderArea)
+            {
+                width = Screen.width,
+            };
+
+            GUILayout.FlexibleSpace();
+            var r_Toolbar = GUILayoutUtility
+                .GetRect(100, EditorGUIUtility.singleLineHeight);
+
+            var btn_OpenLog = GUILayoutUtility
+                .GetRect(80, EditorGUIUtility.singleLineHeight);
+
+            GUILayout.EndHorizontal();
+            
+            var toolbarStyle = new GUIStyle("toolbar")
+            {
+
+            };
+
+            GUI.Box(fullArea, "", toolbarStyle);
+
+            var toolbarDropStyle = new GUIStyle("toolbarDropDown")
+            {
+                fontStyle = FontStyle.Bold,
+                //border = new RectOffset(20, 1, 1, 1),
+                margin = new RectOffset(20, 0, 0, 0),
+            };
+
+            m_Show = EditorGUI
+                .BeginFoldoutHeaderGroup(
+                logHeaderArea.Shrink(9, 14, 0, 0), m_Show, "Log", toolbarDropStyle
+                );
+
+            var toolbarBtnStyle = new GUIStyle("ToolbarButton")
+            {
+
+            };
+
+            // TOOLBAR
+            {
+                var it = r_Toolbar.SplitHorizontal(3).GetEnumerator();
+                it.MoveNext();
+                m_ShowMsg = EditorGUI.Toggle(it.Current, "", m_ShowMsg, toolbarBtnStyle);
+
+                it.MoveNext();
+                m_ShowWrn = EditorGUI.Toggle(it.Current, "", m_ShowWrn, toolbarBtnStyle);
+
+                it.MoveNext();
+                m_ShowErr = EditorGUI.Toggle(it.Current, "0", m_ShowErr, toolbarBtnStyle);
+            }
+            
+            if (GUI.Button(btn_OpenLog, "Open in Log", toolbarBtnStyle))
+            {
+
+                return;
+            }
+
+            if (m_Show)
+            {
+                var boxStyle = new GUIStyle("Box")
+                {
+                    margin = new RectOffset(0, 0, 4, 0),
+                };
+                m_Scroll = GUILayout.BeginScrollView(
+                    m_Scroll, boxStyle, GUILayout.Height(LOG_LENGHT)
+                    );
+
+                foreach (var msg in log)
+                {
+                    EditorGUILayout.HelpBox(msg.Message, GetType(msg.Level));
+                    static MessageType GetType(LogLevel lvl) => lvl switch
+                    {
+                        LogLevel.Msg => MessageType.Info,
+                        LogLevel.Wrn => MessageType.Warning,
+                        LogLevel.Err => MessageType.Error,
+                        _ => MessageType.None,
+                    };
+                }
+
+                GUILayout.EndScrollView();
+            }
+            
+            EditorGUI.EndFoldoutHeaderGroup();
+        }
     }
 }

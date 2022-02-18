@@ -17,9 +17,14 @@ namespace Iniciere
         const string TEMPLATE_DIV = @"\=/";
         const string TEMPLATE_END = @"//>";
         [SerializeField]
-        bool import, importFirstOnly;
+        bool import, importFirstOnly, logTokens;
         //List<string> files;
 
+        /*
+         TODO: Compilation Options
+        * Logging Level
+        * Ignore failed Imports
+         */
         public override void OnImportAsset(AssetImportContext ctx)
         {
             if (!import)
@@ -28,19 +33,21 @@ namespace Iniciere
             var templateLocations = GetTemplates(ctx.assetPath);
 
             List<TemplateInfo> list = new List<TemplateInfo>();
-
+            
             foreach (var tmp in templateLocations)
             {
-                var log = new List<LogEntry>();
-
                 var info = TemplateInfo.New(tmp);
-                int result = Compiler.Precompile(tmp, info);
+                int result = Compiler.Precompile(tmp, info, logTokens);
 
-                if (result == 0)
+                if (result != 0)
                 {
-                    ctx.AddObjectToAsset(info.name, info);
-                    list.Add(info);
+                    Debug.LogWarning(
+                        $"Template '{(info.TmpName ?? "Unknown")}' Failed to Compile.\n" +
+                        $"See it's log for details");
                 }
+                ctx.AddObjectToAsset(info.name, info);
+                list.Add(info);
+                
                 if (importFirstOnly)
                     break;
             }

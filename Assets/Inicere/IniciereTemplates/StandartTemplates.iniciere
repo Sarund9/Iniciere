@@ -17,7 +17,9 @@
 
 	@Toggle("Add Empty Constructor") 
 	var constructor
+	
 	\=/
+	
 	@FORMAT(filename)
 	file "{}.cs"
 
@@ -49,7 +51,7 @@ add "#tpublic {}()#n{#n#t#n}#n"
 	
 add "}"
 
-//>s
+//>
 
 
 <#iniciere "Inherited CSharp Class"
@@ -63,16 +65,16 @@ add "}"
 	fileext "cs"
 
 	@FileName 
-	var $filename
+	var filename
 	@ClassType("Inherit From") 
-	var $baseType
+	var baseType
 
 	\=/
 
-	@FORMAT($filename)
+	@FORMAT(filename)
 	file "{}.cs"
 
-
+	# WIP
 //>
 
 AST for Above:
@@ -138,6 +140,7 @@ add "}"
 	
 //>
 
+
 <#iniciere "Unity ScriptableObject"
 
 	sdesc "Unity ScriptableObject Class"
@@ -172,7 +175,7 @@ using System.Linq;
 using UnityEngine;#n'''
 	
 	@IF(createAssetMenu)
-	add "@CreateAssetMenu "
+	add "[CreateAssetMenu]"
 	
 	@FORMAT(filename)
 	add '''class {} : ScriptableObject
@@ -189,8 +192,13 @@ using UnityEngine;#n'''
 	
 //>
 
-OLD
+TODO:
+* Automatic Namespacing (No Template Syntax Required)
+	* 'namespace_start' and 'namespace_end'
 
+
+OLD
+'''
 TODO:
 * ClassType Editor Window
 
@@ -217,4 +225,4 @@ Macro:
 * Convert Tabs Macro
 
 
-
+'''

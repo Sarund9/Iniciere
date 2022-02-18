@@ -15,8 +15,8 @@ namespace Iniciere
     public struct LogEntry
     {
 #pragma warning disable IDE0044 // Add readonly modifier
-        LogLevel m_Level;
-        string m_Message;
+        [SerializeField] LogLevel m_Level;
+        [SerializeField] string m_Message;
 #pragma warning restore IDE0044 // Add readonly modifier
         public LogEntry(LogLevel level, string message)
         {
@@ -27,6 +27,7 @@ namespace Iniciere
         public string Message => m_Message;
 
     }
+    [Serializable]
     public enum LogLevel
     {
         Msg,
@@ -75,7 +76,7 @@ namespace Iniciere
             bool logtk = false)
         {
             var contents = templateLocation.GetInfoContents(); // TODO: Get IEnumerator<char> from File at Location
-
+            
             var tokens = new ConcurrentQueue<Token>();
             
             var log = new StringBuilder(" === LOG === ");
@@ -212,7 +213,16 @@ namespace Iniciere
             }
             Debug.Log(log);
 
-            return 0;
+            if (r_templateInfo.IsFailed)
+            {
+                r_templateInfo.LogErr("Failed to Compile!");
+                return 1;
+            }
+            else
+            {
+                r_templateInfo.LogMsg("Compiled Succesfully");
+                return 0;
+            }
 
             // ==================================== \\
             
@@ -221,13 +231,13 @@ namespace Iniciere
                 if (toks.Count == 0)
                     return false;
 
-                r_templateInfo.LogMsg($"PARSING: {toks.AggrToString(", ")}");
+                //r_templateInfo.LogMsg($"PARSING: {toks.AggrToString(", ")}");
 
                 switch (toks[0].Type)
                 {
                     // Functions
                     case TokenType.Name:
-                        r_templateInfo.LogMsg($"Function Call: '{toks[0].Value}'");
+                        //r_templateInfo.LogMsg($"Function Call: '{toks[0].Value}'");
                         /* TODO:
                          * var Expression
                          * Set Variables
@@ -605,8 +615,6 @@ namespace Iniciere
                 }
                 return true;
             }
-
-            
 
             #region OLD
             /*

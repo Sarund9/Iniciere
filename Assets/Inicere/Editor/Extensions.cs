@@ -176,12 +176,6 @@ namespace Iniciere
             return new string(chars);
         }
 
-        public static T Do<T>(this T obj, Action<T> action)
-        {
-            action(obj);
-            return obj;
-        }
-
         public static void AddRange<T, T2>(this Dictionary<T, T2> hash, IEnumerable<(T, T2)> items)
         {
             foreach (var item in items)

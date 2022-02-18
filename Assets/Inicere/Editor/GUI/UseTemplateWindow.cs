@@ -11,8 +11,9 @@ namespace Iniciere
     public class UseTemplateWindow : EditorWindow
     {
         TemplateInfo m_Info;
+        [SerializeField]
         string m_Path;
-        int m_NumColumns = 2;
+        
         Vector2 m_Scroll;
         string m_FileName;
 
@@ -27,6 +28,7 @@ namespace Iniciere
             win.ShowUtility();
         }
 
+        // TODO: Extract UI to Class, for re-use in CreateScriptWindow
         public void OnGUI()
         {
             if (!m_Info) {
@@ -63,49 +65,37 @@ namespace Iniciere
             TagDisplay(rects[3], m_Info.Flags, "Flags");
             #endregion
 
-
             GUILayout.Space(4f);
 
             m_Scroll = GUILayout.BeginScrollView(m_Scroll, "Box");
 
-            using (new GUILayout.HorizontalScope())
+            var list = m_Info.Properties;
+            if (list.Count == 0)
             {
-                var list = m_Info.Properties;
-                if (list.Count == 0)
-                {
-                    GUILayout.Label("This template has no Properties");
-                }
-                int itemsPerColumn = list.Count / m_NumColumns;
-                
-                GUILayout.BeginVertical();
-                for (int i = 0; i < list.Count; i++)
-                {
-
-                    //if (i > itemsPerColumn && i % itemsPerColumn == 0)
-                    //{
-                    //    GUILayout.EndVertical();
-                    //    GUILayout.BeginVertical();
-                    //}
-
-                    if (list[i].IsFileName)
-                        continue;
-                    if (list[i].HasEditor)
-                        HandleProperty(list[i]);
-                    else // Debug
-                        GUILayout.Label(list[i].Name + " - No Editor");
-
-                    // ============= \\
-                    static void HandleProperty(TemplateProperty templateProperty)
-                    {
-                        float height = templateProperty.Editor.GetHeight(templateProperty);
-
-                        var rect = GUILayoutUtility.GetRect(0, height);
-
-                        templateProperty.Editor.DrawGUI(rect, templateProperty);
-                    }
-                }
-                GUILayout.EndVertical();
+                GUILayout.Label("This template has no Properties");
             }
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].IsFileName)
+                    continue;
+                if (list[i].HasEditor)
+                    HandleProperty(list[i]);
+                else // Debug
+                    GUILayout.Label(list[i].Name + " - No Editor");
+
+                // ============= \\
+                static void HandleProperty(TemplateProperty templateProperty)
+                {
+                    float height = templateProperty.Editor.GetHeight(templateProperty);
+
+                    var rect = GUILayoutUtility.GetRect(0, height);
+
+                    templateProperty.Editor.DrawGUI(rect, templateProperty);
+                }
+            }
+            //GUILayout.FlexibleSpace();
+            GUILayout.Space(Screen.height - 240f);
 
             GUILayout.EndScrollView();
 

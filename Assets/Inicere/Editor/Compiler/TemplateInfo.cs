@@ -31,6 +31,8 @@ namespace Iniciere
         
         [SerializeField]
         List<LogEntry> precompileLog = new List<LogEntry>();
+        [SerializeField]
+        bool isFailed;
 
         //public TemplateInfo(TemplateLocation location)
         //{
@@ -60,6 +62,7 @@ namespace Iniciere
         public List<string> Flags => flags;
         public IList<TemplateProperty> Properties => properties;
         public List<LogEntry> PrecompileLog => precompileLog;
+        public bool IsFailed => isFailed;
 
         public TemplateProperty FileNameProperty => Properties.FirstOrDefault(x => x.IsFileName);
 
@@ -84,8 +87,16 @@ namespace Iniciere
             precompileLog.Add(new LogEntry(LogLevel.Msg, msg));
         public void LogWrn(string msg) =>
             precompileLog.Add(new LogEntry(LogLevel.Wrn, msg));
-        public void LogErr(string msg) =>
+        public void LogErr(string msg)
+        {
+            isFailed = true;
             precompileLog.Add(new LogEntry(LogLevel.Err, msg));
+        }
+
+        public int ErrCode()
+        {
+            return isFailed ? 1 : 0;
+        }
 
         /// <summary> Load a string from the file </summary>
         //public string GetFromFile()

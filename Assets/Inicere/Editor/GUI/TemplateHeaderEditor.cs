@@ -10,7 +10,7 @@ namespace Iniciere
     {
         TemplateHeader obj;
         TemplateGUI ui = new TemplateGUI();
-
+        
         private void OnEnable()
         {
             obj = (TemplateHeader)target;
@@ -19,12 +19,13 @@ namespace Iniciere
         public override void OnInspectorGUI()
         {
             //base.OnInspectorGUI();
-            foreach (var template in obj.Templates)
+            foreach (var item in obj.Templates)
             {
-                ui.Draw(template);
+                ui.Draw(item);
                 GUILayout.Space(10f);
             }
         }
+        
         
     }
 }
