@@ -14,10 +14,16 @@ namespace Iniciere
         bool m_ShowMsg = true, m_ShowWrn = true, m_ShowErr = true;
         int m_NumMsg, m_NumWrn, m_NumErr;
         string m_Search;
-
-        //Rect fullLogView, fullLogDragArea;
+        
         bool m_Dragging;
-        float m_FullLogHeight;
+        float m_FullLogHeight = 70;
+        int m_SelectedLogItem = -1;
+
+        int m_MouseDownOn = -1;
+
+        Color c_ItemHover = new Color(.4f, .9f, .4f, 200),
+            c_ItemPress = new Color(0, 0, 0, .2f),
+            c_ItemSelect = new Color(.3f, .4f, .8f, .1f);
 
         public static void OpenFrom(List<LogEntry> log, string tmpname)
         {
@@ -32,6 +38,7 @@ namespace Iniciere
 
         public void OnGUI()
         {
+            // TOP Area Layout
             GUILayout.BeginHorizontal();
 
             var logTitleArea = GUILayoutUtility
@@ -110,8 +117,13 @@ namespace Iniciere
                 m_Scroll, boxStyle
                 );
 
-            foreach (var msg in m_Log)
+            var e = Event.current;
+
+            bool hasSelected = false;
+            bool hasBegunSelecting = false;
+            for (int i = 0; i < m_Log.Count; i++)
             {
+                LogEntry msg = m_Log[i];
                 // SKIP UNWANTED MESSAGES
                 switch (msg.Level)
                 {
@@ -133,7 +145,36 @@ namespace Iniciere
                     continue;
                 }
 
-                EditorGUILayout.HelpBox(msg.Message, GetType(msg.Level));
+                var currentArea = GUILayoutUtility.GetRect(10, 36);
+
+                EditorGUI.HelpBox(currentArea, msg.Message, GetType(msg.Level));
+
+                // Selection:
+                if (m_SelectedLogItem == i)
+                {
+                    EditorGUI.DrawRect(currentArea, c_ItemSelect);
+                }
+                else if (currentArea.Contains(e.mousePosition))
+                {
+                    if (m_MouseDownOn > -1)
+                        EditorGUI.DrawRect(currentArea, c_ItemPress);
+                    else
+                        EditorGUI.DrawRect(currentArea, c_ItemHover);
+                    
+                    if (e.type == EventType.MouseDown && e.button == 0)
+                    {
+                        m_MouseDownOn = i;
+                        hasBegunSelecting = true;
+                    }
+                    else if (m_MouseDownOn == i &&
+                        e.type == EventType.MouseUp && e.button == 0)
+                    {
+                        m_SelectedLogItem = i;
+                        hasSelected = true;
+                        m_MouseDownOn = -1;
+                    }
+                }
+
                 static MessageType GetType(LogLevel lvl) => lvl switch
                 {
                     LogLevel.Msg => MessageType.Info,
@@ -143,13 +184,26 @@ namespace Iniciere
                 };
             }
 
+            if (!hasBegunSelecting
+                && e.type == EventType.MouseUp
+                && e.button == 0)
+            {
+                m_MouseDownOn = -1;
+            }
+
+            if (!hasSelected
+                && e.type == EventType.MouseUp
+                && e.button == 0)
+            {
+                m_SelectedLogItem = -1;
+            }
+
             GUILayout.EndScrollView();
 
-            //if (fullLogView.width < 1)
+            // FULL LOG VIEW
             const float DragSize = 8;
 
-            var fullLogView = GUILayoutUtility.GetRect(20, m_FullLogHeight)
-                .Shrink(0, 0, 0, 0);
+            var fullLogView = GUILayoutUtility.GetRect(20, m_FullLogHeight);
             var fullLogDragArea = new Rect(fullLogView)
             {
                 y = fullLogView.y - (DragSize / 2),
@@ -162,12 +216,19 @@ namespace Iniciere
 
             };
 
-            GUI.Label(fullLogView, "Full Log Message", fullLogStyle);
-            EditorGUI.DrawRect(fullLogDragArea, Color.red * .5f);
-
+            if (m_SelectedLogItem >= 0)
+            {
+                GUI.TextArea(
+                fullLogView.Shrink(0, 0, 5, 0),
+                m_Log[m_SelectedLogItem].Message,
+                fullLogStyle
+                );
+            }
+            
             // DRAGGING
-            var e = Event.current;
             var fullWin = new Rect(0, 0, position.width, position.height);
+            // Mouse Shape
+            EditorGUIUtility.AddCursorRect(fullLogDragArea, MouseCursor.ResizeVertical);
 
             if (e.type == EventType.MouseDown // Enter Drag
                 && e.button == 0
@@ -183,16 +244,23 @@ namespace Iniciere
             }
             else if (m_Dragging) // Move Area
             {
-                m_FullLogHeight = (position.height - e.mousePosition.y) - 20;
+                m_FullLogHeight = (position.height - e.mousePosition.y);
                 Repaint();
-                EditorGUI.DrawRect(
-                    new Rect(e.mousePosition - Vector2.one * 3, Vector2.one * 6), Color.green);
+                //EditorGUI.DrawRect(
+                //    new Rect(
+                //        e.mousePosition - Vector2.one * 3, Vector2.one * 6
+                //        ), Color.green);
             }
 
             // Clamp Area
             m_FullLogHeight = Mathf.Clamp(m_FullLogHeight,
                 70, position.height - 120);
 
+        }
+
+        private void Update()
+        {
+            Repaint();
         }
     }
 }
