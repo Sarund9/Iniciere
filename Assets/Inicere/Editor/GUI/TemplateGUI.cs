@@ -19,7 +19,7 @@ namespace Iniciere
             GUILayout.Label(info.TmpName, "LargeLabel");
             GUILayout.Label(info.ShortDescription, "Label");
 
-            m_LogUI.Draw(info.PrecompileLog);
+            m_LogUI.Draw(info.PrecompileLog, info.TmpName);
 
             // TODO: Log Window
             GUILayout.Space(10f);
@@ -48,7 +48,7 @@ namespace Iniciere
         bool m_Show;
         Vector2 m_Scroll;
 
-        bool m_ShowMsg, m_ShowWrn, m_ShowErr;
+        bool m_ShowMsg = true, m_ShowWrn = true, m_ShowErr = true;
         int m_NumMsg, m_NumWrn, m_NumErr;
 
         void UpdateLogNums(List<LogEntry> log)
@@ -71,7 +71,7 @@ namespace Iniciere
             }
         }
 
-        public void Draw(List<LogEntry> log)
+        public void Draw(List<LogEntry> log, string tmpname)
         {
             UpdateLogNums(log);
 
@@ -142,8 +142,8 @@ namespace Iniciere
             
             if (GUI.Button(btn_OpenLog, "Open in Log", toolbarBtnStyle))
             {
-
-                return;
+                m_Show = false;
+                TemplateLogWindow.OpenFrom(log, tmpname);
             }
 
             if (m_Show)
