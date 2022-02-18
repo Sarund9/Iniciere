@@ -49,9 +49,32 @@ namespace Iniciere
         Vector2 m_Scroll;
 
         bool m_ShowMsg, m_ShowWrn, m_ShowErr;
+        int m_NumMsg, m_NumWrn, m_NumErr;
+
+        void UpdateLogNums(List<LogEntry> log)
+        {
+            m_NumMsg = 0; m_NumWrn = 0; m_NumErr = 0;
+            foreach (var item in log)
+            {
+                switch (item.Level)
+                {
+                    case LogLevel.Msg:
+                        m_NumMsg++;
+                        break;
+                    case LogLevel.Wrn:
+                        m_NumWrn++;
+                        break;
+                    case LogLevel.Err:
+                        m_NumErr++;
+                        break;
+                }
+            }
+        }
 
         public void Draw(List<LogEntry> log)
         {
+            UpdateLogNums(log);
+
             GUILayout.BeginHorizontal();
             
             var logHeaderArea = GUILayoutUtility
@@ -99,13 +122,22 @@ namespace Iniciere
             {
                 var it = r_Toolbar.SplitHorizontal(3).GetEnumerator();
                 it.MoveNext();
-                m_ShowMsg = EditorGUI.Toggle(it.Current, "", m_ShowMsg, toolbarBtnStyle);
+                m_ShowMsg = EditorGUI.Toggle(
+                    it.Current,
+                    m_ShowMsg, toolbarBtnStyle);
+                GUI.Label(it.Current, new GUIContent(m_NumMsg.ToString(), "Messages"));
 
                 it.MoveNext();
-                m_ShowWrn = EditorGUI.Toggle(it.Current, "", m_ShowWrn, toolbarBtnStyle);
+                m_ShowWrn = EditorGUI.Toggle(
+                    it.Current,
+                    m_ShowWrn, toolbarBtnStyle);
+                GUI.Label(it.Current, new GUIContent(m_NumWrn.ToString(), "Warnings"));
 
                 it.MoveNext();
-                m_ShowErr = EditorGUI.Toggle(it.Current, "0", m_ShowErr, toolbarBtnStyle);
+                m_ShowErr = EditorGUI.Toggle(
+                    it.Current,
+                    m_ShowErr, toolbarBtnStyle);
+                GUI.Label(it.Current, new GUIContent(m_NumErr.ToString(), "Errors"));
             }
             
             if (GUI.Button(btn_OpenLog, "Open in Log", toolbarBtnStyle))
@@ -126,6 +158,21 @@ namespace Iniciere
 
                 foreach (var msg in log)
                 {
+                    // SKIP UNWANTED MESSAGES
+                    switch (msg.Level)
+                    {
+                        case LogLevel.Msg:
+                            if (!m_ShowMsg) continue;
+                            break;
+                        case LogLevel.Wrn:
+                            if (!m_ShowWrn) continue;
+                            break;
+                        case LogLevel.Err:
+                            if (!m_ShowErr) continue;
+                            break;
+                        default: break;
+                    }
+
                     EditorGUILayout.HelpBox(msg.Message, GetType(msg.Level));
                     static MessageType GetType(LogLevel lvl) => lvl switch
                     {
