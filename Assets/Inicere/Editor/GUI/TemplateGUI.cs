@@ -32,8 +32,12 @@ namespace Iniciere
             }
 
             EditorGUI.EndDisabledGroup();
-            
 
+            //// TODO: Recompile One Template (Mutate Import ??)
+            //if (GUILayout.Button("Recompile"))
+            //{
+            //    //UseTemplateWindow.OpenFrom(info);
+            //}
 
             EditorGUI.BeginDisabledGroup(true);
         }
@@ -48,16 +52,19 @@ namespace Iniciere
         bool m_Show;
         Vector2 m_Scroll;
 
-        bool m_ShowMsg = true, m_ShowWrn = true, m_ShowErr = true;
-        int m_NumMsg, m_NumWrn, m_NumErr;
+        bool m_ShowTrc = false, m_ShowMsg = true, m_ShowWrn = true, m_ShowErr = true;
+        int m_NumTrc, m_NumMsg, m_NumWrn, m_NumErr;
 
         void UpdateLogNums(List<LogEntry> log)
         {
-            m_NumMsg = 0; m_NumWrn = 0; m_NumErr = 0;
+            m_NumTrc = 0; m_NumMsg = 0; m_NumWrn = 0; m_NumErr = 0;
             foreach (var item in log)
             {
                 switch (item.Level)
                 {
+                    case LogLevel.Trc:
+                        m_NumTrc++;
+                        break;
                     case LogLevel.Msg:
                         m_NumMsg++;
                         break;
@@ -87,7 +94,7 @@ namespace Iniciere
 
             GUILayout.FlexibleSpace();
             var r_Toolbar = GUILayoutUtility
-                .GetRect(100, EditorGUIUtility.singleLineHeight);
+                .GetRect(130, EditorGUIUtility.singleLineHeight);
 
             var btn_OpenLog = GUILayoutUtility
                 .GetRect(80, EditorGUIUtility.singleLineHeight);
@@ -120,7 +127,13 @@ namespace Iniciere
 
             // TOOLBAR
             {
-                var it = r_Toolbar.SplitHorizontal(3).GetEnumerator();
+                var it = r_Toolbar.SplitHorizontal(4).GetEnumerator();
+                it.MoveNext();
+                m_ShowTrc = EditorGUI.Toggle(
+                    it.Current,
+                    m_ShowTrc, toolbarBtnStyle);
+                GUI.Label(it.Current, new GUIContent(m_NumTrc.ToString(), "Trace"));
+
                 it.MoveNext();
                 m_ShowMsg = EditorGUI.Toggle(
                     it.Current,
@@ -161,6 +174,9 @@ namespace Iniciere
                     // SKIP UNWANTED MESSAGES
                     switch (msg.Level)
                     {
+                        case LogLevel.Trc:
+                            if (!m_ShowTrc) continue;
+                            break;
                         case LogLevel.Msg:
                             if (!m_ShowMsg) continue;
                             break;
@@ -170,7 +186,6 @@ namespace Iniciere
                         case LogLevel.Err:
                             if (!m_ShowErr) continue;
                             break;
-                        default: break;
                     }
 
                     EditorGUILayout.HelpBox(msg.Message, GetType(msg.Level));

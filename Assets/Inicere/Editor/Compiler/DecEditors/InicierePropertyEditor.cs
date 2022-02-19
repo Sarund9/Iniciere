@@ -7,6 +7,8 @@ namespace Iniciere
     [Serializable]
     public abstract class InicierePropertyEditor
     {
+        [SerializeField, HideInInspector]
+        byte serialize;
         public abstract void DrawGUI(Rect area, TemplateProperty property);
         public virtual float GetHeight(TemplateProperty property) => EditorGUIUtility.singleLineHeight;
 

@@ -192,10 +192,102 @@ using UnityEngine;#n'''
 	
 //>
 
+<#iniciere "Editor Class"
+
+	sdesc "Unity Editor Class"
+	ldesc "Unity Editor Class, used to create custom Editor GUIs for Unity Objects"
+	
+	language "C##"
+	category "standart"
+	flags "std, oop, editor"
+	fileext "cs"
+
+	@Text("Target Class Name")
+	var target
+	
+	@Toggle("Add OnInspectorGUI Method")
+	var mtdGUI
+
+\=/
+
+	@FORMAT(target)
+	file "{}Editor.cs"
+
+	# TODO: Better this Formating
+	add '''using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using UnityEditor;#n'''
+
+	@FORMAT(target)
+	add "[CustomEditor(typeof({}))]"
+
+	@FORMAT(target)
+	add "public class {}Editor#n{"
+	
+	@FORMAT(target)
+	add "#t{} obj;"
+	
+	@FORMAT(target)
+	add '''
+	private void OnEnable()
+	{
+		obj = ({})target;
+	}
+	'''
+	
+	@IF(mtdGUI)
+	add '''
+	public override void OnInspectorGUI()
+	{
+		base.OnInspectorGUI();
+	}
+	'''
+	
+	add "}"
+
+//>
+
+
 TODO:
 * Automatic Namespacing (No Template Syntax Required)
 	* 'namespace_start' and 'namespace_end'
+* Script Template Window Remake
+* Compiler Options:
+	* Trace Msg
+* Configuration System
+	* Editor Folder
+	* Project Namespacing
+* Polish
+	* Extract UI code to Shared Static Methods
 
+Count:
+Editors:
+* Template Info Editor
+* Template Header Editor
+* 
+
+Windows:
+* Precompilation Log
+* Script Builder
+* UseTemplate Window
+* Create Script Window
++ Config Window
+
+SOs:
+* Template Info
+* Template Header ??
++ Config Object
+
+LANGUAGE IMPROVEMENTS:
+* Add description for Properties
+* True AST
+* Flow Control (If, Else, Else If)
+* Templates that take another File/Class as Input
+* FileName-less Templates
+* Compilation Cache (Somehow)
 
 OLD
 '''

@@ -30,6 +30,7 @@ namespace Iniciere
     [Serializable]
     public enum LogLevel
     {
+        Trc,
         Msg,
         Wrn,
         Err,
@@ -37,39 +38,7 @@ namespace Iniciere
     
     public static class Compiler
     {
-        static List<LogEntry> s_Log = new List<LogEntry>();
-
-        public static void PrintLog(Action<LogEntry> logmethod)
-        {
-            lock (s_Log)
-            {
-                for (int i = 0; i < s_Log.Count; i++)
-                {
-                    logmethod(s_Log[i]);
-                }
-                s_Log.Clear();
-            }
-        }
-        //static void LogMsg(string msg) => s_Log.Add(new LogEntry(LogLevel.Msg, msg));
-        //static void LogWrn(string msg) => s_Log.Add(new LogEntry(LogLevel.Wrn, msg));
-        //static void LogErr(string msg) => s_Log.Add(new LogEntry(LogLevel.Err, msg));
-
-        /*
-         TODO TemplateInfo values:
-        * Name          |
-        * Langs         |
-        * Categories    |
-        * Flags         |
-        * FileExts      |
-        * Properties
-        * FileNameProperty
-        * ShortDescription  |
-        * LongDescription   |
-        TODO:
-        * AST
-        * Value Resolution
-         */
-
+        
         public static int Precompile(
             TemplateLocation templateLocation,
             TemplateInfo r_templateInfo,
@@ -79,12 +48,13 @@ namespace Iniciere
             
             var tokens = new ConcurrentQueue<Token>();
             
-            var log = new StringBuilder(" === LOG === ");
+            //var log = new StringBuilder(" === LOG === ");
             var tklog = new StringBuilder();
             if (logtk)
             {
                 tklog.AppendLine("============ TOKENS ============");
                 tklog.AppendLine("================================");
+                r_templateInfo.LogTrc($"Token Logging is Enabled");
             }
 
             var task = Lexer.ParseAsync(contents, tokens);
@@ -152,6 +122,7 @@ namespace Iniciere
             }
             r_templateInfo.name = tmpName;
             r_templateInfo.TmpName = tmpName;
+            r_templateInfo.LogTrc($"Template name: {tmpName}");
             AwaitDequeue(); // -> Template Begins...
            
             Dictionary<string, DecoratorTypeInstance> decorators = new Dictionary<string, DecoratorTypeInstance>();
@@ -191,14 +162,9 @@ namespace Iniciere
                             continue;
 
                         // END EXPRESSION, PARSE
-                        if (TryParseExpression(buffer))
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        TryParseExpression(buffer);
+
+                        break;
                     }
                     
                     buffer.Add(current);
@@ -211,7 +177,7 @@ namespace Iniciere
                 tklog.AppendLine("================================");
                 Debug.Log(tklog);
             }
-            Debug.Log(log);
+            //Debug.Log(log);
 
             if (r_templateInfo.IsFailed)
             {
@@ -231,13 +197,13 @@ namespace Iniciere
                 if (toks.Count == 0)
                     return false;
 
-                //r_templateInfo.LogMsg($"PARSING: {toks.AggrToString(", ")}");
+                r_templateInfo.LogTrc($"PARSING: {toks.AggrToString(", ")}");
 
                 switch (toks[0].Type)
                 {
                     // Functions
                     case TokenType.Name:
-                        //r_templateInfo.LogMsg($"Function Call: '{toks[0].Value}'");
+                        r_templateInfo.LogTrc($"Function Call: '{toks[0].Value}'");
                         /* TODO:
                          * var Expression
                          * Set Variables
@@ -252,6 +218,7 @@ namespace Iniciere
                     // Macros and Decorators
                     case TokenType.AtSign:
                         //Log($"Decorator/Macro not Supported");
+                        r_templateInfo.LogTrc($"Decorator: '{toks[0].Value}'");
 
                         return HandleDecorator(toks.Skip(1));
 

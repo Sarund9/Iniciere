@@ -83,6 +83,8 @@ namespace Iniciere
 
         public string GetBodyContents() => location.GetBodyContents();
 
+        public void LogTrc(string msg) =>
+            precompileLog.Add(new LogEntry(LogLevel.Trc, msg));
         public void LogMsg(string msg) =>
             precompileLog.Add(new LogEntry(LogLevel.Msg, msg));
         public void LogWrn(string msg) =>

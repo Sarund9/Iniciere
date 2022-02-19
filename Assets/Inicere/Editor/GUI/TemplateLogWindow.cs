@@ -10,9 +10,9 @@ namespace Iniciere
         List<LogEntry> m_Log;
         string m_TempName;
 
-        Vector2 m_Scroll;
-        bool m_ShowMsg = true, m_ShowWrn = true, m_ShowErr = true;
-        int m_NumMsg, m_NumWrn, m_NumErr;
+        Vector2 m_Scroll, m_MsgScroll;
+        bool m_ShowTrc = false, m_ShowMsg = true, m_ShowWrn = true, m_ShowErr = true;
+        int m_NumTrc, m_NumMsg, m_NumWrn, m_NumErr;
         string m_Search;
         
         bool m_Dragging;
@@ -21,8 +21,8 @@ namespace Iniciere
 
         int m_MouseDownOn = -1;
 
-        Color c_ItemHover = new Color(.4f, .9f, .4f, 200),
-            c_ItemPress = new Color(0, 0, 0, .2f),
+        Color c_ItemHover = new Color(.2f, .2f, .2f, .2f),
+            c_ItemPress = new Color(.1f, .1f, .1f, .3f),
             c_ItemSelect = new Color(.3f, .4f, .8f, .1f);
 
         public static void OpenFrom(List<LogEntry> log, string tmpname)
@@ -35,9 +35,34 @@ namespace Iniciere
             win.m_TempName = tmpname;
             win.Show();
         }
+        
+        void UpdateLogNums()
+        {
+            m_NumTrc = 0; m_NumMsg = 0; m_NumWrn = 0; m_NumErr = 0;
+            foreach (var item in m_Log)
+            {
+                switch (item.Level)
+                {
+                    case LogLevel.Trc:
+                        m_NumTrc++;
+                        break;
+                    case LogLevel.Msg:
+                        m_NumMsg++;
+                        break;
+                    case LogLevel.Wrn:
+                        m_NumWrn++;
+                        break;
+                    case LogLevel.Err:
+                        m_NumErr++;
+                        break;
+                }
+            }
+        }
 
         public void OnGUI()
         {
+            UpdateLogNums();
+
             // TOP Area Layout
             GUILayout.BeginHorizontal();
 
@@ -56,7 +81,7 @@ namespace Iniciere
                 GUILayout.ExpandWidth(true));
 
             var r_Toolbar = GUILayoutUtility
-                .GetRect(100, EditorGUIUtility.singleLineHeight);
+                .GetRect(130, EditorGUIUtility.singleLineHeight);
 
             GUILayout.EndHorizontal();
 
@@ -88,7 +113,13 @@ namespace Iniciere
 
             // TOOLBAR
             {
-                var it = r_Toolbar.SplitHorizontal(3).GetEnumerator();
+                var it = r_Toolbar.SplitHorizontal(4).GetEnumerator();
+                it.MoveNext();
+                m_ShowTrc = EditorGUI.Toggle(
+                    it.Current,
+                    m_ShowTrc, toolbarBtnStyle);
+                GUI.Label(it.Current, new GUIContent(m_NumTrc.ToString(), "Trace"));
+
                 it.MoveNext();
                 m_ShowMsg = EditorGUI.Toggle(
                     it.Current,
@@ -127,6 +158,9 @@ namespace Iniciere
                 // SKIP UNWANTED MESSAGES
                 switch (msg.Level)
                 {
+                    case LogLevel.Trc:
+                        if (!m_ShowTrc) continue;
+                        break;
                     case LogLevel.Msg:
                         if (!m_ShowMsg) continue;
                         break;
@@ -136,7 +170,6 @@ namespace Iniciere
                     case LogLevel.Err:
                         if (!m_ShowErr) continue;
                         break;
-                    default: break;
                 }
                 // SKIP SEARCH
                 if (!string.IsNullOrEmpty(m_Search) &&
@@ -174,6 +207,8 @@ namespace Iniciere
                         m_MouseDownOn = -1;
                     }
                 }
+
+                GUILayout.Space(2f);
 
                 static MessageType GetType(LogLevel lvl) => lvl switch
                 {
