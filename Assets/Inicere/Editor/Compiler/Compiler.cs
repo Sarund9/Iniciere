@@ -604,6 +604,7 @@ namespace Iniciere
             TemplateOutput r_templateOutput)
         {
             r_templateOutput.Name = templateInfo.TmpName;
+            bool compileSuccess = true;
 
             var filecontents = templateInfo.GetBodyContents();
             var tokens = new ConcurrentQueue<Token>();
@@ -698,20 +699,15 @@ namespace Iniciere
                     if (current.Type == TokenType.NewLine ||
                         current.Type == TokenType.Semicolon ||
                         current.Type == TokenType.OpTemplateSeparate ||
-                        current.Type == TokenType.EoT)
+                        current.Type == TokenType.EoT ||
+                        current.Type == TokenType.OpTemplateEnd)
                     {
                         if (buffer.Count == 0)
                             continue;
 
                         // END EXPRESSION, PARSE
-                        if (TryParseExpression(buffer))
-                        {
-                            break;
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        TryParseExpression(buffer);
+                        break;
                     }
 
                     buffer.Add(current);
@@ -724,7 +720,7 @@ namespace Iniciere
 
             while (AwaitDequeue()) { }
 
-            return 0;
+            return compileSuccess ? 0 : 1;
             // =================== \\
 
             bool TryParseExpression(List<Token> toks)
@@ -732,13 +728,13 @@ namespace Iniciere
                 if (toks.Count == 0)
                     return false;
 
-                LogMsg($"PARSING: {toks.AggrToString(", ")}");
+                LogTrc($"PARSING: {toks.AggrToString(", ")}");
 
                 switch (toks[0].Type)
                 {
                     // Functions
                     case TokenType.Name:
-                        LogMsg($"Function Call: '{toks[0].Value}'");
+                        LogTrc($"Function Call: '{toks.FirstOrDefault()}'");
                         /* TODO:
                          * var Expression
                          * Set Variables
@@ -752,7 +748,7 @@ namespace Iniciere
                         return HandleFunctionCall(toks);
                     // Macros and Decorators
                     case TokenType.AtSign:
-                        LogMsg($"Macro not Supported");
+                        LogTrc($"Macro {toks.FirstOrDefault()}");
 
                         return HandleMacro(toks.Skip(1));
 
@@ -1037,9 +1033,13 @@ namespace Iniciere
             }
 
 #pragma warning disable CS8321 // Local function is declared but never used
+            void LogTrc(string msg) => print(new LogEntry(LogLevel.Trc, msg + $" - {linecount}"));
             void LogMsg(string msg) => print(new LogEntry(LogLevel.Msg, msg + $" - {linecount}"));
             void LogWrn(string msg) => print(new LogEntry(LogLevel.Wrn, msg + $" - {linecount}"));
-            void LogErr(string msg) => print(new LogEntry(LogLevel.Err, msg + $" - {linecount}"));
+            void LogErr(string msg) {
+                compileSuccess = false;
+                print(new LogEntry(LogLevel.Err, msg + $" - {linecount}"));
+            }
 #pragma warning restore CS8321 // Local function is declared but never used
         }
 

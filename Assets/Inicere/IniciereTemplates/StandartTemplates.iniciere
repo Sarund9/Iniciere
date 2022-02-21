@@ -269,7 +269,7 @@ TODO:
 	* ScriptBuilder
 Final:
 * Multiple Namespaces Option
-* Tracing Messages for Compiler
+
 * Fix bug CreateScriptWindow not making Script
 * Editor Folder System
 * Config Editor
