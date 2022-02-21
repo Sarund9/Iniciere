@@ -10,16 +10,8 @@ namespace Iniciere
 {
     public class CreateScriptWindow : EditorWindow
     {
-        //List<TemplateLocation> templates = new List<TemplateLocation>();
-
-        readonly List<Task<TemplateInfo>> precompiling = new List<Task<TemplateInfo>>();
-
-        readonly List<TemplateInfo> templates = new List<TemplateInfo>();
-        
+        List<TemplateInfo> templates;
         int selectedTemplate = -1;
-
-        bool selectedLastEvent = false;
-
         TemplateInfo SelectedTemplate => selectedTemplate < 0 ? null : templates[selectedTemplate];
 
         string search = "";
@@ -29,11 +21,10 @@ namespace Iniciere
         readonly Dictionary<string, bool> filters_cat = new Dictionary<string, bool>();
         readonly Dictionary<string, bool> filters_flags = new Dictionary<string, bool>();
 
-        //Vector2[] inspectorTagScrolls = new Vector2[4];
-        Vector2 inspectorScroll;
+        BuildFileGUI buildFileUI = new BuildFileGUI();
 
         [MenuItem("Assets/Create/Script", priority = 80)] //80 is C# Script Priority
-        public static void Create()
+        public static void OpenWindow()
         {
             var win = CreateInstance<CreateScriptWindow>();
 
@@ -52,51 +43,52 @@ namespace Iniciere
             win.position = pos.ScaleSizeBy(scale, pivot);
 
             win.titleContent = new GUIContent("Create new Script file", "Create a new Script File");
-
+            
             //win.ShowModalUtility();
             win.ShowUtility();
         }
 
-        //void ProcessAsync(Action action, Action callback = null)
-        //{
-        //    thread = new Thread(Exec);
-        //    thread.Start(action);
-        //    void Exec(object del)
-        //    {
-        //        (del as Action).Invoke();
-        //        callback?.Invoke();
-        //        Thread.Sleep(1);
-        //    }
-        //}
+        public static IEnumerable<T> FindAssetsByType<T>() where T : UnityEngine.Object
+        {
+            string[] guids = AssetDatabase.FindAssets($"t:{typeof(T)}");
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(guids[i]);
+                var assets = AssetDatabase.LoadAllAssetsAtPath(assetPath)
+                    .OfType<T>();
+
+                foreach (var item in assets)
+                    yield return item;
+            }
+        }
 
         private void OnEnable()
         {
-            //((Action)FindFiles).BeginInvoke(OnFinished)
-            //templates.CollectionChanged += TemplateColChanged;
-            //var _ = FindFiles();
-            FindFilesNew();
-
-            selectedTemplate = -1;
-        }
-
-        //private void TemplateColChanged(object sender, NotifyCollectionChangedEventArgs e)
-        //{
-        //    if (e.Action == NotifyCollectionChangedAction.Add)
-        //    {
-        //        //e.NewItems[0]
-        //    }
-        //}
-
-        //private void CreateGUI()
-        //{
-        //    //rootVisualElement = new 
-        //}
-
-        //private void CreateGUI()
-        //{
+            templates = FindAssetsByType<TemplateInfo>()
+                .Where(x => !x.IsFailed)
+                .ToList();
             
-        //}
+            selectedTemplate = -1;
+            filters_flags.Clear();
+            filters_cat.Clear();
+            filters_lang.Clear();
+            filters_fileEx.Clear();
 
+            foreach (var info in templates)
+            {
+                foreach (var flag in info.Flags)
+                    filters_flags[flag] = true;
+
+                foreach (var flag in info.Categories)
+                    filters_cat[flag] = true;
+
+                foreach (var flag in info.Langs)
+                    filters_lang[flag] = true;
+
+                foreach (var flag in info.FileExts)
+                    filters_fileEx[flag] = true;
+            }
+        }
 
         private void OnGUI()
         {
@@ -205,6 +197,7 @@ namespace Iniciere
             {
                 if (SkipTempalte(i))
                     continue;
+                
 
                 Rect rect = r_tmpList;
                 rect.x += TMP_ITEM_MARGIN;
@@ -271,170 +264,8 @@ namespace Iniciere
             Rect halfTheScreenR = new Rect(position.width / 2, 0, position.width / 2, position.height);
             GUILayout.BeginArea(halfTheScreenR);
 
-            EditorRightSide();
-
-            void EditorRightSide()
-            {
-                if (SelectedTemplate != null && !selectedLastEvent)
-                {
-                    selectedLastEvent = true;
-                    return;
-                }
-                if (SelectedTemplate == null)
-                {
-                    selectedLastEvent = false;
-                    return;
-                }
-
-                #region TMP_INFO
-
-                //if (SelectedTemplate != null)
-                {
-                    var style_TemplateTitle = new GUIStyle(GUI.skin.label)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                        fontSize = 19,
-                        padding = new RectOffset(0, 0, 5, 0),
-                    };
-                    GUILayout.Label(new GUIContent(SelectedTemplate.TmpName, SelectedTemplate.ShortDescription), style_TemplateTitle, GUILayout.ExpandWidth(true));
-                    EditorGUILayout.SelectableLabel(SelectedTemplate.LongDescription);
-
-                    using (new GUILayout.HorizontalScope(GUILayout.MaxHeight(30)))
-                    {
-
-                        Rect baseRect = GUILayoutUtility.GetRect(10, 50);
-
-                        Rect[] rects = baseRect
-                            .SplitHorizontal(4)
-                            .Select(r => r.Shrink(3, 3, 0, 0))
-                            .ToArray();
-
-                        TagDisplay(rects[0], SelectedTemplate.FileExts, "File Exts");
-                        TagDisplay(rects[1], SelectedTemplate.Langs, "Language");
-                        TagDisplay(rects[2], SelectedTemplate.Categories, "Categories");
-                        TagDisplay(rects[3], SelectedTemplate.Flags, "Flags");
-                    }
-
-                }
-
-                static void TagDisplay(Rect rect, List<string> tags, string title)
-                {
-                    StringBuilder str = new StringBuilder("\n");
-
-                    foreach (var tag in tags)
-                    {
-                        str.Append($"{tag}, ");
-                    }
-                    if (str.Length > 2)
-                        str.Remove(str.Length - 2, 2);
-                    else
-                        str.Append("none");
-
-                    float lineHeight = EditorGUIUtility.singleLineHeight;
-                    int numItems = tags.Count;
-
-                    float height = lineHeight * numItems;
-
-                    var boxstyle = new GUIStyle("HelpBox")
-                    {
-                        fontSize = 12,
-                    };
-
-                    GUI.Label(rect, new GUIContent(str.ToString()), boxstyle);
-
-                    var titlestyle = new GUIStyle("Toolbar")
-                    {
-                        fontSize = 12,
-                        fixedHeight = lineHeight,
-                        fontStyle = FontStyle.Bold,
-                    };
-
-                    var titleRect = rect
-                        .Shrink(0, 0, 0, rect.height - lineHeight);
-
-                    GUI.Label(titleRect, title, titlestyle);
-                }
-
-                #endregion
-
-
-                EditorGUI.BeginChangeCheck();
-
-                var fileNameProperty = SelectedTemplate.FileNameProperty;
-                if (fileNameProperty != null)
-                {
-                    var str = EditorGUILayout.TextField("File Name", fileNameProperty.Value.ToString());
-
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        fileNameProperty.Value = str;
-                    }
-                }
-
-                #region INSPECTOR
-                using (new GUILayout.ScrollViewScope(inspectorScroll))
-                {
-                    var properties = SelectedTemplate.Properties;
-                    //var sobj = new UnityEditor.SerializedObject();
-                    foreach (var prop in properties)
-                    {
-                        if (prop.IsFileName)
-                            continue;
-                        if (prop.HasEditor)
-                            HandleProperty(prop);
-                    }
-                    void HandleProperty(TemplateProperty templateProperty)
-                    {
-                        float height = templateProperty.Editor.GetHeight(templateProperty);
-
-                        var rect = GUILayoutUtility.GetRect(0, height);
-
-                        templateProperty.Editor.DrawGUI(rect, templateProperty);
-                    }
-                }
-
-                #endregion
-
-
-            }
-
-            GUILayout.FlexibleSpace();
-            /*var r1 =*/ GUILayoutUtility.GetRect(position.height, 20);
-            //Draw(r1);
-            using (new GUILayout.HorizontalScope())
-            {
-                float screenQuarter = position.width / 4;
-                Rect butonsRect = GUILayoutUtility
-                    .GetRect(20, 20);
-
-                //EditorGUI.DrawRect(butonsRect, Color.red);
-
-                Rect button = butonsRect
-                    .Shrink(0, screenQuarter + 10, 0, 0);
-                Rect button2 = button
-                    .Shift(-button.width - 4, 0);
-                //button.x += 
-                //Draw(r2);
-                //GUILayout.FlexibleSpace();
-                
-                EditorGUI.BeginDisabledGroup(SelectedTemplate is null);
-                
-                if (GUI.Button(button, "Create"))
-                {
-                    //CREATE SCRIPT (PROGRESS BAR?)
-                    var path = Extensions.GetPathToProjectWindowFolder();
-                    ScriptBuilder.CreateScript(SelectedTemplate, path);
-
-                }
-                if (GUI.Button(button2, "Create & Close"))
-                {
-                    //CREATE SCRIPT (PROGRESS BAR?)
-                    var path = Extensions.GetPathToProjectWindowFolder();
-                    ScriptBuilder.CreateScript(SelectedTemplate, path);
-                    Close();
-                }
-                EditorGUI.EndDisabledGroup();
-            }
+            buildFileUI.Draw(SelectedTemplate, Close, true);
+            GUILayout.Space(5f); // Margin
 
             GUILayout.EndArea();
 
@@ -531,11 +362,11 @@ namespace Iniciere
                 bool exclude = true;
                 foreach (var tag in tags)
                 {
-                    //if (!filters.ContainsKey(tag))
-                    //{
-                    //    Debug.Log($"TAG '{tag}' is not in flags");
-                    //    continue;
-                    //}
+                    if (!filters.ContainsKey(tag))
+                    {
+                        Debug.Log($"TAG '{tag}' is not in flags");
+                        continue;
+                    }
                     if (filters[tag])
                     {
                         exclude = false;
@@ -547,122 +378,298 @@ namespace Iniciere
         }
 
 
-        static Color rdbgcolor;
-        void Draw(Rect rect)
-        {
-            rdbgcolor = UnityEngine.Random.ColorHSV(0, 1, 0.7f, 0.9f, 0.1f, 0.7f, .5f, .5f);
-            EditorGUI.DrawRect(rect, rdbgcolor);
-        }
 
-        private void OnInspectorUpdate()
-        {
-            for (int i = 0; i < precompiling.Count; i++)
-            {
-                if (precompiling[i].IsFaulted)
-                {
-                    Debug.LogError($"Iniciere Compilation Faulted: {precompiling[i].Exception}");
-                    precompiling.RemoveAt(i);
-                    i--;
-                    //throw precompiling[i].Exception;
-                }
-                else if (precompiling[i].IsCompleted)
-                {
-                    //Debug.Log("COMPLETED");
-                    var info = precompiling[i].Result;
-                    if (info != null)
-                    {
-                        //Debug.Log($"Template precompiled: {info.Name}");
-                        templates.Add(info);
-
-                        filters_lang.AddRange(info.Langs.Select(x => (x, true)));
-
-                        filters_fileEx.AddRange(info.FileExts.Select(x => (x, true)));
-
-                        filters_cat.AddRange(info.Categories.Select(x => (x, true)));
-
-                        filters_flags.AddRange(info.Flags.Select(x => (x, true)));
-                    }
-                    precompiling.RemoveAt(i);
-                    i--;
-                }
-                
-            }
-        }
-
-        private void FindFilesNew()
-        {
-            var paths = FindAssetsByType<TemplateInfo>();
-
-            foreach (var tmpPath in paths)
-            {
-
-            }
-        }
-
-        private async Task FindFiles(Action callback = null)
-        {
-            IEnumerable<string> filepaths = await Task.Run(() => InicereScriptFinder.FindFilePaths());
-
-            IEnumerable<TemplateLocation> templates = InicereScriptFinder.FindTemplatesLite(filepaths);
-
-            foreach (var item in templates)
-            {
-                TemplateInfo info = TemplateInfo.New(item);
-                precompiling.Add(PrecompileTemplate(item, info));
-            }
-            //return templates;
-        }
-        private async Task<TemplateInfo> PrecompileTemplate(TemplateLocation template, TemplateInfo info)
-        {
-            
-            int result = await Task.Run(() => Compiler.Precompile(template, info));
-
-            if (result != 0)
-            {
-                //Task.
-                return null;
-            }
-
-            return info;
-        }
-
-        private void OnDestroy() //TODO: Cancel Compile
-        {
-            
-        }
-
-        void CancelCompilations()
-        {
-            foreach (var item in precompiling)
-            {
-                //TODO: Cancel Compile
-            }
-        }
-
-
-        public static List<T> FindAssetsByType<T>() where T : UnityEngine.Object
-        {
-            List<T> result = new List<T>();
-            string[] guids = AssetDatabase.FindAssets(string.Format("t:{0}", typeof(T)));
-            for (int i = 0; i < guids.Length; i++)
-            {
-                string assetPath = AssetDatabase.GUIDToAssetPath(guids[i]);
-                var assets = AssetDatabase.LoadAllAssetsAtPath(assetPath)
-                    .OfType<T>()
-                    .ToArray();
-                if (assets.Length > 0)
-                {
-                    result.AddRange(assets);
-                }
-            }
-            return result;
-        }
     }
 }
 
 
 #region OLD_CODE
 /*
+
+GUILayout.FlexibleSpace();
+//var r1 =
+GUILayoutUtility.GetRect(position.height, 20);
+//Draw(r1);
+using (new GUILayout.HorizontalScope())
+{
+    float screenQuarter = position.width / 4;
+    Rect butonsRect = GUILayoutUtility
+        .GetRect(20, 20);
+
+    //EditorGUI.DrawRect(butonsRect, Color.red);
+
+    Rect button = butonsRect
+        .Shrink(0, screenQuarter + 10, 0, 0);
+    Rect button2 = button
+        .Shift(-button.width - 4, 0);
+    //button.x += 
+    //Draw(r2);
+    //GUILayout.FlexibleSpace();
+
+    EditorGUI.BeginDisabledGroup(SelectedTemplate is null);
+
+    if (GUI.Button(button, "Create"))
+    {
+        //CREATE SCRIPT (PROGRESS BAR?)
+        var path = Extensions.GetPathToProjectWindowFolder();
+        ScriptBuilder.CreateScript(SelectedTemplate, path);
+
+    }
+    if (GUI.Button(button2, "Create & Close"))
+    {
+        //CREATE SCRIPT (PROGRESS BAR?)
+        var path = Extensions.GetPathToProjectWindowFolder();
+        ScriptBuilder.CreateScript(SelectedTemplate, path);
+        Close();
+    }
+    EditorGUI.EndDisabledGroup();
+}
+
+//List<TemplateLocation> templates = new List<TemplateLocation>();
+
+private void OnInspectorUpdate()
+{
+    for (int i = 0; i < precompiling.Count; i++)
+    {
+        if (precompiling[i].IsFaulted)
+        {
+            Debug.LogError($"Iniciere Compilation Faulted: {precompiling[i].Exception}");
+            precompiling.RemoveAt(i);
+            i--;
+            //throw precompiling[i].Exception;
+        }
+        else if (precompiling[i].IsCompleted)
+        {
+            //Debug.Log("COMPLETED");
+            var info = precompiling[i].Result;
+            if (info != null)
+            {
+                //Debug.Log($"Template precompiled: {info.Name}");
+                templates.Add(info);
+
+                filters_lang.AddRange(info.Langs.Select(x => (x, true)));
+
+                filters_fileEx.AddRange(info.FileExts.Select(x => (x, true)));
+
+                filters_cat.AddRange(info.Categories.Select(x => (x, true)));
+
+                filters_flags.AddRange(info.Flags.Select(x => (x, true)));
+            }
+            precompiling.RemoveAt(i);
+            i--;
+        }
+                
+    }
+}
+
+readonly List<Task<TemplateInfo>> precompiling = new List<Task<TemplateInfo>>();
+
+void ProcessAsync(Action action, Action callback = null)
+{
+    thread = new Thread(Exec);
+    thread.Start(action);
+    void Exec(object del)
+    {
+        (del as Action).Invoke();
+        callback?.Invoke();
+        Thread.Sleep(1);
+    }
+}
+
+private void TemplateColChanged(object sender, NotifyCollectionChangedEventArgs e)
+{
+    if (e.Action == NotifyCollectionChangedAction.Add)
+    {
+        //e.NewItems[0]
+    }
+}
+
+private void CreateGUI()
+{
+    //rootVisualElement = new 
+}
+
+private void CreateGUI()
+{
+            
+}
+
+private async Task FindFiles(Action callback = null)
+{
+    IEnumerable<string> filepaths = await Task.Run(() => InicereScriptFinder.FindFilePaths());
+
+    IEnumerable<TemplateLocation> templates = InicereScriptFinder.FindTemplatesLite(filepaths);
+
+    foreach (var item in templates)
+    {
+        TemplateInfo info = TemplateInfo.New(item);
+        precompiling.Add(PrecompileTemplate(item, info));
+    }
+    //return templates;
+}
+private async Task<TemplateInfo> PrecompileTemplate(TemplateLocation template, TemplateInfo info)
+{
+            
+    int result = await Task.Run(() => Compiler.Precompile(template, info));
+
+    if (result != 0)
+    {
+        //Task.
+        return null;
+    }
+
+    return info;
+}
+
+private void OnDestroy() //TODO: Cancel Compile
+{
+            
+}
+
+void CancelCompilations()
+{
+    foreach (var item in precompiling)
+    {
+        //TODO: Cancel Compile
+    }
+}
+
+static Color rdbgcolor;
+void Draw(Rect rect)
+{
+    rdbgcolor = UnityEngine.Random.ColorHSV(0, 1, 0.7f, 0.9f, 0.1f, 0.7f, .5f, .5f);
+    EditorGUI.DrawRect(rect, rdbgcolor);
+}
+
+EditorRightSide();
+
+void EditorRightSide()
+{
+    if (SelectedTemplate != null && !selectedLastEvent)
+    {
+        selectedLastEvent = true;
+        return;
+    }
+    if (SelectedTemplate == null)
+    {
+        selectedLastEvent = false;
+        return;
+    }
+
+    #region TMP_INFO
+
+    //if (SelectedTemplate != null)
+    {
+        var style_TemplateTitle = new GUIStyle(GUI.skin.label)
+        {
+            alignment = TextAnchor.MiddleCenter,
+            fontSize = 19,
+            padding = new RectOffset(0, 0, 5, 0),
+        };
+        GUILayout.Label(new GUIContent(SelectedTemplate.TmpName, SelectedTemplate.ShortDescription), style_TemplateTitle, GUILayout.ExpandWidth(true));
+        EditorGUILayout.SelectableLabel(SelectedTemplate.LongDescription);
+
+        using (new GUILayout.HorizontalScope(GUILayout.MaxHeight(30)))
+        {
+
+            Rect baseRect = GUILayoutUtility.GetRect(10, 50);
+
+            Rect[] rects = baseRect
+                .SplitHorizontal(4)
+                .Select(r => r.Shrink(3, 3, 0, 0))
+                .ToArray();
+
+            TagDisplay(rects[0], SelectedTemplate.FileExts, "File Exts");
+            TagDisplay(rects[1], SelectedTemplate.Langs, "Language");
+            TagDisplay(rects[2], SelectedTemplate.Categories, "Categories");
+            TagDisplay(rects[3], SelectedTemplate.Flags, "Flags");
+        }
+
+    }
+
+    static void TagDisplay(Rect rect, List<string> tags, string title)
+    {
+        StringBuilder str = new StringBuilder("\n");
+
+        foreach (var tag in tags)
+        {
+            str.Append($"{tag}, ");
+        }
+        if (str.Length > 2)
+            str.Remove(str.Length - 2, 2);
+        else
+            str.Append("none");
+
+        float lineHeight = EditorGUIUtility.singleLineHeight;
+        int numItems = tags.Count;
+
+        float height = lineHeight * numItems;
+
+        var boxstyle = new GUIStyle("HelpBox")
+        {
+            fontSize = 12,
+        };
+
+        GUI.Label(rect, new GUIContent(str.ToString()), boxstyle);
+
+        var titlestyle = new GUIStyle("Toolbar")
+        {
+            fontSize = 12,
+            fixedHeight = lineHeight,
+            fontStyle = FontStyle.Bold,
+        };
+
+        var titleRect = rect
+            .Shrink(0, 0, 0, rect.height - lineHeight);
+
+        GUI.Label(titleRect, title, titlestyle);
+    }
+
+    #endregion
+
+
+    EditorGUI.BeginChangeCheck();
+
+    var fileNameProperty = SelectedTemplate.FileNameProperty;
+    if (fileNameProperty != null)
+    {
+        var str = EditorGUILayout.TextField("File Name", fileNameProperty.Value.ToString());
+
+        if (EditorGUI.EndChangeCheck())
+        {
+            fileNameProperty.Value = str;
+        }
+    }
+
+    #region INSPECTOR
+    using (new GUILayout.ScrollViewScope(inspectorScroll))
+    {
+        var properties = SelectedTemplate.Properties;
+        //var sobj = new UnityEditor.SerializedObject();
+        foreach (var prop in properties)
+        {
+            if (prop.IsFileName)
+                continue;
+            if (prop.HasEditor)
+                HandleProperty(prop);
+        }
+        void HandleProperty(TemplateProperty templateProperty)
+        {
+            float height = templateProperty.Editor.GetHeight(templateProperty);
+
+            var rect = GUILayoutUtility.GetRect(0, height);
+
+            templateProperty.Editor.DrawGUI(rect, templateProperty);
+        }
+    }
+
+    #endregion
+
+
+}
+
+
+
 const int SIZE = 20;
 const int MARGIN = 10;
 

@@ -267,12 +267,18 @@ TODO:
 * Polish
 	* Extract UI code to Shared Static Methods
 	* ScriptBuilder
+Final:
+* Multiple Namespaces Option
+* Tracing Messages for Compiler
+* Fix bug CreateScriptWindow not making Script
+* Editor Folder System
+* Config Editor
 
 Count:
 Editors:
 * Template Info Editor
 * Template Header Editor
-* 
+* Configuration
 
 Windows:
 * Precompilation Log

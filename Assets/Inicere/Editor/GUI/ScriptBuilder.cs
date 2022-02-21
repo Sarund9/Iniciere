@@ -37,6 +37,8 @@ namespace Iniciere
 
             win.ShowUtility();
 
+            Debug.Log($"Creating script from {info.name} in\n'{directoryPath}'");
+
             win.compiling = CompileAsync(info, win);
         }
 
