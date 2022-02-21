@@ -1,4 +1,4 @@
-
+0
 <#iniciere "Empty CSharp Class"
 
 	sdesc "Standart CSharp class"
@@ -57,7 +57,7 @@ public class {}
 
 //>
 
-
+1
 <#iniciere "Inherited CSharp Class"
 
 	sdesc "CSharp class implementing another class"
@@ -87,7 +87,7 @@ Template
 	|___@Name|sdesc , @StringLit, "CSharp class implementing another class "
 	|___ ...
 	
-
+2
 <#iniciere "Unity MonoBehaviour"
 
 	sdesc "Unity MonoBehaviour Class"
@@ -122,6 +122,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;#n'''
 	
+	namespace_start
+	
 	@FORMAT(filename)
 	addln '''
 public class {} : MonoBehaviour
@@ -142,9 +144,11 @@ addln "#n#tvoid FixedUpdate()#n#t{#n#t#t#n#t}"
 
 addln "}"
 	
+	namespace_end
+	
 //>
 
-
+3
 <#iniciere "Unity ScriptableObject"
 
 	sdesc "Unity ScriptableObject Class"
@@ -171,12 +175,13 @@ addln "}"
 	@FORMAT(filename)
 	file "{}.cs"
 	
-	add '''
-using System;
+	add '''using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;#n'''
+using UnityEngine;#n#n'''
+	
+	namespace_start
 	
 	@IF(createAssetMenu)
 	addln "[CreateAssetMenu]"
@@ -194,8 +199,9 @@ using UnityEngine;#n'''
 
 	addln "}"
 	
+	namespace_end
 //>
-
+4
 <#iniciere "Editor Class"
 
 	sdesc "Unity Editor Class"
@@ -206,7 +212,10 @@ using UnityEngine;#n'''
 	flags "std, oop, editor"
 	fileext "cs"
 
-	@Text("Target Class Name")
+	@FileName
+	var filename
+
+	@Text("Target Class") # TODO: Optional Parameters
 	var target
 	
 	@Toggle("Add OnInspectorGUI Method")
@@ -214,7 +223,7 @@ using UnityEngine;#n'''
 
 \=/
 
-	@FORMAT(target)
+	@FORMAT(filename)
 	file "{}Editor.cs"
 
 	# TODO: Better this Formating
@@ -223,13 +232,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEditor;#n'''
+using UnityEditor;#n#n'''
 
 	@FORMAT(target)
 	addln "[CustomEditor(typeof({}))]"
 
 	@FORMAT(target)
-	addln "public class {}Editor#n{"
+	addln "public class {}Editor : Editor#n{"
 	
 	@FORMAT(target)
 	addln "#t{} obj;"
@@ -248,7 +257,7 @@ using UnityEditor;#n'''
 	{
 		base.OnInspectorGUI();
 	}
-	'''
+'''
 	
 	addln "}"
 
@@ -270,9 +279,14 @@ TODO:
 Final:
 * Multiple Namespaces Option
 
-* Fix bug CreateScriptWindow not making Script
 * Editor Folder System
 * Config Editor
+* Make Config Use ExecuteInEditMode ??
+
+Editor System:
+* Show the FileName dialogue greyed out
+* Add an auto_filename Function to Precompilation
+
 
 Count:
 Editors:

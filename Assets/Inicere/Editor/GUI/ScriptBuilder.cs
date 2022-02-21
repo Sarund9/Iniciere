@@ -37,7 +37,7 @@ namespace Iniciere
 
             win.ShowUtility();
 
-            Debug.Log($"Creating script from {info.name} in\n'{directoryPath}'");
+            //Debug.Log($"Creating script from {info.name} in\n'{directoryPath}'");
 
             win.compiling = CompileAsync(info, win);
         }
@@ -70,7 +70,7 @@ namespace Iniciere
                 var r = compiling.Result;
                 if (r.result == 0)
                 {
-                    CreateFile(r.template, directoryPath);
+                    CreateFiles(r.template, directoryPath);
                 }
                 compiling = null;
                 Log(new LogEntry(LogLevel.Msg, "Finished Generating"));
@@ -78,7 +78,7 @@ namespace Iniciere
             }
         }
 
-        void CreateFile(TemplateOutput template, string directoryPath)
+        void CreateFiles(TemplateOutput template, string directoryPath)
         {
             if (template.Files.Count == 0)
             {
@@ -90,7 +90,7 @@ namespace Iniciere
             {
                 var filepath = $"{directoryPath}/{file.Name}";
 
-                Debug.Log($"CREATING FILE AT {filepath}");
+                //Debug.Log($"CREATING FILE AT {filepath}");
 
                 using var create = File.CreateText(filepath);
                 create.Write(file.GetString());

@@ -94,7 +94,7 @@ namespace Iniciere
         {
             Event e = Event.current;
 
-            UnityEngine.Random.InitState(99);
+            //UnityEngine.Random.InitState(99);
 
             float halfScreen = position.width / 2;
 
@@ -102,6 +102,7 @@ namespace Iniciere
 
             GUILayout.BeginArea(halfTheScreenL);
 
+            GUILayout.Space(4f);
             search = GUILayout.TextField(search, "SearchTextField", GUILayout.Width(halfScreen - 5));
 
             #region TMP_FILTERS
@@ -183,12 +184,12 @@ namespace Iniciere
             Rect r_tmpList = GUILayoutUtility.GetRect(1, 1,
                 GUILayout.MaxWidth(halfScreen),
                 GUILayout.ExpandHeight(true))
-                .Shrink(10);
+                .Shrink(7f);
 
             EditorGUI.DrawRect(r_tmpList, new Color(0.2f, 0.2f, 0.2f));
 
             const float TMP_ITEM_HEIGHT = 80;
-            const float TMP_ITEM_MARGIN = 2.2f;
+            const float TMP_ITEM_MARGIN = .9f;
             Color tmpColor1 = new Color(0.3f, 0.3f, 0.3f); // TODO: EditorBackround thing
             Color tmpColor2 = new Color(0.4f, 0.4f, 0.4f);
             bool colToUse = false;
@@ -243,8 +244,17 @@ namespace Iniciere
             void TemplateDisplay(int index, Rect rect)
             {
                 var template = templates[index];
-                Rect label = rect.Shrink(0, 0, 0, TMP_ITEM_HEIGHT - EditorGUIUtility.singleLineHeight);
-                GUI.Label(label, new GUIContent(template.TmpName));
+                var titleStyle = new GUIStyle("Label")
+                {
+                    fontStyle = FontStyle.Bold,
+                    fontSize = 12,
+                };
+
+                Rect r_Title = rect.Shrink(0, 0, 0, TMP_ITEM_HEIGHT - EditorGUIUtility.singleLineHeight);
+                GUI.Label(r_Title, new GUIContent(template.TmpName), titleStyle);
+
+                Rect r_sdesc = r_Title.Shift(0, EditorGUIUtility.singleLineHeight);
+                GUI.Label(r_sdesc, new GUIContent(template.ShortDescription));
 
                 if (e.type == EventType.MouseDown && e.button == 0 && rect.Contains(e.mousePosition))
                 {
@@ -264,8 +274,22 @@ namespace Iniciere
             Rect halfTheScreenR = new Rect(position.width / 2, 0, position.width / 2, position.height);
             GUILayout.BeginArea(halfTheScreenR);
 
-            buildFileUI.Draw(SelectedTemplate, Close, true);
-            GUILayout.Space(5f); // Margin
+            if (SelectedTemplate)
+            {
+                buildFileUI.Draw(SelectedTemplate, Close, true);
+                GUILayout.Space(7f); // Margin
+            }
+            else
+            {
+                var labelStyle = new GUIStyle("Label")
+                {
+                    alignment = TextAnchor.MiddleCenter,
+                };
+                GUILayout.FlexibleSpace();
+                GUILayout.Label("No Template Selected", labelStyle);
+                GUILayout.FlexibleSpace();
+            }
+            
 
             GUILayout.EndArea();
 

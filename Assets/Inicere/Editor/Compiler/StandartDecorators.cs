@@ -21,11 +21,11 @@ namespace Iniciere
             ctx.Property.MarkAsFileName();
         }
         [IniciereDecorator("Text")]
-        public static void TextDecorator(DecoratorContext ctx)
+        public static void TextDecorator(DecoratorContext ctx, string editorName)
         {
             ctx.Property.Value = "";
-            //ctx.Property.LitValue = "";
-            ctx.Property.Editor = new TextEditor();
+            //Debug.Log($"EDITOR: {editorName}");
+            ctx.Property.Editor = new TextEditor(editorName);
             //ctx.Property.CreateEditor(DrawGUI, null);
         }
         
@@ -38,7 +38,7 @@ namespace Iniciere
             ctx.Property.Editor = new PropertyToggleEditor(editorName);
         }
         
-        [IniciereDecorator("OptionalText")]
+        //[IniciereDecorator("OptionalText")]
         public static void OptionalText(DecoratorContext ctx)
         {
             ctx.Property.Editor = new OptTextEditor();

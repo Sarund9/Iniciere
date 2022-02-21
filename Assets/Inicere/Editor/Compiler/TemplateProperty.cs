@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace Iniciere
@@ -58,6 +59,7 @@ namespace Iniciere
             var val = Value == null ? "NULL" : Value.ToString();
             return $"{Typename} {Name} = {val};";
         }
+
     }
 
 

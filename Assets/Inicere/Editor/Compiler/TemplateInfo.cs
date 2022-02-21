@@ -34,23 +34,13 @@ namespace Iniciere
         [SerializeField]
         bool isFailed;
 
-        //public TemplateInfo(TemplateLocation location)
-        //{
-        //    this.location = location;
-        //}
         public static TemplateInfo New(TemplateLocation location)
         {
             var obj = CreateInstance<TemplateInfo>();
             obj.location = location;
             return obj;
         }
-        //if (!File.Exists(filepath))
-        //    throw new ArgumentException($"Filepath does not exist:\n{filepath}");
-        //if (end <= start)
-        //    throw new ArgumentException($"Start[{start}] and end[{end}] do not");
-        //this.filepath = filepath;
-        //this.start = start;
-        //this.end = end;
+        
         public string TmpName
         {
             get => m_TemplateName;
@@ -172,7 +162,7 @@ namespace Iniciere
 
         public string GetInfoContents() //TODO: Cache Results
         {
-            if (infocontentCache is object)
+            if (!string.IsNullOrEmpty(infocontentCache))
             {
                 return infocontentCache;
             }
@@ -189,7 +179,7 @@ namespace Iniciere
 
         public string GetBodyContents()
         {
-            if (bodycontentCache is object)
+            if (!string.IsNullOrEmpty(bodycontentCache))
             {
                 return bodycontentCache;
             }

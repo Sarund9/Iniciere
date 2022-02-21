@@ -154,6 +154,7 @@ namespace Iniciere
             {
                 var path = Extensions.GetPathToProjectWindowFolder();
                 ScriptBuilder.CreateScript(info, path);
+                m_FileName = "";
             }
             if (GUILayout.Button("Create & Close"))
             {

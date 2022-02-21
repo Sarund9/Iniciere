@@ -17,8 +17,12 @@ namespace Iniciere
         const string TEMPLATE_DIV = @"\=/";
         const string TEMPLATE_END = @"//>";
         [SerializeField]
-        bool import, importFirstOnly, logTokens;
+        bool import, logTokens;
         //List<string> files;
+        [SerializeField, Min(0)]
+        int impStartAt;
+        [SerializeField, Min(1)]
+        int importCount = 1;
 
         /*
          TODO: Compilation Options
@@ -33,9 +37,16 @@ namespace Iniciere
             var templateLocations = GetTemplates(ctx.assetPath);
 
             List<TemplateInfo> list = new List<TemplateInfo>();
-            
+
+            int i = -1;
             foreach (var tmp in templateLocations)
             {
+                i++;
+                if (i < impStartAt)
+                    continue;
+                if (i > impStartAt + importCount)
+                    break;
+
                 var info = TemplateInfo.New(tmp);
                 int result = Compiler.Precompile(tmp, info, logTokens);
 
@@ -47,9 +58,7 @@ namespace Iniciere
                 }
                 ctx.AddObjectToAsset(info.name, info);
                 list.Add(info);
-                
-                if (importFirstOnly)
-                    break;
+
             }
 
             var header = TemplateHeader.From(list);

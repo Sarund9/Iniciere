@@ -19,8 +19,13 @@ namespace Iniciere
         {
             EditorGUI.BeginChangeCheck();
 
-            bool value = EditorGUI.ToggleLeft(area,
-                editorName ?? property.Name,
+            var it = area.SplitHorizontal(2).GetEnumerator();
+            it.MoveNext();
+
+            GUI.Label(it.Current, editorName ?? property.Name);
+
+            it.MoveNext();
+            bool value = EditorGUI.Toggle(it.Current,
                 (bool)property.Value);
 
             if (EditorGUI.EndChangeCheck())

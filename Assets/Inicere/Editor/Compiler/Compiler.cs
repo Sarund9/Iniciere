@@ -512,7 +512,10 @@ namespace Iniciere
                 //Log($"#$$# CALLING {decoratorTypeInstance.Name} [{callargsdebug}]");
                 if (decoratorTypeInstance.ParamCount != calling_params.Count)
                 {
-                    Debug.Log($"Parameters did not match Function Lenght");
+                    r_templateInfo.LogErr($"Decorator:" +
+                        $"'{decoratorTypeInstance.Name}' expected " +
+                        $"{decoratorTypeInstance.ParamCount} arguments, " +
+                        $"got {calling_params.Count}");
                     return false;
                 }
 
