@@ -1085,6 +1085,25 @@ namespace Iniciere
 
         }
 
+        public static IEnumerable<int> FindNewLines(this string text)
+        {
+            var nl = Environment.NewLine;
+
+            int c = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == nl[c])
+                {
+                    c++;
+                    if (c == nl.Length)
+                    {
+                        yield return i;
+                        c = 0;
+                    }
+                }
+            }
+        }
+
         public static bool IsInBounds(this string str, in int i) =>
             i > -1 && str.Length > i;
 
@@ -1121,8 +1140,6 @@ namespace Iniciere
 
         public static bool TryParse(string text, out string str)
         {
-            // TODO: There is a bug here 
-            // '#t#n
             var build = new StringBuilder();
             bool raw = text[0] == '`';
             bool escape = false;
@@ -1173,5 +1190,42 @@ namespace Iniciere
             return true;
         }
 
+        public static string ToDebuggable(this string text)
+        {
+            var build = new StringBuilder();
+
+            foreach (var C in text)
+            {
+                switch (C)
+                {
+                    case '\n':
+                        build.Append("\\n");
+                        break;
+                    case '\r':
+                        build.Append("\\r");
+                        break;
+                    case '\t':
+                        build.Append("\\t");
+                        break;
+                    case '\0':
+                        build.Append("\\0");
+                        break;
+                    case '\a':
+                        build.Append("\\a");
+                        break;
+
+                    default:
+                        build.Append(C);
+                        break;
+                }
+            }
+
+
+            return build.ToString();
+        }
+        //public static IEnumerable<int> ComplexIT(this string str)
+        //{
+
+        //}
     }
 }

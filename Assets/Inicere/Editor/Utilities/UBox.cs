@@ -50,6 +50,8 @@ namespace Iniciere
                 aseID = typeCache.AssemblyQualifiedName;
                 if (typeCache == typeof(string))
                     json = (string)value;
+                else if (typeCache == typeof(bool))
+                    json = ((bool)value).ToString();
                 else
                     json = JsonUtility.ToJson(value, false);
             }
@@ -61,6 +63,11 @@ namespace Iniciere
                 var type = GetValueType();
                 if (type == typeof(string))
                     valueCache = json;
+                else if (type == typeof(bool))
+                    if (bool.TryParse(json, out var bVal))
+                        valueCache = bVal;
+                    else
+                        valueCache = false;
                 else
                     valueCache = JsonUtility.FromJson(json, type);
             }

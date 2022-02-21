@@ -39,6 +39,7 @@ namespace Iniciere
             PropertyUI();
             
             BottomUI();
+
         }
 
         private void OnDisable()
@@ -75,6 +76,8 @@ namespace Iniciere
                 GUILayout.Label("This template has no Properties");
             }
 
+            EditorGUI.BeginChangeCheck();
+
             for (int i = 0; i < list.Count; i++)
             {
                 if (list[i].IsFileName)
@@ -99,7 +102,10 @@ namespace Iniciere
 
             GUILayout.EndScrollView();
 
-            
+            if (EditorGUI.EndChangeCheck())
+            {
+                EditorUtility.SetDirty(m_Info);
+            }
         }
 
         void BottomUI()
@@ -127,7 +133,7 @@ namespace Iniciere
             //    Debug.Log($"{m_Info.FileNameProperty.Value}");
             //}
 
-            using (var _ = new GUILayout.HorizontalScope())
+            //using (var _ = new GUILayout.HorizontalScope())
             {
                 //m_Path = GUILayout.TextArea(m_Path, GUILayout.Height(18));
                 //if (GUILayout.Button("...", GUILayout.Width(26)))

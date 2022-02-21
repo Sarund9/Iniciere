@@ -51,8 +51,8 @@ namespace Iniciere
                 //Testing(lastInfo);
                 //var json = JsonUtility.ToJson("TEST", true);
                 //Debug.Log($"'TEST' = '{json}'");
-                label = StringUtils.TryParse(filepath, out var val)? val : "NULL";
-                
+                //label = StringUtils.TryParse(filepath, out var val)? val : "NULL";
+                TextFile.Test();
             }
 
             GUILayout.Label(label);

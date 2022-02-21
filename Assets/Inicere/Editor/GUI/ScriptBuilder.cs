@@ -16,6 +16,8 @@ namespace Iniciere
         List<LogEntry> m_Log = new List<LogEntry>();
         Vector2 m_Scroll;
 
+        TemplateLogWindowGUI ui = new TemplateLogWindowGUI();
+
         public static void CreateScript(TemplateInfo info, string directoryPath)
         {
             var win = CreateInstance<ScriptBuilder>();
@@ -27,6 +29,7 @@ namespace Iniciere
 #else
             Rect pos = Extensions.GetEditorMainWindowPos2019();
 #endif
+            win.titleContent = new GUIContent($"Building '{info.TmpName}'...");
 
             Vector2 scale = new Vector2(0.3f, 0.2f);
             Vector2 pivot = new Vector2(pos.width / 2, pos.height / 2);
@@ -39,33 +42,12 @@ namespace Iniciere
 
         private void OnGUI()
         {
-            GUILayout.Label(GetStateMessage());
-
-            m_Scroll = GUILayout.BeginScrollView(m_Scroll, "Box");
-
-            try
-            {
-                foreach (var item in m_Log)
-                {
-                    GUILayout.Label($"[{item.Level}] - {item.Message}");
-                    //static string GetStyle(LogLevel lvl) => lvl switch
-                    //{
-                    //    LogLevel.Wrn => "WarningStyle",
-                    //    LogLevel.Err => "ErrorStyle",
-                    //    _ => "LogStyle",
-                    //};
-                }
-            }
-            catch { }
-            
-            GUILayout.EndScrollView();
+            ui.Draw(m_Log, tmpName, position);
         }
 
-        private string GetStateMessage()
+        private void Update()
         {
-            if (compiling is null)
-                return $"Finished Generating '{tmpName}'";
-            return $"Generating Script: '{tmpName}' ...";
+            Repaint();
         }
 
         private void OnInspectorUpdate()
@@ -155,6 +137,32 @@ namespace Iniciere
 
 #region OLD_CODE
 /*
+private string GetStateMessage()
+{
+    if (compiling is null)
+        return $"Finished Generating '{tmpName}'";
+    return $"Generating Script: '{tmpName}' ...";
+}
+
+GUILayout.Label(GetStateMessage());
+m_Scroll = GUILayout.BeginScrollView(m_Scroll, "Box");
+
+try
+{
+    foreach (var item in m_Log)
+    {
+        GUILayout.Label($"[{item.Level}] - {item.Message}");
+        //static string GetStyle(LogLevel lvl) => lvl switch
+        //{
+        //    LogLevel.Wrn => "WarningStyle",
+        //    LogLevel.Err => "ErrorStyle",
+        //    _ => "LogStyle",
+        //};
+    }
+}
+catch { }
+            
+GUILayout.EndScrollView();
 const int SIZE = 20;
 const int MARGIN = 10;
 

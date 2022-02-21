@@ -12,4 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5cc9ae824c96d4479fcc7e75f2835c2, type: 3}
   m_Name: IniciereConfig
   m_EditorClassIdentifier: 
-  editorFolders: []
+  projectNamespace: InicereTests
+  projectEditorFolder: Editor
+  projectEditorNamespace: InicereTestsEditor

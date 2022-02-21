@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Iniciere
@@ -62,5 +63,6 @@ namespace Iniciere
                 File.WriteAllText($"{folderPath}/{file.Name}", file.GetString());
             }
         }
+
     }
 }

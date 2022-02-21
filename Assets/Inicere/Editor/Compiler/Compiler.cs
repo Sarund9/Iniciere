@@ -807,8 +807,8 @@ namespace Iniciere
                         LogErr($"Function 'file' expected a string, got nothing");
                         return false;
                     #endregion
-                    #region ADD
-                    case "add":
+                    #region ADDLN
+                    case "addln":
                         if (toks.Count < 2)
                         {
                             LogErr($"Function 'add' expected a string, got nothing");
@@ -835,6 +835,53 @@ namespace Iniciere
                         }
                         LogErr($"Function 'add' expected a string, got nothing");
                         return false;
+                    #endregion
+                    #region ADD
+                    case "add":
+                        if (toks.Count < 2)
+                        {
+                            LogErr($"Function 'add' expected a string, got nothing");
+                            return false;
+                        }
+                        if (!HandleExpression(toks.Skip(1), out value, LogErr, GetProperty))
+                        {
+                            LogErr($"Failed to parse Expression");
+                            return false;
+                        }
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string strvalue2)
+                        {
+                            var linebuild = new StringBuilder(strvalue2);
+
+                            if (!ApplyMacros(linebuild))
+                                return false;
+
+                            r_templateOutput.LastFile().Add(linebuild.ToString());
+                            return true;
+                        }
+                        LogErr($"Function 'add' expected a string, got nothing");
+                        return false;
+                    #endregion
+                    #region NAMESPACING
+                    case "namespace_start":
+                        if (toks.Count > 1 && toks[1].Type != TokenType.Semicolon)
+                        {
+                            LogErr($"Function 'namespace_start' expected end of Line");
+                            return true;
+                        }
+                        r_templateOutput.LastFile().StartNamespace();
+                        return true;
+                    case "namespace_end":
+                        if (toks.Count > 1 && toks[1].Type != TokenType.Semicolon)
+                        {
+                            LogErr($"Function 'namespace_end' expected end of Line");
+                            return true;
+                        }
+                        r_templateOutput.LastFile().EndNamespace();
+                        return true;
                     #endregion
                     default:
                         LogErr($"Unknown Function: {name}");

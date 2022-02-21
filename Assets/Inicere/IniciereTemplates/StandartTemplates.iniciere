@@ -23,8 +23,7 @@
 	@FORMAT(filename)
 	file "{}.cs"
 
-	add '''
-using System;
+	add '''using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +31,11 @@ using System.Linq;
 
 	# TODO: IF, VERIFYNAMESPACE
 	@IF(unitynamespace)
-	add "using UnityEngine;#n"
+	addln "using UnityEngine;"
+	
+	add "#n"
+	
+	namespace_start
 	
 	# TODO: ENCAPSULATESCOPE (adds tabs before every '\n')
 	# TODO: if statements (if, else, endif, elif, keywords) these act like the C# precompiler
@@ -44,12 +47,13 @@ using System.Linq;
 public class {}
 {#n#t'''
 
-@FORMAT(filename)
-@IF(constructor)
-@TABIF(constructor)
-add "#tpublic {}()#n{#n#t#n}#n"
+	@FORMAT(filename)
+	@IF(constructor)
+	addln "#tpublic {}()#n{#n#t#n}#n"
 	
-add "}"
+	addln "}"
+
+	namespace_end
 
 //>
 
@@ -119,24 +123,24 @@ using System.Linq;
 using UnityEngine;#n'''
 	
 	@FORMAT(filename)
-	add '''
+	addln '''
 public class {} : MonoBehaviour
 {
 #t'''
 
 @IF(mtdAwake)
-add "#n#tvoid Awake()#n#t{#n#t#t#n#t}"
+addln "#n#tvoid Awake()#n#t{#n#t#t#n#t}"
 
 @IF(mtdStart)
-add "#n#tvoid Start()#n#t{#n#t#t#n#t}"
+addln "#n#tvoid Start()#n#t{#n#t#t#n#t}"
 
 @IF(mtdUpdate)
-add "#n#tvoid Update()#n#t{#n#t#t#n#t}"
+addln "#n#tvoid Update()#n#t{#n#t#t#n#t}"
 
 @IF(mtdFixedUpdate)
-add "#n#tvoid FixedUpdate()#n#t{#n#t#t#n#t}"
+addln "#n#tvoid FixedUpdate()#n#t{#n#t#t#n#t}"
 
-add "}"
+addln "}"
 	
 //>
 
@@ -175,20 +179,20 @@ using System.Linq;
 using UnityEngine;#n'''
 	
 	@IF(createAssetMenu)
-	add "[CreateAssetMenu]"
+	addln "[CreateAssetMenu]"
 	
 	@FORMAT(filename)
-	add '''class {} : ScriptableObject
+	addln '''class {} : ScriptableObject
 {
 #t'''
 
 	@IF(mtdOnEnable)
-	add "#tvoid OnEnable()#n#t{#n#t#t#n#t}#n"
+	addln "#tvoid OnEnable()#n#t{#n#t#t#n#t}#n"
 
 	@IF(mtdOnDisable)
-	add "#tvoid OnDisable()#n#t{#n#t#t#n#t}#n"
+	addln "#tvoid OnDisable()#n#t{#n#t#t#n#t}#n"
 
-	add "}"
+	addln "}"
 	
 //>
 
@@ -222,13 +226,13 @@ using UnityEngine;
 using UnityEditor;#n'''
 
 	@FORMAT(target)
-	add "[CustomEditor(typeof({}))]"
+	addln "[CustomEditor(typeof({}))]"
 
 	@FORMAT(target)
-	add "public class {}Editor#n{"
+	addln "public class {}Editor#n{"
 	
 	@FORMAT(target)
-	add "#t{} obj;"
+	addln "#t{} obj;"
 	
 	@FORMAT(target)
 	add '''
@@ -238,7 +242,7 @@ using UnityEditor;#n'''
 	}
 	'''
 	
-	@IF(mtdGUI)
+	@IF(mtdGUI) # TODO: TabIf
 	add '''
 	public override void OnInspectorGUI()
 	{
@@ -246,7 +250,7 @@ using UnityEditor;#n'''
 	}
 	'''
 	
-	add "}"
+	addln "}"
 
 //>
 
@@ -262,6 +266,7 @@ TODO:
 	* Project Namespacing
 * Polish
 	* Extract UI code to Shared Static Methods
+	* ScriptBuilder
 
 Count:
 Editors:
