@@ -50,7 +50,20 @@ namespace Iniciere
             ctx.Property.Editor = new ClassTypeEditor(msg, requiredImpl);
         }
 
-
+        //[IniciereDecorator("Namespace")]
+        //public static void NamespaceDecorator(DecoratorContext ctx)
+        //{
+        //    ctx.Property.Value = ""; //TODO: Default Name Input Option
+        //    //ctx.Property.LitValue = "New_File";
+        //    ctx.Property.Editor = new PropertyNamespaceEditor(false);
+        //}
+        //[IniciereDecorator("EditorNamespace")]
+        //public static void EditorNamespaceDecorator(DecoratorContext ctx)
+        //{
+        //    ctx.Property.Value = ""; //TODO: Default Name Input Option
+        //    //ctx.Property.LitValue = "New_File";
+        //    ctx.Property.Editor = new PropertyNamespaceEditor(true);
+        //}
     }
 
 

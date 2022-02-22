@@ -20,8 +20,15 @@ namespace Iniciere
 
         public string projectNamespace;         // Implemented
         public string projectEditorNamespace;   // Implemented
-        public bool useEditorFolder;
+        public bool useEditorFolder;            // Implemented
         public string projectEditorFolder;      // Implemented
+
+        //[SerializeField]
+        //List<string> m_ProjectNamespaces = new List<string>();
+        //List<string> m_ProjectEditorNamespaces = new List<string>();
+
+        //public List<string> ProjectNamespaces => m_ProjectNamespaces;
+        //public List<string> ProjectEditorNamespaces => m_ProjectEditorNamespaces;
 
         public static IniciereConfig Instance { get; private set; }
 
@@ -63,11 +70,10 @@ namespace Iniciere
     }
 
     [Serializable]
-    public struct EditorFolder
+    public struct Namespace
     {
-        public string name;
-        public string path;
-        public string editorNamespace;
+        public string runtimeName;
+        public string editorName;
     }
 }
 

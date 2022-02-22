@@ -12,7 +12,7 @@ namespace Iniciere
     {
         Vector2 m_Scroll;
         string m_FileName;
-
+        int m_SelectedNamespace = -1;
 
         public bool Draw(TemplateInfo info, Action closeWindowCallback, bool keepOpenOption = false)
         {
