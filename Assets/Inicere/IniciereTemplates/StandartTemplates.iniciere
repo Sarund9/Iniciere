@@ -224,7 +224,7 @@ using UnityEngine;#n#n'''
 \=/
 
 	@FORMAT(filename)
-	file "{}Editor.cs"
+	editor_file "{}Editor.cs"
 
 	# TODO: Better this Formating
 	add '''using System;
@@ -233,6 +233,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEditor;#n#n'''
+
+	namespace_start
 
 	@FORMAT(target)
 	addln "[CustomEditor(typeof({}))]"
@@ -261,31 +263,25 @@ using UnityEditor;#n#n'''
 	
 	addln "}"
 
+	namespace_end
+
 //>
 
 
 TODO:
-* Automatic Namespacing (No Template Syntax Required)
-	* 'namespace_start' and 'namespace_end'
-* Script Template Window Remake
-* Compiler Options:
-	* Trace Msg
 * Configuration System
 	* Editor Folder
-	* Project Namespacing
-* Polish
-	* Extract UI code to Shared Static Methods
-	* ScriptBuilder
+
 Final:
 * Multiple Namespaces Option
 
 * Editor Folder System
 * Config Editor
-* Make Config Use ExecuteInEditMode ??
 
-Editor System:
-* Show the FileName dialogue greyed out
-* Add an auto_filename Function to Precompilation
+Editor Folder System:
+* Show the Path
+* Show a warning if it's an Editor Script'
+* Use editor_file
 
 
 Count:
