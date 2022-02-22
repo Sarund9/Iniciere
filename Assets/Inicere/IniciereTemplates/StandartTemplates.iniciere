@@ -291,14 +291,13 @@ Count:
 Editors:
 * Template Info Editor
 * Template Header Editor
-* Configuration
+* Configuration Editor
 
 Windows:
-* Precompilation Log
-* Script Builder
+* Precompilation Log + Script Builder
 * UseTemplate Window
 * Create Script Window
-+ Config Window
+* Config Window
 
 SOs:
 * Template Info

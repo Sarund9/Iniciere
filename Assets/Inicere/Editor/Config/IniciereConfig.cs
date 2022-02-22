@@ -12,23 +12,10 @@ namespace Iniciere
     public class IniciereConfig : ScriptableObject
     {
 
-        //[SerializeField]
-        //List<EditorFolder> editorFolders = new List<EditorFolder>();
-        //// TODO: USE LISTS
-        //[SerializeField]
-        //List<string> projectNamespaces = new List<string>();
-
         public string projectNamespace;         // Implemented
         public string projectEditorNamespace;   // Implemented
-        public bool useEditorFolder;            // Implemented
+        public bool useUniqueEditorFolder;   // Implemented
         public string projectEditorFolder;      // Implemented
-
-        //[SerializeField]
-        //List<string> m_ProjectNamespaces = new List<string>();
-        //List<string> m_ProjectEditorNamespaces = new List<string>();
-
-        //public List<string> ProjectNamespaces => m_ProjectNamespaces;
-        //public List<string> ProjectEditorNamespaces => m_ProjectEditorNamespaces;
 
         public static IniciereConfig Instance { get; private set; }
 

@@ -108,7 +108,7 @@ namespace Iniciere
 
         string GetDirPath(TextFile file)
         {
-            if (!file.IsEditor || !IniciereConfig.Instance.useEditorFolder)
+            if (!file.IsEditor || !IniciereConfig.Instance.useUniqueEditorFolder)
             {
                 return directoryPath;
             }
