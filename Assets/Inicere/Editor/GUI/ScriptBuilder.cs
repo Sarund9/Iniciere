@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -88,9 +89,17 @@ namespace Iniciere
             
             foreach (var file in template.Files)
             {
-                var filepath = $"{directoryPath}/{file.Name}";
-
+                string filepath = GetFilePath(file);
+                
                 //Debug.Log($"CREATING FILE AT {filepath}");
+                if (file.IsEditor)
+                {
+                    if (!Regex.IsMatch(filepath, "/editor/|/editor$", RegexOptions.IgnoreCase))
+                    {
+                        filepath += "/editor";
+                        Directory.CreateDirectory(filepath);
+                    }
+                }
 
                 using var create = File.CreateText(filepath);
                 create.Write(file.GetString());
@@ -99,6 +108,42 @@ namespace Iniciere
             AssetDatabase.SaveAssets();
         }
 
+        string GetFilePath(TextFile file)
+        {
+            if (!file.IsEditor)
+            {
+                return $"{directoryPath}/{file.Name}";
+            }
+            
+            var directory = $"{Application.dataPath}/" +
+                $"{IniciereConfig.Instance.projectEditorFolder}";
+
+            if (File.Exists(directory))
+            {
+                Debug.LogError($"File not created at Editor Directory!\n" +
+                    $"EditorFolder is a File!");
+                return $"{directoryPath}/{file.Name}";
+            }
+
+            if (!Directory.Exists(directory))
+            {
+                Debug.LogError($"File not created at Editor Directory!\n" +
+                    $"EditorFolder does not Exist:{directory}");
+                return $"{directoryPath}/{file.Name}";
+            }
+
+            //if (!Regex.IsMatch(directory, "/editor/|/editor$", RegexOptions.IgnoreCase))
+            //{
+            //    //Debug.LogError($"File not created at Editor Directory!\n" +
+            //    //    $"EditorFolder is not in an Editor Folder!\n" +
+            //    //    $"{IniciereConfig.Instance.projectEditorFolder}");
+            //    return $"{directoryPath}/{file.Name}";
+            //}
+
+            //filepath = $"{directoryPath}/{file.Name}";
+
+            return $"{directoryPath}/{file.Name}";
+        }
 
         static async Task<TemplateResult> CompileAsync(TemplateInfo info, ScriptBuilder instance)
         {

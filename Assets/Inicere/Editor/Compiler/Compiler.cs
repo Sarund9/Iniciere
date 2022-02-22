@@ -777,6 +777,36 @@ namespace Iniciere
                         LogErr($"Function '{name}' cannot be called in the Body");
                         return false;
                     #endregion
+                    #region EDITOR_FILE
+                    case "editor_file":
+                        if (toks.Count < 2)
+                        {
+                            LogErr($"Function 'editor_file' expected a string, got nothing");
+                            return false;
+                        }
+                        if (!HandleExpression(toks.Skip(1), out value, LogErr, GetProperty))
+                        {
+                            LogErr($"Failed to parse Expression");
+                            return false;
+                        }
+                        if (value is null)
+                        {
+                            return false; // Function above logs the Error
+                        }
+                        if (value is string efilename)
+                        {
+                            var fnamebuild = new StringBuilder(efilename);
+
+                            if (!ApplyMacros(fnamebuild))
+                                return false;
+
+                            r_templateOutput.AddFile(fnamebuild.ToString());
+                            r_templateOutput.LastFile().IsEditor = true;
+                            return true;
+                        }
+                        LogErr($"Function 'editor_file' expected a string, got nothing");
+                        return false;
+                    #endregion
                     #region FILE
                     case "file":
                         if (toks.Count < 2)
@@ -1051,15 +1081,6 @@ namespace Iniciere
             !task.IsCompleted && !task.IsFaulted && !task.IsCanceled &&
             task.Status != TaskStatus.WaitingForActivation;
 
-        static bool IsResultFalse(this Task<bool> task)
-        {
-            if (task.IsCompleted)
-                return !task.Result;
-
-
-            return false;
-        }
-
         // TODO: AST
         static bool HandleExpression(
             IEnumerable<Token> toks,
@@ -1230,6 +1251,14 @@ namespace Iniciere
 }
 
 #region OLD_CODE
+/*static bool IsResultFalse(this Task<bool> task)
+{
+    if (task.IsCompleted)
+        return !task.Result;
+
+
+    return false;
+}*/
 /* HandleVarDecl()
 //bool HandleVarDecl(IEnumerable<Token> toks)
 //{

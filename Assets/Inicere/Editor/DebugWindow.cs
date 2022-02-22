@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
@@ -52,8 +53,15 @@ namespace Iniciere
                 //var json = JsonUtility.ToJson("TEST", true);
                 //Debug.Log($"'TEST' = '{json}'");
                 //label = StringUtils.TryParse(filepath, out var val)? val : "NULL";
-                TextFile.Test();
+                //TextFile.Test();
+                
+
+
+                Debug.Log($"DataPath:'{Application.dataPath}'");
             }
+
+            bool match = Regex.IsMatch(filepath, "/editor/|/editor$", RegexOptions.IgnoreCase);
+            GUILayout.Label($"MATCH SUCCESS: {match}");
 
             GUILayout.Label(label);
 

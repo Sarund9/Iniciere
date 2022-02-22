@@ -14,6 +14,7 @@ namespace Iniciere
             Name = filename;
         }
         public string Name { get; set; }
+        public bool IsEditor { get; set; }
         //private List<string> Lines { get; } = new List<string>();
         //public string Contents { get; set; }
         int m_NamespaceCount = 0;
