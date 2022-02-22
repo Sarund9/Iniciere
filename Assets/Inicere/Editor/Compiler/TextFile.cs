@@ -74,7 +74,7 @@ namespace Iniciere
                 Debug.LogError("ERROR: Iniciere Config not Found!");
                 return;
             }
-            AddLine($"namespace {cfg.projectNamespace}{Environment.NewLine}{{");
+            AddLine($"namespace {(IsEditor ? cfg.projectEditorNamespace : cfg.projectNamespace)}{Environment.NewLine}{{");
             m_NamespaceCount++;
         }
 

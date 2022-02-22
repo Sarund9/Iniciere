@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: IniciereConfig
   m_EditorClassIdentifier: 
   projectNamespace: InicereTests
-  projectEditorFolder: Editor
   projectEditorNamespace: InicereTestsEditor
+  useEditorFolder: 0
+  projectEditorFolder: Editor

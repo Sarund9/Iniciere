@@ -57,14 +57,12 @@ namespace Iniciere
         {
             if (compiling is null)
             {
-                //Close();
                 return;
             }
             if (compiling.IsFaulted)
             {
                 Debug.LogError($"Script Build Canceled, Compilation Error:\n{compiling.Exception.InnerException.Message}");
                 compiling = null;
-                //Close();
             }
             else if (compiling.IsCompleted)
             {
@@ -75,7 +73,6 @@ namespace Iniciere
                 }
                 compiling = null;
                 Log(new LogEntry(LogLevel.Msg, "Finished Generating"));
-                //Close();
             }
         }
 
@@ -87,32 +84,33 @@ namespace Iniciere
                 return;
             }
             
-            foreach (var file in template.Files)
+            foreach (TextFile file in template.Files)
             {
-                string filepath = GetFilePath(file);
+                string dirpath = GetDirPath(file);
                 
                 //Debug.Log($"CREATING FILE AT {filepath}");
                 if (file.IsEditor)
                 {
-                    if (!Regex.IsMatch(filepath, "/editor/|/editor$", RegexOptions.IgnoreCase))
+                    if (!Regex.IsMatch(dirpath, "/editor/|/editor$", RegexOptions.IgnoreCase))
                     {
-                        filepath += "/editor";
-                        Directory.CreateDirectory(filepath);
+                        dirpath += "/editor";
+                        if (!Directory.Exists(dirpath))
+                            Directory.CreateDirectory(dirpath);
                     }
                 }
 
-                using var create = File.CreateText(filepath);
+                using var create = File.CreateText($"{dirpath}/{file.Name}");
                 create.Write(file.GetString());
             }
             AssetDatabase.Refresh();
             AssetDatabase.SaveAssets();
         }
 
-        string GetFilePath(TextFile file)
+        string GetDirPath(TextFile file)
         {
-            if (!file.IsEditor)
+            if (!file.IsEditor || !IniciereConfig.Instance.useEditorFolder)
             {
-                return $"{directoryPath}/{file.Name}";
+                return directoryPath;
             }
             
             var directory = $"{Application.dataPath}/" +
@@ -120,16 +118,16 @@ namespace Iniciere
 
             if (File.Exists(directory))
             {
-                Debug.LogError($"File not created at Editor Directory!\n" +
+                Debug.LogWarning($"File not created at Editor Directory!\n" +
                     $"EditorFolder is a File!");
-                return $"{directoryPath}/{file.Name}";
+                return directoryPath;
             }
 
             if (!Directory.Exists(directory))
             {
-                Debug.LogError($"File not created at Editor Directory!\n" +
+                Debug.LogWarning($"File not created at Editor Directory!\n" +
                     $"EditorFolder does not Exist:{directory}");
-                return $"{directoryPath}/{file.Name}";
+                return directoryPath;
             }
 
             //if (!Regex.IsMatch(directory, "/editor/|/editor$", RegexOptions.IgnoreCase))
@@ -142,7 +140,7 @@ namespace Iniciere
 
             //filepath = $"{directoryPath}/{file.Name}";
 
-            return $"{directoryPath}/{file.Name}";
+            return directory;
         }
 
         static async Task<TemplateResult> CompileAsync(TemplateInfo info, ScriptBuilder instance)

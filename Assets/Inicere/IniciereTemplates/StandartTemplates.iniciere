@@ -187,7 +187,7 @@ using UnityEngine;#n#n'''
 	addln "[CreateAssetMenu]"
 	
 	@FORMAT(filename)
-	addln '''class {} : ScriptableObject
+	addln '''public class {} : ScriptableObject
 {
 #t'''
 
@@ -275,8 +275,11 @@ TODO:
 Final:
 * Multiple Namespaces Option
 
-* Editor Folder System
 * Config Editor
+
+Polish:
+* Disable Debug Stuff
+* Extensive Testing
 
 Editor Folder System:
 * Show the Path

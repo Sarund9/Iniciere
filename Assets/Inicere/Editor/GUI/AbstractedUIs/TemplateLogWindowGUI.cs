@@ -27,9 +27,9 @@ namespace Iniciere
         void UpdateLogNums(List<LogEntry> log)
         {
             m_NumTrc = 0; m_NumMsg = 0; m_NumWrn = 0; m_NumErr = 0;
-            foreach (var item in log)
+            for (int i = 0; i < log.Count; i++)
             {
-                switch (item.Level)
+                switch (log[i].Level)
                 {
                     case LogLevel.Trc:
                         m_NumTrc++;

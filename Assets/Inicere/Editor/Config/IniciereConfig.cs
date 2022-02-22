@@ -19,8 +19,9 @@ namespace Iniciere
         //List<string> projectNamespaces = new List<string>();
 
         public string projectNamespace;         // Implemented
-        public string projectEditorFolder;      // --
-        public string projectEditorNamespace;   // --
+        public string projectEditorNamespace;   // Implemented
+        public bool useEditorFolder;
+        public string projectEditorFolder;      // Implemented
 
         public static IniciereConfig Instance { get; private set; }
 
