@@ -18,11 +18,11 @@ namespace Iniciere
         const string TEMPLATE_END = @"//>";
         [SerializeField]
         bool import, logTokens;
-        //List<string> files;
-        [SerializeField, Min(0)]
-        int impStartAt;
-        [SerializeField, Min(1)]
-        int importCount = 1;
+        ////List<string> files;
+        //[SerializeField, Min(0)]
+        //int impStartAt;
+        //[SerializeField, Min(1)]
+        //int importCount = 1;
 
         /*
          TODO: Compilation Options
@@ -38,14 +38,14 @@ namespace Iniciere
 
             List<TemplateInfo> list = new List<TemplateInfo>();
 
-            int i = -1;
+            //int i = -1;
             foreach (var tmp in templateLocations)
             {
-                i++;
-                if (i < impStartAt)
-                    continue;
-                if (i > impStartAt + importCount)
-                    break;
+                //i++;
+                //if (i < impStartAt)
+                //    continue;
+                //if (i > impStartAt + importCount)
+                //    break;
 
                 var info = TemplateInfo.New(tmp);
                 int result = Compiler.Precompile(tmp, info, logTokens);

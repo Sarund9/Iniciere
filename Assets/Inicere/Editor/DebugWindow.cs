@@ -26,7 +26,7 @@ namespace Iniciere
 
         UBox box = new UBox();
 
-        [MenuItem("Tools/Iniciere/DebugWindow")]
+        //[MenuItem("Tools/Iniciere/DebugWindow")]
         public static void OpenWindow()
         {
             GetWindow<DebugWindow>("Debug Window");

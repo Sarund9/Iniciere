@@ -20,16 +20,17 @@ namespace Iniciere
 
         public override void OnInspectorGUI()
         {
-            selected = GUILayout.Toolbar(selected, tabs);
+            //selected = GUILayout.Toolbar(selected, tabs);
 
-            if (selected == 0)
-            {
+            //if (selected == 0)
+            //{
 
-            }
-            else
-            {
-                base.OnInspectorGUI();
-            }
+            //}
+            //else
+            //{
+                
+            //}
+            base.OnInspectorGUI();
         }
     }
 }

@@ -58,7 +58,7 @@ public class {}
 //>
 
 1
-<#iniciere "Inherited CSharp Class"
+<!#iniciere "Inherited CSharp Class"
 
 	sdesc "CSharp class implementing another class"
 	ldesc "Select the "
@@ -115,12 +115,11 @@ Template
 	@FORMAT(filename)
 	file "{}.cs"
 	
-	add '''
-using System;
+	add '''using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;#n'''
+using UnityEngine;#n#n'''
 	
 	namespace_start
 	
@@ -297,7 +296,6 @@ Windows:
 * Precompilation Log + Script Builder
 * UseTemplate Window
 * Create Script Window
-* Config Window
 
 SOs:
 * Template Info
