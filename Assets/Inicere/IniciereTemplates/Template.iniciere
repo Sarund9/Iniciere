@@ -1,0 +1,24 @@
+
+
+<#iniciere "My Template"
+	
+	sdesc "Des"
+	
+	ldesc "un test"
+
+	language "C##"
+	category "standart"
+	flags "std, oop"
+	fileext "cs"
+
+	@FileName 
+	var filename
+
+	\=/
+	
+	@FORMAT(filename)
+	file "{}.cs"
+	
+	add "// Hola"
+	
+//>
